@@ -60,13 +60,11 @@ const TextInput = ({ label, value, onChange, placeholder, isNumeric = false }: {
     
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
       e.preventDefault();
-      const currentVal = value || '0';
+      const currentVal = value || '0px';
       const num = parseInt(currentVal) || 0;
       const step = e.shiftKey ? 10 : 1;
       const nextNum = e.key === 'ArrowUp' ? num + step : num - step;
-      // Keep unit if it exists, otherwise default to px
-      const unit = currentVal.replace(/[0-9-]/g, '') || 'px';
-      onChange(`${nextNum}${unit}`);
+      onChange(`${nextNum}px`);
     }
   };
 
@@ -99,12 +97,15 @@ const SpacingInputGroup = ({ label, values, onChange }: {
 }) => {
     
     const updateAll = (val: string) => {
-        const finalVal = (val && !isNaN(Number(val))) ? `${val}px` : val;
+        // Automatically enforce px for numeric-only inputs
+        const finalVal = (val !== '' && !isNaN(Number(val))) ? `${val}px` : val;
         onChange({ top: finalVal, right: finalVal, bottom: finalVal, left: finalVal });
     };
 
     const updateSide = (side: keyof typeof values, val: string) => {
-        onChange({ ...values, [side]: val });
+        // Instantly append px if it's a number to ensure CSS validity while typing
+        const finalVal = (val !== '' && !isNaN(Number(val))) ? `${val}px` : val;
+        onChange({ ...values, [side]: finalVal });
     };
 
     return (
@@ -263,16 +264,14 @@ const App: React.FC = () => {
     }
   }, [selectedSectionId, isPreviewMode]);
   
-  // Switch to Content tab when selecting a new element
   useEffect(() => {
       if(selectedElementId) {
           if(editTab === 'advanced') setEditTab('content');
       }
   }, [selectedElementId]);
 
-  // Inject Dynamic Styles
   useEffect(() => {
-    const { typography, colors } = siteData.globalStyles;
+    const { colors } = siteData.globalStyles;
     const styleString = `:root { --bg-color: ${colors.backgroundColor}; --text-color: ${colors.textColor}; --title-color: ${colors.titleColor}; --accent-color: ${colors.accentColor}; --btn-bg: ${colors.buttonBackgroundColor}; --btn-text: ${colors.buttonTextColor}; } #canvas-root { background-color: var(--bg-color); color: var(--text-color); min-height: 100vh; }`;
     const styleEl = document.createElement('style');
     styleEl.id = 'dynamic-theme-styles';
@@ -318,8 +317,6 @@ const App: React.FC = () => {
 
   const applyTheme = (theme: typeof PRESET_THEMES[0]) => {
       const colors = theme.elements;
-      
-      // 1. Update Global Settings
       const newGlobalStyles = {
           ...siteData.globalStyles,
           colors: {
@@ -335,8 +332,6 @@ const App: React.FC = () => {
               overlayColor: colors.overlay.color
           }
       };
-
-      // 2. Deep update all sections to enforce the new theme
       const newSections = siteData.sections.map(section => ({
           ...section,
           styles: {
@@ -350,12 +345,10 @@ const App: React.FC = () => {
               buttonTextColor: colors.primaryButton.text,
               borderColor: colors.ring,
               overlayColor: colors.overlay.color,
-              // Force opacity to 1 because presets provide RGBA colors with alpha baked in
               overlayOpacityValue: '1', 
               overlayBlendMode: colors.overlay.blend || 'normal'
           }
       }));
-
       setSiteData(prev => ({
           ...prev,
           globalStyles: newGlobalStyles,
@@ -377,11 +370,9 @@ const App: React.FC = () => {
                  updateElement(uploadTarget.sectionId, uploadTarget.elementId, { content: newContent });
              }
         } else {
-             // Section background image or other fields
              if (uploadTarget.field === 'backgroundImage') {
                  updateSectionStyle(uploadTarget.sectionId, uploadTarget.field, base64String);
              } else {
-                 // Section content image (logo, hero image)
                  const section = siteData.sections.find(s => s.id === uploadTarget.sectionId);
                  if(section) {
                     updateSection(uploadTarget.sectionId, { content: {...section.content, [uploadTarget.field]: base64String} });
@@ -432,48 +423,22 @@ const App: React.FC = () => {
     setIsAddMenuOpen(false);
   };
 
-  // --- Comprehensive Style Editor ---
-
-  const renderStyleEditor = (
-      styles: any, 
-      onUpdate: (key: string, val: any) => void, 
-      context: 'section' | 'element'
-    ) => {
-      
-      // Helper to prepare spacing values
+  const renderStyleEditor = (styles: any, onUpdate: (key: string, val: any) => void, context: 'section' | 'element') => {
       const getSpacingValues = (type: 'margin' | 'padding') => {
         if (context === 'element') {
             const val = styles[type];
-            if (typeof val === 'string') {
-                return { top: val, right: val, bottom: val, left: val };
-            }
+            if (typeof val === 'string') return { top: val, right: val, bottom: val, left: val };
             return val || {};
         } else {
-            // Section
-            if (type === 'padding') {
-                return {
-                    top: styles.paddingTop,
-                    bottom: styles.paddingBottom,
-                    left: styles.paddingLeft,
-                    right: styles.paddingRight
-                };
-            } else {
-                return {
-                    top: styles.marginTop,
-                    bottom: styles.marginBottom,
-                    left: styles.marginLeft,
-                    right: styles.marginRight
-                };
-            }
+            if (type === 'padding') return { top: styles.paddingTop, bottom: styles.paddingBottom, left: styles.paddingLeft, right: styles.paddingRight };
+            return { top: styles.marginTop, bottom: styles.marginBottom, left: styles.marginLeft, right: styles.marginRight };
         }
       };
 
       const handleSpacingUpdate = (type: 'margin' | 'padding', newValues: any) => {
           if (context === 'element') {
-              // For elements, we store as an object
               onUpdate(type, newValues);
           } else {
-              // For sections, we map to flat keys
               if (type === 'padding') {
                   if (newValues.top !== undefined) onUpdate('paddingTop', newValues.top);
                   if (newValues.bottom !== undefined) onUpdate('paddingBottom', newValues.bottom);
@@ -490,152 +455,47 @@ const App: React.FC = () => {
       
       return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-2 duration-300">
-              
-              {/* 1. LAYOUT & SPACING */}
               <AccordionGroup title="Layout & Spacing" defaultOpen={true}>
                   <div className="mb-4">
-                      {context === 'section' && (
-                          <TextInput label="Max Width" value={styles.maxWidth} onChange={(v) => onUpdate('maxWidth', v)} placeholder="max-w-6xl" />
-                      )}
+                      {context === 'section' && <TextInput label="Max Width" value={styles.maxWidth} onChange={(v) => onUpdate('maxWidth', v)} placeholder="max-w-6xl" />}
                   </div>
-                  
                   <div className="space-y-4">
-                      <SpacingInputGroup 
-                        label="Padding" 
-                        values={getSpacingValues('padding')} 
-                        onChange={(v) => handleSpacingUpdate('padding', v)} 
-                      />
-                      
+                      <SpacingInputGroup label="Padding" values={getSpacingValues('padding')} onChange={(v) => handleSpacingUpdate('padding', v)} />
                       <div className="h-px bg-white/5"></div>
-
-                      <SpacingInputGroup 
-                        label="Margin" 
-                        values={getSpacingValues('margin')} 
-                        onChange={(v) => handleSpacingUpdate('margin', v)} 
-                      />
+                      <SpacingInputGroup label="Margin" values={getSpacingValues('margin')} onChange={(v) => handleSpacingUpdate('margin', v)} />
                   </div>
               </AccordionGroup>
-
-              {/* 2. TYPOGRAPHY (GENERAL) */}
               <AccordionGroup title="Typography" defaultOpen={true}>
                    <ColorInput label="Text Color" value={styles.textColor || styles.color} onChange={(v) => context === 'section' ? onUpdate('textColor', v) : onUpdate('color', v)} />
                    <div className="grid grid-cols-2 gap-4">
                         <TextInput label="Font Size" value={context === 'section' ? styles.titleSize : styles.fontSize} onChange={(v) => context === 'section' ? onUpdate('titleSize', v) : onUpdate('fontSize', v)} placeholder="1rem" />
-                        <SelectInput 
-                            label="Font Weight"
-                            value={styles.fontWeight || 'normal'}
-                            options={[{label: 'Normal', value: '400'}, {label: 'Bold', value: '700'}, {label: 'Black', value: '900'}, {label: 'Light', value: '300'}]}
-                            onChange={(v) => onUpdate('fontWeight', v)}
-                        />
+                        <SelectInput label="Font Weight" value={styles.fontWeight || '400'} options={[{label: 'Normal', value: '400'}, {label: 'Bold', value: '700'}, {label: 'Black', value: '900'}, {label: 'Light', value: '300'}]} onChange={(v) => onUpdate('fontWeight', v)} />
                    </div>
                    <div className="mt-2">
                         <label className="text-[10px] font-bold text-white/40 capitalize ml-1 mb-1 block">Alignment</label>
-                        <ButtonGroup 
-                            value={styles.textAlign || 'left'}
-                            onChange={(v) => onUpdate('textAlign', v)}
-                            options={[
-                                { icon: 'fa-align-left', value: 'left', label: 'Left' },
-                                { icon: 'fa-align-center', value: 'center', label: 'Center' },
-                                { icon: 'fa-align-right', value: 'right', label: 'Right' },
-                                { icon: 'fa-align-justify', value: 'justify', label: 'Justify' }
-                            ]}
-                        />
+                        <ButtonGroup value={styles.textAlign || 'left'} onChange={(v) => onUpdate('textAlign', v)} options={[{ icon: 'fa-align-left', value: 'left', label: 'Left' }, { icon: 'fa-align-center', value: 'center', label: 'Center' }, { icon: 'fa-align-right', value: 'right', label: 'Right' }, { icon: 'fa-align-justify', value: 'justify', label: 'Justify' }]} />
                    </div>
               </AccordionGroup>
-              
-              {/* SECTION-SPECIFIC TYPOGRAPHY */}
               {context === 'section' && (
                   <>
                       <AccordionGroup title="Heading Styles">
                           <ColorInput label="Heading Color" value={styles.titleColor || styles.textColor} onChange={(v) => onUpdate('titleColor', v)} />
-                          <div className="grid grid-cols-2 gap-4">
-                              <TextInput label="Size" value={styles.titleSize} onChange={(v) => onUpdate('titleSize', v)} placeholder="text-5xl" />
-                          </div>
+                          <div className="grid grid-cols-2 gap-4"><TextInput label="Size" value={styles.titleSize} onChange={(v) => onUpdate('titleSize', v)} placeholder="text-5xl" /></div>
                       </AccordionGroup>
-                      
-                      <AccordionGroup title="Subtitle Styles">
-                           <ColorInput label="Subtitle Color" value={styles.subtitleColor || styles.textColor} onChange={(v) => onUpdate('subtitleColor', v)} />
-                           <TextInput label="Size" value={styles.subtitleSize} onChange={(v) => onUpdate('subtitleSize', v)} placeholder="text-xl" />
-                      </AccordionGroup>
-
                       <AccordionGroup title="Action Button">
                            <ColorInput label="Button Bg" value={styles.buttonBackgroundColor} onChange={(v) => onUpdate('buttonBackgroundColor', v)} />
                            <ColorInput label="Button Text" value={styles.buttonTextColor} onChange={(v) => onUpdate('buttonTextColor', v)} />
-                           <SelectInput 
-                              label="Shape"
-                              value={styles.buttonStyle || 'rounded'}
-                              options={[{label: 'Rounded', value: 'rounded'}, {label: 'Pill', value: 'pill'}, {label: 'Square', value: 'square'}]}
-                              onChange={(v) => onUpdate('buttonStyle', v)}
-                           />
+                           <SelectInput label="Shape" value={styles.buttonStyle || 'rounded'} options={[{label: 'Rounded', value: 'rounded'}, {label: 'Pill', value: 'pill'}, {label: 'Square', value: 'square'}]} onChange={(v) => onUpdate('buttonStyle', v)} />
                       </AccordionGroup>
                   </>
               )}
-
-              {/* 3. BACKGROUND & OVERLAY */}
               <AccordionGroup title="Background">
                    <ColorInput label="Background Color" value={styles.backgroundColor} onChange={(v) => onUpdate('backgroundColor', v)} />
-                   
-                   <div className="mt-4">
-                       <ImageControl 
-                            label="Background Image" 
-                            value={styles.backgroundImage} 
-                            onChange={(v) => onUpdate('backgroundImage', v)} 
-                            onUpload={() => triggerUpload(selectedSectionId!, 'backgroundImage')}
-                       />
-                   </div>
-
-                   {context === 'section' && (
-                       <div className="mt-4 p-3 bg-white/5 rounded border border-white/5">
-                           <h4 className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2">Overlay</h4>
-                           <ColorInput label="Overlay Color" value={styles.overlayColor} onChange={(v) => onUpdate('overlayColor', v)} />
-                           <div className="mt-2">
-                                <RangeInput 
-                                    label="Opacity" 
-                                    value={parseFloat(styles.overlayOpacityValue || '0')} 
-                                    max={1} 
-                                    step={0.1} 
-                                    onChange={(v) => onUpdate('overlayOpacityValue', v.toString())} 
-                                />
-                           </div>
-                           <div className="mt-2">
-                                <SelectInput 
-                                    label="Blend Mode"
-                                    value={styles.overlayBlendMode || 'normal'}
-                                    options={[
-                                        {label: 'Normal', value: 'normal'},
-                                        {label: 'Multiply', value: 'multiply'},
-                                        {label: 'Screen', value: 'screen'},
-                                        {label: 'Overlay', value: 'overlay'},
-                                        {label: 'Darken', value: 'darken'},
-                                        {label: 'Lighten', value: 'lighten'}
-                                    ]}
-                                    onChange={(v) => onUpdate('overlayBlendMode', v)}
-                                />
-                           </div>
-                       </div>
-                   )}
+                   <div className="mt-4"><ImageControl label="Background Image" value={styles.backgroundImage} onChange={(v) => onUpdate('backgroundImage', v)} onUpload={() => triggerUpload(selectedSectionId!, 'backgroundImage')} /></div>
               </AccordionGroup>
-
-              {/* 4. BORDERS & EFFECTS */}
-              <AccordionGroup title="Borders & Effects">
-                   <div className="grid grid-cols-2 gap-4">
-                        <TextInput label="Border Radius" value={styles.borderRadius} onChange={(v) => onUpdate('borderRadius', v)} placeholder="0px" />
-                        <ColorInput label="Border Color" value={styles.borderColor} onChange={(v) => onUpdate('borderColor', v)} />
-                   </div>
-                   <div className="mt-4">
-                       <RangeInput label="Opacity" value={parseFloat(styles.opacity || '1')} max={1} step={0.1} onChange={(v) => onUpdate('opacity', v)} />
-                   </div>
-                   <div className="mt-2">
-                       <TextInput label="Box Shadow" value={styles.boxShadow} onChange={(v) => onUpdate('boxShadow', v)} placeholder="0 4px 6px rgba(0,0,0,0.1)" />
-                   </div>
-              </AccordionGroup>
-
           </div>
       );
   };
-
-
-  // --- Main Render ---
 
   return (
     <div className={`h-screen bg-black text-white selection:bg-blue-500/30 overflow-hidden flex flex-col`} style={{ fontFamily: siteData.globalStyles.primaryFont }}>
@@ -643,33 +503,19 @@ const App: React.FC = () => {
             <div className="flex items-center gap-4">
                 <span className="font-bold text-lg tracking-tighter">Genie<span className="text-blue-500">Build</span></span>
                 <div className="h-4 w-px bg-white/10 mx-2"></div>
-                <button 
-                  onClick={() => { setSelectedSectionId(null); setSelectedElementId(null); setIsSidebarOpen(true); }} 
-                  className={`px-3 py-1.5 rounded text-xs transition-colors flex items-center gap-2 ${!selectedSectionId ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`} 
-                  title="Global Design System"
-                >
-                    <i className="fa-solid fa-palette"></i>Theme
-                </button>
+                <button onClick={() => { setSelectedSectionId(null); setSelectedElementId(null); setIsSidebarOpen(true); }} className={`px-3 py-1.5 rounded text-xs transition-colors flex items-center gap-2 ${!selectedSectionId ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`} title="Global Design System"><i className="fa-solid fa-palette"></i>Theme</button>
             </div>
              <div className="flex items-center gap-2">
                  <div className="flex bg-[#151515] rounded p-1 border border-[#333] mr-2">
                      <button onClick={() => setViewMode('desktop')} className={`px-2 py-1 rounded text-xs transition-colors ${viewMode === 'desktop' ? 'bg-[#333] text-white' : 'text-slate-500 hover:text-white'}`}><i className="fa-solid fa-desktop"></i></button>
                      <button onClick={() => setViewMode('mobile')} className={`px-2 py-1 rounded text-xs transition-colors ${viewMode === 'mobile' ? 'bg-[#333] text-white' : 'text-slate-500 hover:text-white'}`}><i className="fa-solid fa-mobile-screen"></i></button>
                  </div>
-                 <button 
-                    onClick={() => setIsPreviewMode(!isPreviewMode)}
-                    className={`px-3 py-1.5 rounded text-xs font-bold border transition-all ${isPreviewMode ? 'bg-blue-600 border-blue-600 text-white' : 'border-white/20 hover:bg-white/10'}`}
-                >
-                    {isPreviewMode ? <><i className="fa-solid fa-eye-slash mr-2"></i>Edit</> : <><i className="fa-solid fa-eye mr-2"></i>Preview</>}
-                </button>
+                 <button onClick={() => setIsPreviewMode(!isPreviewMode)} className={`px-3 py-1.5 rounded text-xs font-bold border transition-all ${isPreviewMode ? 'bg-blue-600 border-blue-600 text-white' : 'border-white/20 hover:bg-white/10'}`}>{isPreviewMode ? <><i className="fa-solid fa-eye-slash mr-2"></i>Edit</> : <><i className="fa-solid fa-eye mr-2"></i>Preview</>}</button>
             </div>
         </header>
 
         <div className="flex-1 flex overflow-hidden relative">
-            {/* SIDEBAR */}
             <aside className={`w-80 bg-[#080808] border-r border-white/10 flex flex-col shrink-0 transition-all duration-300 absolute z-40 h-full md:relative ${isSidebarOpen && !isPreviewMode ? 'translate-x-0' : '-translate-x-full md:hidden'} ${!isPreviewMode ? 'md:translate-x-0' : 'md:-translate-x-full md:w-0 md:border-none'}`}>
-                
-                {/* 1. NO SELECTION: GLOBAL DESIGN SYSTEM */}
                 {!selectedSectionId ? (
                      <div className="flex flex-col h-full">
                          <div className="p-4 border-b border-white/10">
@@ -677,288 +523,54 @@ const App: React.FC = () => {
                             <div className="flex bg-[#151515] p-1 rounded">
                                 <button onClick={() => setGlobalTab('themes')} className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${globalTab === 'themes' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>Presets</button>
                                 <button onClick={() => setGlobalTab('colors')} className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${globalTab === 'colors' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>Colors</button>
-                                <button onClick={() => setGlobalTab('typography')} className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${globalTab === 'typography' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>Type</button>
                             </div>
                          </div>
                          <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
                              {globalTab === 'themes' && (
                                  <div className="space-y-4">
-                                     <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest mb-2">Select a Preset</p>
-                                     <div className="grid grid-cols-1 gap-4">
-                                         {PRESET_THEMES.map((theme, idx) => (
-                                             <button 
-                                                key={idx}
-                                                onClick={() => applyTheme(theme)}
-                                                className="group flex flex-col gap-2 p-3 rounded-xl border border-white/10 hover:border-white/30 bg-[#111] hover:bg-[#1a1a1a] transition-all"
-                                             >
-                                                 <div className="flex items-center justify-between w-full">
-                                                     <span className="font-bold text-xs uppercase tracking-wider text-white/80">{theme.name}</span>
-                                                     <div className="flex gap-1">
-                                                          <div className="w-4 h-4 rounded-full border border-white/10" style={{backgroundColor: theme.elements.surface}} title="Background"></div>
-                                                          <div className="w-4 h-4 rounded-full border border-white/10" style={{backgroundColor: theme.elements.heading}} title="Text"></div>
-                                                          <div className="w-4 h-4 rounded-full border border-white/10" style={{backgroundColor: theme.elements.primaryButton.bg}} title="Primary"></div>
-                                                          <div className="w-4 h-4 rounded-full border border-white/10" style={{backgroundColor: theme.elements.accent}} title="Accent"></div>
-                                                     </div>
-                                                 </div>
-                                                 <div className="w-full h-12 rounded-lg overflow-hidden relative shadow-inner mt-1">
-                                                      {/* Preview Composition */}
-                                                      <div className="absolute inset-0" style={{backgroundColor: theme.elements.surface}}></div>
-                                                      <div className="absolute top-3 left-3 right-3 h-2 rounded-full opacity-40" style={{backgroundColor: theme.elements.heading, width: '60%'}}></div>
-                                                      <div className="absolute top-7 left-3 h-2 rounded-full opacity-20" style={{backgroundColor: theme.elements.description, width: '40%'}}></div>
-                                                      <div className="absolute bottom-3 right-3 w-8 h-4 rounded" style={{backgroundColor: theme.elements.primaryButton.bg}}></div>
-                                                 </div>
-                                             </button>
-                                         ))}
-                                     </div>
+                                     {PRESET_THEMES.map((theme, idx) => (
+                                         <button key={idx} onClick={() => applyTheme(theme)} className="group flex flex-col gap-2 p-3 rounded-xl border border-white/10 hover:border-white/30 bg-[#111] hover:bg-[#1a1a1a] transition-all"><div className="flex items-center justify-between w-full"><span className="font-bold text-xs uppercase tracking-wider text-white/80">{theme.name}</span><div className="flex gap-1"><div className="w-4 h-4 rounded-full border border-white/10" style={{backgroundColor: theme.elements.surface}}></div><div className="w-4 h-4 rounded-full border border-white/10" style={{backgroundColor: theme.elements.primaryButton.bg}}></div></div></div></button>
+                                     ))}
                                  </div>
                              )}
                              {globalTab === 'colors' && (
                                 <div className="space-y-4">
-                                    <ColorInput label="Background" value={siteData.globalStyles.colors.backgroundColor} onChange={(v) => updateGlobalColor('backgroundColor', v)} />
-                                    <ColorInput label="Text" value={siteData.globalStyles.colors.textColor} onChange={(v) => updateGlobalColor('textColor', v)} />
-                                    <ColorInput label="Title" value={siteData.globalStyles.colors.titleColor} onChange={(v) => updateGlobalColor('titleColor', v)} />
-                                    <ColorInput label="Primary / Accent" value={siteData.globalStyles.colors.accentColor} onChange={(v) => updateGlobalColor('accentColor', v)} />
-                                    <ColorInput label="Button Bg" value={siteData.globalStyles.colors.buttonBackgroundColor} onChange={(v) => updateGlobalColor('buttonBackgroundColor', v)} />
-                                    <ColorInput label="Button Text" value={siteData.globalStyles.colors.buttonTextColor} onChange={(v) => updateGlobalColor('buttonTextColor', v)} />
-                                </div>
-                             )}
-                              {globalTab === 'typography' && (
-                                <div className="space-y-4">
-                                    <div className="p-4 bg-white/5 rounded border border-white/10 text-xs text-white/50 text-center">
-                                        Typography controls coming soon.
-                                    </div>
+                                    <ColorInput label="Background" value={siteData.globalStyles.colors.backgroundColor} onChange={(v) => updateGlobalColor('backgroundColor', v)} /><ColorInput label="Text" value={siteData.globalStyles.colors.textColor} onChange={(v) => updateGlobalColor('textColor', v)} /><ColorInput label="Title" value={siteData.globalStyles.colors.titleColor} onChange={(v) => updateGlobalColor('titleColor', v)} />
                                 </div>
                              )}
                          </div>
                      </div>
                 ) : (
-                    // 2. SELECTION ACTIVE (SECTION OR ELEMENT)
                     <div className="flex flex-col h-full">
-                        {/* Header with Breadcrumb */}
                         <div className="p-4 border-b border-white/10">
-                             <div className="flex items-center gap-2 mb-3">
-                                <button onClick={() => { if(selectedElementId) setSelectedElementId(null); else setSelectedSectionId(null); }} className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/10 text-slate-400"><i className="fa-solid fa-arrow-left text-[10px]"></i></button>
-                                <div className="flex items-center text-xs font-bold capitalize truncate">
-                                    <span className={selectedElementId ? 'text-slate-500' : 'text-white'}>{selectedSection?.type.replace('-',' ')}</span>
-                                    {selectedElementId && (
-                                        <>
-                                            <i className="fa-solid fa-chevron-right text-[8px] mx-1.5 text-slate-600"></i>
-                                            <span className="text-white">{selectedElement?.type.replace('-',' ')}</span>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                            
-                            {/* Tabs */}
+                             <div className="flex items-center gap-2 mb-3"><button onClick={() => { if(selectedElementId) setSelectedElementId(null); else setSelectedSectionId(null); }} className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/10 text-slate-400"><i className="fa-solid fa-arrow-left text-[10px]"></i></button><div className="flex items-center text-xs font-bold capitalize truncate"><span className={selectedElementId ? 'text-slate-500' : 'text-white'}>{selectedSection?.type}</span>{selectedElementId && <><i className="fa-solid fa-chevron-right text-[8px] mx-1.5 text-slate-600"></i><span className="text-white">{selectedElement?.type}</span></>}</div></div>
                             <div className="flex gap-1 bg-[#151515] rounded p-1">
-                                <button onClick={() => setEditTab('content')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'content' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>CONTENT</button>
-                                <button onClick={() => setEditTab('design')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'design' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>DESIGN</button>
-                                {selectedElementId && (
-                                    <button onClick={() => setEditTab('advanced')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'advanced' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>ADVANCED</button>
-                                )}
+                                <button onClick={() => setEditTab('content')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'content' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>CONTENT</button><button onClick={() => setEditTab('design')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'design' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>DESIGN</button>
                             </div>
                         </div>
-
                         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pb-20">
-                             {/* 3. ELEMENT EDITOR */}
                              {selectedElementId && selectedElement && selectedSection ? (
-                                 editTab === 'design' ? (
-                                     renderStyleEditor(selectedElement.style, (k,v) => updateElement(selectedSection.id, selectedElement.id, { style: { ...selectedElement.style, [k]: v } }), 'element')
-                                 ) : editTab === 'content' ? (
-                                     <div className="space-y-4">
-                                         {/* Basic Content inputs like Text, Subtext */}
-                                         {['heading','text','button','badge','blockquote','icon-box','image-box','star-rating','alert-box','counter','call-to-action','toggle','pricing-table','countdown-timer'].includes(selectedElement.type) && (
-                                            <TextAreaInput 
-                                                label="Text Content" 
-                                                value={selectedElement.content.text} 
-                                                onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, text: v} })} 
-                                            />
-                                         )}
-                                          {['icon-box','image-box','alert-box','toggle', 'call-to-action', 'hero', 'image-banner'].includes(selectedElement.type) && (
-                                             <TextAreaInput 
-                                                label="Subtext" 
-                                                value={selectedElement.content.subText} 
-                                                onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, subText: v} })} 
-                                            />
-                                         )}
-                                         {['image','video','image-box'].includes(selectedElement.type) && (
-                                             <ImageControl 
-                                                label="Source URL" 
-                                                value={selectedElement.content.src} 
-                                                onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, src: v} })}
-                                                onUpload={() => triggerUpload(selectedSection.id, 'src', selectedElement.id)}
-                                             />
-                                         )}
-                                     </div>
-                                 ) : (
-                                     <div className="space-y-4">
-                                         <SelectInput 
-                                            label="Animation"
-                                            value={selectedElement.settings?.animation || 'none'}
-                                            options={[{label: 'None', value: 'none'}, {label: 'Fade In', value: 'fade'}, {label: 'Slide Up', value: 'slide'}, {label: 'Zoom In', value: 'zoom'}]}
-                                            onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { settings: { ...selectedElement.settings, animation: v as any } })}
-                                         />
-                                         <TextInput label="Custom Class" value={selectedElement.settings?.className} onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { settings: { ...selectedElement.settings, className: v } })} />
-                                     </div>
-                                 )
+                                 editTab === 'design' ? (renderStyleEditor(selectedElement.style, (k,v) => updateElement(selectedSection.id, selectedElement.id, { style: { ...selectedElement.style, [k]: v } }), 'element')) : (<div className="space-y-4"><TextAreaInput label="Text" value={selectedElement.content.text} onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, text: v} })} /></div>)
                              ) : (
-                                 // 4. SECTION EDITOR
                                  selectedSection && (
-                                     editTab === 'design' ? (
-                                         renderStyleEditor(selectedSection.styles, (k,v) => updateSectionStyle(selectedSection.id, k, v), 'section')
-                                     ) : (
-                                         <div className="space-y-6">
-                                              
-                                              {/* EDITABLE FIELDS FOR CONTENT-BASED SECTIONS (Hero, CTA, etc) */}
-                                              {(selectedSection.content.title !== undefined || selectedSection.content.subtitle !== undefined || selectedSection.content.description !== undefined) && (
-                                                  <div className="space-y-4 border-b border-white/10 pb-6 mb-2">
-                                                      <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Section Content</h3>
-                                                      
-                                                      {/* Title */}
-                                                      {(selectedSection.content.title !== undefined) && (
-                                                          <TextAreaInput 
-                                                            label="Heading"
-                                                            value={selectedSection.content.title}
-                                                            onChange={(v) => updateSection(selectedSection.id, { content: {...selectedSection.content, title: v} })}
-                                                            rows={2}
-                                                          />
-                                                      )}
-                                                      
-                                                      {/* Subtitle */}
-                                                      {(selectedSection.content.subtitle !== undefined) && (
-                                                          <TextAreaInput 
-                                                            label="Subtitle"
-                                                            value={selectedSection.content.subtitle}
-                                                            onChange={(v) => updateSection(selectedSection.id, { content: {...selectedSection.content, subtitle: v} })}
-                                                          />
-                                                      )}
-
-                                                      {/* Description */}
-                                                      {(selectedSection.content.description !== undefined) && (
-                                                          <TextAreaInput 
-                                                            label="Description"
-                                                            value={selectedSection.content.description}
-                                                            onChange={(v) => updateSection(selectedSection.id, { content: {...selectedSection.content, description: v} })}
-                                                            rows={4}
-                                                          />
-                                                      )}
-
-                                                      {/* CTA Text */}
-                                                      {(selectedSection.content.ctaText !== undefined) && (
-                                                          <TextInput 
-                                                              label="Button Text" 
-                                                              value={selectedSection.content.ctaText} 
-                                                              onChange={(v) => updateSection(selectedSection.id, { content: {...selectedSection.content, ctaText: v} })} 
-                                                          />
-                                                      )}
-
-                                                       {/* Image URL with Preview */}
-                                                      {(selectedSection.content.imageUrl !== undefined) && (
-                                                           <div className="pt-2">
-                                                               <ImageControl 
-                                                                    label="Main Image" 
-                                                                    value={selectedSection.content.imageUrl} 
-                                                                    onChange={(v) => updateSection(selectedSection.id, { content: {...selectedSection.content, imageUrl: v} })}
-                                                                    onUpload={() => triggerUpload(selectedSection.id, 'imageUrl')}
-                                                               />
-                                                           </div>
-                                                      )}
-
-                                                      {/* Logo URL with Preview */}
-                                                      {(selectedSection.content.logoImageUrl !== undefined) && (
-                                                           <div className="pt-2">
-                                                               <ImageControl 
-                                                                    label="Logo Image" 
-                                                                    value={selectedSection.content.logoImageUrl} 
-                                                                    onChange={(v) => updateSection(selectedSection.id, { content: {...selectedSection.content, logoImageUrl: v} })}
-                                                                    onUpload={() => triggerUpload(selectedSection.id, 'logoImageUrl')}
-                                                               />
-                                                           </div>
-                                                      )}
-                                                  </div>
-                                              )}
-
-                                             {selectedSection.elements && (
-                                                 <div className="space-y-2">
-                                                     <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-2">Child Elements</label>
-                                                     {selectedSection.elements.map(el => (
-                                                          <button 
-                                                            key={el.id}
-                                                            onClick={() => setSelectedElementId(el.id)}
-                                                            className="w-full text-left p-2.5 rounded bg-[#1a1a1a] border border-[#333] hover:border-white/30 text-xs flex justify-between items-center group transition-colors"
-                                                         >
-                                                             <span className="capitalize font-bold text-slate-300">{el.type.replace('-',' ')}</span>
-                                                             <i className="fa-solid fa-chevron-right text-[10px] opacity-0 group-hover:opacity-50"></i>
-                                                         </button>
-                                                     ))}
-                                                 </div>
-                                             )}
-                                         </div>
-                                     )
+                                     editTab === 'design' ? (renderStyleEditor(selectedSection.styles, (k,v) => updateSectionStyle(selectedSection.id, k, v), 'section')) : (<div className="space-y-6"><TextAreaInput label="Heading" value={selectedSection.content.title} onChange={(v) => updateSection(selectedSection.id, { content: {...selectedSection.content, title: v} })} /></div>)
                                  )
                              )}
                         </div>
                     </div>
                 )}
             </aside>
-
-            {/* CANVAS */}
             <main className="flex-1 bg-[#111] overflow-hidden relative flex flex-col items-center justify-center p-4 md:p-8" onClick={() => { setSelectedSectionId(null); setSelectedElementId(null); }}>
-                <PreviewFrame 
-                    className={`
-                        transition-all duration-500 ease-in-out shadow-2xl ring-1 ring-white/10
-                        ${viewMode === 'desktop' && !isPreviewMode ? 'w-full h-full rounded-xl' : ''}
-                        ${viewMode === 'desktop' && isPreviewMode ? 'w-full h-full rounded-none' : ''}
-                        ${viewMode === 'mobile' ? 'w-[375px] h-[667px] rounded-2xl border-[8px] border-[#222]' : ''}
-                    `}
-                    style={{ backgroundColor: 'var(--bg-color)' }}
-                >
+                <PreviewFrame className={`transition-all duration-500 ease-in-out shadow-2xl ring-1 ring-white/10 ${viewMode === 'desktop' ? 'w-full h-full rounded-xl' : 'w-[375px] h-[667px] rounded-2xl border-[8px] border-[#222]'}`} style={{ backgroundColor: 'var(--bg-color)' }}>
                     <div id="canvas-root" className="min-h-full">
                          {siteData.sections.map((section) => (
-                            <SectionRenderer 
-                                key={section.id} 
-                                section={section} 
-                                onUpdate={updateSection}
-                                isSelected={selectedSectionId === section.id}
-                                readOnly={isPreviewMode}
-                                onClick={() => { setSelectedSectionId(section.id); setSelectedElementId(null); }}
-                                onDelete={deleteSection}
-                                onMoveUp={(id) => moveSection(id, 'up')}
-                                onMoveDown={(id) => moveSection(id, 'down')}
-                                onUpload={triggerUpload}
-                                // Pass selection down
-                                selectedElementId={selectedElementId}
-                                onElementSelect={(elId) => { setSelectedSectionId(section.id); setSelectedElementId(elId); }}
-                            />
+                            <SectionRenderer key={section.id} section={section} onUpdate={updateSection} isSelected={selectedSectionId === section.id} readOnly={isPreviewMode} onClick={() => { setSelectedSectionId(section.id); setSelectedElementId(null); }} onDelete={deleteSection} onMoveUp={(id) => moveSection(id, 'up')} onMoveDown={(id) => moveSection(id, 'down')} onUpload={triggerUpload} selectedElementId={selectedElementId} onElementSelect={(elId) => { setSelectedSectionId(section.id); setSelectedElementId(elId); }} />
                         ))}
                     </div>
                 </PreviewFrame>
             </main>
-
-            {/* ADD SECTION MODAL */}
-            {isAddMenuOpen && !isPreviewMode && (
-                <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-8" onClick={() => setIsAddMenuOpen(false)}>
-                    <div className="bg-[#151515] border border-white/10 rounded-2xl w-full max-w-4xl max-h-full overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                        <div className="p-6 border-b border-white/10 flex justify-between items-center">
-                            <h2 className="text-xl font-bold">Add Section</h2>
-                            <button onClick={() => setIsAddMenuOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"><i className="fa-solid fa-xmark"></i></button>
-                        </div>
-                        <div className="p-6 overflow-y-auto grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {Object.entries(SECTION_TEMPLATES).map(([key, template]) => (
-                                <button 
-                                    key={key}
-                                    onClick={() => addNewSection(key as SectionType)}
-                                    className="aspect-square bg-[#0a0a0a] border border-white/10 rounded-xl hover:border-blue-500 hover:bg-blue-500/5 transition-all flex flex-col items-center justify-center gap-4 group"
-                                >
-                                    <span className="font-bold capitalize">{key.replace('-', ' ')}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
         </div>
+        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
     </div>
   );
 };
