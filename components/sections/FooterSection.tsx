@@ -4,6 +4,7 @@ import { Section } from '../../types';
 import { FooterColumns } from './footer/FooterColumns';
 import { FooterCentered } from './footer/FooterCentered';
 import { FooterMinimal } from './footer/FooterMinimal';
+import { FooterApi } from './footer/FooterApi';
 
 interface FooterSectionProps {
   section: Section;
@@ -11,17 +12,20 @@ interface FooterSectionProps {
   onLinkEdit: (index: number, value: string) => void;
   onLogoClick: () => void;
   buttonClass: string;
+  readOnly?: boolean;
 }
 
 export const FooterSection: React.FC<FooterSectionProps> = (props) => {
-  const variant = props.section.styles.variant || 'columns';
+  const variant = props.section.styles.variant || 'FooterColumns';
 
   switch (variant) {
-    case 'minimal':
+    case 'FooterApi':
+        return <FooterApi section={props.section} readOnly={props.readOnly} />;
+    case 'FooterMinimal':
         return <FooterMinimal {...props} />;
-    case 'centered':
+    case 'FooterCentered':
         return <FooterCentered {...props} />;
-    case 'columns':
+    case 'FooterColumns':
     default:
         return <FooterColumns {...props} />;
   }

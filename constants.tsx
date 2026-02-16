@@ -326,7 +326,7 @@ export const INITIAL_TEMPLATE: WebsiteData = {
             paddingX: 'px-6',
             textAlign: 'center',
             titleSize: 'text-6xl',
-            variant: 'center'
+            variant: 'HeroCenter'
         }
     },
     // 1. BASIC ELEMENTS SECTION
@@ -440,7 +440,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
           textAlign: 'center',
           titleSize: 'text-3xl md:text-5xl',
           titleColor: '#F8FAFC',
-          variant: 'grid'
+          variant: 'FeaturesGrid'
       }
   },
   pricing: {
@@ -529,7 +529,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
         paddingX: 'px-6',
         textAlign: 'left',
         titleSize: '24px',
-        variant: 'simple'
+        variant: 'NavbarSimple'
     }
   },
   footer: {

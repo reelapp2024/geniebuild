@@ -13,14 +13,14 @@ interface HeroSectionProps {
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = (props) => {
-  const variant = props.section.styles.variant || 'center';
+  const variant = props.section.styles.variant || 'HeroCenter';
 
   switch (variant) {
-    case 'split-right':
+    case 'HeroSplitRight':
       return <HeroSplitRight {...props} />;
-    case 'split-left':
+    case 'HeroSplitLeft':
       return <HeroSplitLeft {...props} />;
-    case 'center':
+    case 'HeroCenter':
     default:
       return <HeroCenter {...props} />;
   }

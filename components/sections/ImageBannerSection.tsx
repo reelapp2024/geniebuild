@@ -18,14 +18,14 @@ interface ImageBannerSectionProps {
 }
 
 export const ImageBannerSection: React.FC<ImageBannerSectionProps> = (props) => {
-  const variant = props.section.styles.variant || 'center';
+  const variant = props.section.styles.variant || 'BannerCenter';
 
   switch (variant) {
-    case 'bottom-left':
+    case 'BannerBottomLeft':
         return <BannerBottomLeft {...props} />;
-    case 'split':
+    case 'BannerSplit':
         return <BannerSplit {...props} />;
-    case 'center':
+    case 'BannerCenter':
     default:
         return <BannerCenter {...props} />;
   }

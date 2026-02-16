@@ -13,18 +13,14 @@ interface CTASectionProps {
 }
 
 export const CTASection: React.FC<CTASectionProps> = (props) => {
-  const variant = props.section.styles.variant || 'center';
+  const variant = props.section.styles.variant || 'CTACenter';
 
   switch (variant) {
-    case 'split':
+    case 'CTASplit':
         return <CTASplit {...props} />;
-    case 'boxed': // Reuse Center for boxed but with styles applied in SectionRenderer or handled here?
-        // To be safe, let's reuse CTACenter but wrapped differently if needed, 
-        // or just render CTACenter as the logic inside is mainly content placement.
-        // Actually, Boxed implies a background/border, which was handled in the previous CTASection.tsx via classes.
-        // Since I'm refactoring, let's make a CTABoxed too.
+    case 'CTABoxed':
         return <CTABoxed {...props} />;
-    case 'center':
+    case 'CTACenter':
     default:
         return <CTACenter {...props} />;
   }

@@ -15,14 +15,14 @@ interface FeaturesSectionProps {
 }
 
 export const FeaturesSection: React.FC<FeaturesSectionProps> = (props) => {
-  const variant = props.section.styles.variant || 'grid';
+  const variant = props.section.styles.variant || 'FeaturesGrid';
 
   switch (variant) {
-    case 'list':
+    case 'FeaturesList':
       return <FeaturesList {...props} />;
-    case 'cards-minimal':
+    case 'FeaturesCards':
       return <FeaturesCards {...props} />;
-    case 'grid':
+    case 'FeaturesGrid':
     default:
       return <FeaturesGrid {...props} />;
   }

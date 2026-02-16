@@ -307,6 +307,8 @@ export interface Section {
     blockquoteAuthor?: string;
     highlightText?: string;
     listItems?: string[]; 
+    projectId?: string; // For API-based navbar/footer
+    brand?: string; // For footer brand name
   };
   // The new flexible structure for custom/elements sections
   elements?: WebsiteElement[]; 

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Section, WebsiteElement } from '../types';
 import { NavbarSection } from './sections/NavbarSection';
 import { HeroSection } from './sections/HeroSection';
@@ -10,6 +10,50 @@ import { CTASection } from './sections/CTASection';
 import { FooterSection } from './sections/FooterSection';
 import { ImageBannerSection } from './sections/ImageBannerSection';
 import { ElementsSection } from './sections/ElementsSection';
+
+// FAQ Section Component - defined outside to properly manage state
+// FAQ should be interactive even in readOnly mode (readOnly only prevents editing, not interaction)
+const FAQSection: React.FC<{ section: Section, titleClass: string, titleStyle: React.CSSProperties, readOnly: boolean }> = ({ section, titleClass, titleStyle, readOnly }) => {
+  const { content, styles } = section;
+  const faqItems = content.items || [];
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  
+  return (
+    <div className={`${styles.maxWidth || 'max-w-4xl'} mx-auto px-6`}>
+      {content.title && (
+        <h2 className={titleClass} style={titleStyle}>
+          {content.title}
+        </h2>
+      )}
+      <div className="space-y-4 mt-8">
+        {faqItems.map((item: any, idx: number) => {
+          const isOpen = openIndex === idx;
+          return (
+            <div key={idx} className="border border-white/10 rounded-lg overflow-hidden bg-white/5">
+              <button
+                onClick={() => {
+                  // FAQ should be interactive even in readOnly mode
+                  setOpenIndex(isOpen ? null : idx);
+                }}
+                className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer"
+                style={{ color: styles.titleColor || styles.textColor }}
+                type="button"
+              >
+                <span className="font-semibold">{item.question}</span>
+                <i className={`fa-solid fa-chevron-${isOpen ? 'up' : 'down'} transition-transform`}></i>
+              </button>
+              {isOpen && (
+                <div className="px-6 pb-4 pt-0" style={{ color: styles.textColor || styles.descriptionColor }}>
+                  {item.answer}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 interface SectionRendererProps {
   section: Section;
@@ -212,12 +256,13 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       overlayClass = '';
   }
 
+
   const renderContent = () => {
     const props = { section, onTextEdit: handleTextEdit, buttonClass, isSelected, titleClass, titleStyle, readOnly };
     
     switch (type) {
       case 'navbar':
-        return <NavbarSection {...props} onLinkEdit={handleLinkEdit} onLogoClick={handleLogoClick} />;
+        return <NavbarSection {...props} onLinkEdit={handleLinkEdit} onLogoClick={handleLogoClick} readOnly={readOnly} />;
       case 'hero':
         return <HeroSection {...props} onImageClick={handleImageClick} />;
       case 'features':
@@ -229,7 +274,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       case 'cta':
         return <CTASection {...props} />;
       case 'footer':
-        return <FooterSection {...props} onLinkEdit={handleLinkEdit} onLogoClick={handleLogoClick} />;
+        return <FooterSection {...props} onLinkEdit={handleLinkEdit} onLogoClick={handleLogoClick} readOnly={readOnly} />;
       case 'image-banner':
         return <ImageBannerSection {...props} />;
       case 'elements':
@@ -240,6 +285,9 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
             onElementSelect={onElementSelect}
             selectedElementId={selectedElementId}
         />;
+      case 'faq':
+        // Render FAQ as accordion-style section
+        return <FAQSection {...props} />;
       default:
         return <div className="p-10 text-center">Unsupported Section Type: {type}</div>;
     }

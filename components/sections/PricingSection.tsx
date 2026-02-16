@@ -17,12 +17,12 @@ interface PricingSectionProps {
 }
 
 export const PricingSection: React.FC<PricingSectionProps> = (props) => {
-  const variant = props.section.styles.variant || 'cards';
+  const variant = props.section.styles.variant || 'PricingCards';
   
-  if (variant === 'minimal') {
+  if (variant === 'PricingMinimal') {
       return <PricingMinimal {...props} />;
   }
   
-  // Default and Highlight use Cards structure
+  // Default uses Cards structure
   return <PricingCards {...props} />;
 };

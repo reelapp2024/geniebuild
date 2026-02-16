@@ -4,6 +4,7 @@ import { Section } from '../../types';
 import { NavbarSimple } from './navbar/NavbarSimple';
 import { NavbarCentered } from './navbar/NavbarCentered';
 import { NavbarMinimal } from './navbar/NavbarMinimal';
+import { NavbarApi } from './navbar/NavbarApi';
 
 interface NavbarSectionProps {
   section: Section;
@@ -11,17 +12,20 @@ interface NavbarSectionProps {
   onLinkEdit: (index: number, value: string) => void;
   onLogoClick: () => void;
   buttonClass: string;
+  readOnly?: boolean;
 }
 
 export const NavbarSection: React.FC<NavbarSectionProps> = (props) => {
-  const variant = props.section.styles.variant || 'simple';
+  const variant = props.section.styles.variant || 'NavbarSimple';
 
   switch (variant) {
-    case 'centered':
+    case 'NavbarApi':
+        return <NavbarApi section={props.section} readOnly={props.readOnly} />;
+    case 'NavbarCentered':
         return <NavbarCentered {...props} />;
-    case 'minimal':
+    case 'NavbarMinimal':
         return <NavbarMinimal {...props} />;
-    case 'simple':
+    case 'NavbarSimple':
     default:
         return <NavbarSimple {...props} />;
   }
