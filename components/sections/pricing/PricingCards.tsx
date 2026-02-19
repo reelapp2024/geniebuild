@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Section } from '../../../types';
+import { getHeadingSizeClass } from '../../../utils/headingSizeUtils';
 
 interface PricingProps {
   section: Section;
@@ -35,7 +36,21 @@ export const PricingCards: React.FC<PricingProps> = ({ section, isSelected, onTe
   return (
     <div className="max-w-7xl mx-auto px-6">
       <div className="text-center mb-16">
-        <h2 className={`${titleClass} outline-none focus:ring-2 ring-white rounded px-2`} style={titleStyle} contentEditable suppressContentEditableWarning onBlur={(e) => onTextEdit('title', e.currentTarget.textContent || '')}>{content.title}</h2>
+        {(() => {
+          const headingTag = (styles.titleHeadingTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+          return React.createElement(
+            headingTag,
+            {
+              key: `pricing-title-${headingTag}-${section.id}`,
+              className: `${titleClass.replace(/text-\w+(\s+md:text-\w+)?/g, getHeadingSizeClass(headingTag, styles.titleSize || 'text-3xl md:text-5xl'))} outline-none focus:ring-2 ring-white rounded px-2`,
+              style: titleStyle,
+              contentEditable: true,
+              suppressContentEditableWarning: true,
+              onBlur: (e: any) => onTextEdit('title', e.currentTarget.textContent || '')
+            },
+            content.title
+          );
+        })()}
         <p className="opacity-60 text-lg outline-none focus:ring-2 ring-white rounded px-2 max-w-2xl mx-auto" contentEditable suppressContentEditableWarning onBlur={(e) => onTextEdit('subtitle', e.currentTarget.textContent || '')}>{content.subtitle}</p>
       </div>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">

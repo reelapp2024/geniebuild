@@ -344,13 +344,21 @@ export interface Section {
     textColor: string; 
     
     titleColor?: string;
-    titleSize?: string; 
+    titleSize?: string;
+    titleAlign?: 'left' | 'center' | 'right' | 'justify';
+    titleFontWeight?: string;
+    titleHeadingTag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'; // Heading level for section titles
     
     subtitleColor?: string;
     subtitleSize?: string;
+    subtitleAlign?: 'left' | 'center' | 'right' | 'justify';
+    subtitleFontWeight?: string;
     
     descriptionColor?: string;
     descriptionSize?: string;
+    
+    fontSize?: string;
+    fontWeight?: string;
     
     accentColor: string; 
 

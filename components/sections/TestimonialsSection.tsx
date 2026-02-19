@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Section } from '../../types';
+import { getHeadingSizeClass } from '../../utils/headingSizeUtils';
 
 interface TestimonialsSectionProps {
   section: Section;
@@ -27,15 +28,21 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ sectio
 
   return (
     <div className="max-w-7xl mx-auto px-6">
-       <h2 
-        className={`${titleClass} text-center outline-none focus:ring-2 ring-white rounded px-2 mb-4`} 
-        style={titleStyle}
-        contentEditable 
-        suppressContentEditableWarning 
-        onBlur={(e) => onTextEdit('title', e.currentTarget.textContent || '')}
-       >
-        {content.title}
-       </h2>
+       {(() => {
+         const headingTag = (styles.titleHeadingTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+         return React.createElement(
+           headingTag,
+           {
+             key: `testimonials-title-${headingTag}-${section.id}`,
+             className: `${titleClass.replace(/text-\w+(\s+md:text-\w+)?/g, getHeadingSizeClass(headingTag, styles.titleSize || 'text-3xl md:text-5xl'))} text-center outline-none focus:ring-2 ring-white rounded px-2 mb-4`,
+             style: titleStyle,
+             contentEditable: true,
+             suppressContentEditableWarning: true,
+             onBlur: (e: any) => onTextEdit('title', e.currentTarget.textContent || '')
+           },
+           content.title
+         );
+       })()}
        
        {content.subtitle && (
          <p 

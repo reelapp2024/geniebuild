@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Section } from '../../../types';
+import { getHeadingSizeClass } from '../../../utils/headingSizeUtils';
 
 interface FeaturesProps {
   section: Section;
@@ -13,9 +14,22 @@ interface FeaturesProps {
 
 export const FeaturesGrid: React.FC<FeaturesProps> = ({ section, isSelected, onTextEdit, onItemEdit, onAddItem, onRemoveItem }) => {
   const { content, styles } = section;
+  const headingTag = (styles.titleHeadingTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+  
   return (
     <div className="max-w-7xl mx-auto px-6 relative z-10">
-      <h2 className="text-4xl font-bold mb-4 text-center outline-none focus:ring-2 ring-white rounded px-2" style={{color: styles.titleColor}} contentEditable suppressContentEditableWarning onBlur={(e) => onTextEdit('title', e.currentTarget.textContent || '')}>{content.title}</h2>
+      {React.createElement(
+        headingTag,
+        {
+          key: `features-title-${headingTag}-${section.id}`, // Force re-render when tag changes
+          className: `${getHeadingSizeClass(headingTag, styles.titleSize || 'text-3xl md:text-4xl')} font-bold mb-4 text-center outline-none focus:ring-2 ring-white rounded px-2`,
+          style: {color: styles.titleColor},
+          contentEditable: true,
+          suppressContentEditableWarning: true,
+          onBlur: (e: any) => onTextEdit('title', e.currentTarget.textContent || '')
+        },
+        content.title
+      )}
       
       {content.subtitle && (
          <p 

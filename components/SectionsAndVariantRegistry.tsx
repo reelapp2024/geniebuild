@@ -44,7 +44,7 @@ export const SECTIONS_REGISTRY: SectionConfig[] = [
   },
   {
     sectionType: 'cta',
-    variants: ['CTACenter', 'CTASplit', 'CTABoxed'],
+    variants: ['CTACenter', 'CTASplit'],
     defaultVariant: 'CTACenter'
   },
   {

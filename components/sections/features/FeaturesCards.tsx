@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Section } from '../../../types';
+import { getHeadingSizeClass } from '../../../utils/headingSizeUtils';
 
 interface FeaturesProps {
   section: Section;
@@ -15,7 +16,21 @@ export const FeaturesCards: React.FC<FeaturesProps> = ({ section, isSelected, on
   const { content, styles } = section;
   return (
     <div className="max-w-7xl mx-auto px-6 relative z-10">
-      <h2 className="text-4xl font-bold mb-12 text-center outline-none focus:ring-2 ring-white rounded px-2" style={{color: styles.titleColor}} contentEditable suppressContentEditableWarning onBlur={(e) => onTextEdit('title', e.currentTarget.textContent || '')}>{content.title}</h2>
+      {(() => {
+        const headingTag = (styles.titleHeadingTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+        return React.createElement(
+          headingTag,
+          {
+            key: `features-title-${headingTag}-${section.id}`,
+            className: `${getHeadingSizeClass(headingTag, styles.titleSize || 'text-3xl md:text-4xl')} font-bold mb-12 text-center outline-none focus:ring-2 ring-white rounded px-2`,
+            style: {color: styles.titleColor},
+            contentEditable: true,
+            suppressContentEditableWarning: true,
+            onBlur: (e: any) => onTextEdit('title', e.currentTarget.textContent || '')
+          },
+          content.title
+        );
+      })()}
       <div className="grid md:grid-cols-3 gap-4">
         {content.items?.map((item) => (
           <div key={item.id} className="relative group/item p-6 rounded-xl border border-white/5 hover:bg-white/5 transition-colors">

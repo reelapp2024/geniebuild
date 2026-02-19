@@ -6,6 +6,27 @@ import { geminiService } from './services/geminiService';
 import SectionRenderer from './components/SectionRenderer';
 import { PreviewFrame } from './components/PreviewFrame';
 
+// Get URL parameters
+const getUrlParams = () => {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  
+  // If token is in URL, save it to localStorage for future use
+  if (token) {
+    localStorage.setItem('token', token);
+    // Remove token from URL for security (clean URL)
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.delete('token');
+    window.history.replaceState({}, '', newUrl.toString());
+  }
+  
+  return {
+    projectId: params.get('projectId'),
+    pageId: params.get('pageId'),
+    token: token || localStorage.getItem('token'),
+  };
+};
+
 // Helper lists for sidebar categorization
 const BASIC_ELEMENTS: ElementType[] = ['heading', 'text', 'button', 'image', 'video', 'icon', 'icon-box', 'image-box', 'list', 'star-rating', 'badge', 'highlight-text', 'blockquote'];
 const ADVANCED_ELEMENTS: ElementType[] = ['accordion', 'toggle', 'tabs', 'progress-bar', 'counter', 'testimonial', 'review-carousel', 'alert-box', 'pricing-table', 'flip-box', 'call-to-action', 'countdown-timer'];
@@ -196,36 +217,45 @@ const RangeInput = ({ label, value, min = 0, max = 100, step = 1, onChange, unit
     </div>
 );
 
-const SelectInput = ({ label, value, options, onChange }: { label: string, value: string | undefined, options: {label: string, value: string}[], onChange: (val: string) => void }) => (
-    <div className="flex flex-col gap-1.5">
-        <label className="text-[10px] font-bold text-white/40 capitalize ml-1">{label}</label>
-        <div className="relative">
-            <select 
-                className="w-full bg-[#151515] border border-[#333] rounded p-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-colors appearance-none cursor-pointer"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-            >
-                {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </select>
-            <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/30 pointer-events-none"></i>
+const SelectInput = ({ label, value, options, onChange }: { label: string, value: string | undefined, options: {label: string, value: string}[], onChange: (val: string) => void }) => {
+    const currentValue = value || options[0]?.value || '';
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold text-white/40 capitalize ml-1">{label}</label>
+            <div className="relative">
+                <select 
+                    className="w-full bg-[#151515] border border-[#333] rounded p-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-colors appearance-none cursor-pointer"
+                    value={currentValue}
+                    onChange={(e) => {
+                        e.preventDefault();
+                        onChange(e.target.value);
+                    }}
+                >
+                    {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+                <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/30 pointer-events-none"></i>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
-const ButtonGroup = ({ options, value, onChange }: { options: {icon: string, value: string, label: string}[], value: string | undefined, onChange: (val: string) => void }) => (
-    <div className="flex bg-[#151515] p-1 rounded border border-[#333]">
-        {options.map(opt => (
-            <button 
-                key={opt.value}
-                className={`flex-1 py-1.5 rounded text-xs transition-all ${value === opt.value ? 'bg-[#333] text-white shadow-sm' : 'text-white/40 hover:text-white'}`}
-                onClick={() => onChange(opt.value)}
-                title={opt.label}
-            >
-                <i className={`fa-solid ${opt.icon}`}></i>
-            </button>
-        ))}
-    </div>
-);
+const ButtonGroup = ({ options, value, onChange }: { options: {icon: string, value: string, label: string}[], value: string | undefined, onChange: (val: string) => void }) => {
+    const currentValue = value || 'left'; // Default to 'left' if undefined
+    return (
+        <div className="flex bg-[#151515] p-1 rounded border border-[#333]">
+            {options.map(opt => (
+                <button 
+                    key={opt.value}
+                    className={`flex-1 py-1.5 rounded text-xs transition-all ${currentValue === opt.value ? 'bg-[#333] text-white shadow-sm' : 'text-white/40 hover:text-white'}`}
+                    onClick={() => onChange(opt.value)}
+                    title={opt.label}
+                >
+                    <i className={`fa-solid ${opt.icon}`}></i>
+                </button>
+            ))}
+        </div>
+    );
+};
 
 // --- Main App Component ---
 
@@ -242,27 +272,274 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop'); 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<{sectionId: string, elementId?: string, field: string} | null>(null);
+  const [loadingPageData, setLoadingPageData] = useState(false);
+  const [savingPageData, setSavingPageData] = useState(false);
 
-  const selectedSection = useMemo(() => 
-    siteData.sections.find(s => s.id === selectedSectionId), 
-    [siteData.sections, selectedSectionId]
-  );
+  // Load page data from API if projectId and pageId are in URL
+  useEffect(() => {
+    const { projectId, pageId } = getUrlParams();
+    if (projectId && pageId) {
+      loadPageData(projectId, pageId);
+    }
+  }, []);
+
+  const loadPageData = async (projectId: string, pageId: string) => {
+    try {
+      setLoadingPageData(true);
+      const { token } = getUrlParams();
+      const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:1111/admin/v1';
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`${apiUrl}/getWebsiteDesignData/${projectId}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch website data');
+      }
+
+      const data = await response.json();
+      if (data?.data?.pages) {
+        // Find the specific page
+        const pageData = data.data.pages.find((p: any) => {
+          const currentPageId = p.pageId?._id || p.pageId;
+          return String(currentPageId) === String(pageId);
+        });
+
+        if (pageData && pageData.style?.renderer === 'geniebuild' && pageData.componentIds && Array.isArray(pageData.componentIds)) {
+          // Extract sectionData from componentIds (single source of truth)
+          const genieBuildSections: Section[] = pageData.componentIds
+            .map((compData: any) => compData.sectionData)
+            .filter((section: any) => section != null) as Section[];
+          
+          // Extract global colors from design data
+          const globalColors = {
+            backgroundColor: data.data.colorSecondary || '#0E1214',
+            textColor: data.data.colorAccent || '#D1D5DB',
+            titleColor: data.data.colorAccent || '#F8FAFC',
+            subtitleColor: data.data.colorAccent || '#D1D5DB',
+            accentColor: data.data.colorAccent || '#F8FAFC',
+            buttonBackgroundColor: data.data.colorPrimary || '#E11D48',
+            buttonTextColor: '#FFFFFF',
+            linkColor: data.data.colorAccent || '#F8FAFC',
+            borderColor: data.data.colorAccent || '#D1D5DB'
+          };
+
+          setSiteData({
+            ...INITIAL_TEMPLATE,
+            sections: genieBuildSections,
+            globalStyles: {
+              ...INITIAL_TEMPLATE.globalStyles,
+              colors: globalColors,
+            },
+          });
+        } else {
+          console.warn('Page does not have GenieBuild sections');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading page data:', error);
+    } finally {
+      setLoadingPageData(false);
+    }
+  };
+
+  const savePageData = async () => {
+    const { projectId, pageId, token } = getUrlParams();
+    if (!projectId || !pageId) {
+      alert('Missing projectId or pageId in URL');
+      return;
+    }
+
+    if (!token) {
+      alert('Authentication token not found. Please open GenieBuild from the admin panel.');
+      return;
+    }
+
+    try {
+      setSavingPageData(true);
+      const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:1111/admin/v1';
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      };
+      
+      // Transform siteData back to the format expected by the API
+      // We need to fetch the current page data first to get componentIds structure
+      const getResponse = await fetch(`${apiUrl}/getWebsiteDesignData/${projectId}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!getResponse.ok) {
+        throw new Error('Failed to fetch current website data');
+      }
+
+      const getData = await getResponse.json();
+      if (!getData?.data?.pages) {
+        throw new Error('No pages data found');
+      }
+
+      // Find the specific page
+      const currentPageData = getData.data.pages.find((p: any) => {
+        const currentPageId = p.pageId?._id || p.pageId;
+        return String(currentPageId) === String(pageId);
+      });
+
+      if (!currentPageData || !currentPageData.componentIds) {
+        throw new Error('Page data not found or invalid');
+      }
+
+      // Update componentIds with new sectionData from siteData
+      // Match sections by type and update sectionData, preserving componentId structure
+      const updatedComponentIds = currentPageData.componentIds.map((compData: any) => {
+        // Find matching section by type
+        const matchingSection = siteData.sections.find((s: Section) => s.type === compData.sectionData?.type);
+        if (matchingSection) {
+          return {
+            ...compData,
+            sectionData: matchingSection
+          };
+        }
+        // Keep existing component if no match found (section might have been removed from editor)
+        return compData;
+      });
+
+      // Prepare the save payload
+      const savePayload = {
+        projectId,
+        colorPrimary: siteData.globalStyles.colors.buttonBackgroundColor || '#E11D48',
+        colorSecondary: siteData.globalStyles.colors.backgroundColor || '#0E1214',
+        colorAccent: siteData.globalStyles.colors.titleColor || '#F8FAFC',
+        pages: [{
+          pageId,
+          style: {
+            renderer: 'geniebuild'
+          },
+          componentIds: updatedComponentIds
+        }]
+      };
+
+      const saveResponse = await fetch(`${apiUrl}/saveWebsiteDesignData`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(savePayload),
+      });
+
+      if (!saveResponse.ok) {
+        const errorData = await saveResponse.json();
+        throw new Error(errorData.message || 'Failed to save website data');
+      }
+
+      alert('Website changes saved successfully!');
+    } catch (error: any) {
+      console.error('Error saving page data:', error);
+      alert(`Failed to save: ${error.message}`);
+    } finally {
+      setSavingPageData(false);
+    }
+  };
+
+  const selectedSection = useMemo(() => {
+    const section = siteData.sections.find(s => s.id === selectedSectionId);
+    return section;
+  }, [siteData.sections, selectedSectionId]);
 
   const selectedElement = useMemo(() => {
     if (!selectedSection || !selectedElementId) return null;
-    return selectedSection.elements?.find(e => e.id === selectedElementId);
-  }, [selectedSection, selectedElementId]);
+    
+    // Check if it's a regular element in elements array
+    const regularElement = selectedSection.elements?.find(e => e.id === selectedElementId);
+    if (regularElement) return regularElement;
+    
+    // Handle Hero section virtual elements
+    if (selectedSection.type === 'hero' && selectedElementId.startsWith(`${selectedSection.id}-hero-`)) {
+      const elementType = selectedElementId.replace(`${selectedSection.id}-hero-`, '');
+      const { content, styles } = selectedSection;
+      const styleAny = styles as any;
+      
+      // Create virtual element based on type
+      let virtualElement: WebsiteElement | null = null;
+      
+      if (elementType === 'title') {
+        virtualElement = {
+          id: selectedElementId,
+          type: 'heading',
+          content: { 
+            text: content.title || '',
+            htmlTag: styleAny.titleHeadingTag || 'h1' // Include heading tag in virtual element
+          },
+          style: {
+            color: styles.titleColor || '',
+            fontSize: styles.titleSize || 'text-4xl md:text-6xl',
+            fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
+            textAlign: (styleAny.titleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
+          }
+        };
+      } else if (elementType === 'subtitle') {
+        virtualElement = {
+          id: selectedElementId,
+          type: 'text',
+          content: { text: content.subtitle || '' },
+          style: {
+            color: styles.subtitleColor || styles.textColor || '',
+            fontSize: styles.subtitleSize || styleAny.fontSize || 'text-lg md:text-xl',
+            fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
+            textAlign: (styleAny.subtitleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
+          }
+        };
+      } else if (elementType === 'button') {
+        virtualElement = {
+          id: selectedElementId,
+          type: 'button',
+          content: { text: content.ctaText || '' },
+          style: {
+            backgroundColor: styles.buttonBackgroundColor || '',
+            color: styles.buttonTextColor || '',
+            fontSize: 'text-lg',
+            padding: 'px-8 py-3',
+          }
+        };
+      } else if (elementType === 'image') {
+        virtualElement = {
+          id: selectedElementId,
+          type: 'image',
+          content: { imageUrl: content.imageUrl || '', imageAlt: 'Hero' },
+          style: {
+            width: '100%',
+            objectFit: 'cover',
+          }
+        };
+      }
+      
+      return virtualElement;
+    }
+    
+    return null;
+  }, [selectedSection, selectedElementId, siteData.sections]);
 
   useEffect(() => {
     if (selectedSectionId && !isPreviewMode) {
       setIsSidebarOpen(true);
-      if (selectedSection && !selectedSection.elements?.find(e => e.id === selectedElementId)) {
+      // If an element is selected but doesn't exist in the current section, clear it
+      if (selectedElementId && selectedSection && !selectedSection.elements?.find(e => e.id === selectedElementId)) {
+        // Check if it's a virtual element (Hero section elements)
+        const isVirtualElement = selectedElementId.startsWith(`${selectedSection.id}-hero-`);
+        if (!isVirtualElement) {
           setSelectedElementId(null);
+        }
       }
     } else {
       setIsSidebarOpen(false);
     }
-  }, [selectedSectionId, isPreviewMode]);
+  }, [selectedSectionId, selectedElementId, isPreviewMode, selectedSection]);
   
   useEffect(() => {
       if(selectedElementId) {
@@ -295,17 +572,163 @@ const App: React.FC = () => {
           ...prev,
           sections: prev.sections.map(s => {
               if (s.id !== sectionId) return s;
+              
+              // Handle Hero section virtual elements
+              if (s.type === 'hero' && elementId.startsWith(`${sectionId}-hero-`)) {
+                  const elementType = elementId.replace(`${sectionId}-hero-`, '');
+                  const sectionUpdates: Partial<Section> = {};
+                  
+                  // Update content based on element type
+                  if (updates.content) {
+                      if (elementType === 'title') {
+                          // Handle title heading tag update
+                          if (updates.content.htmlTag !== undefined) {
+                              sectionUpdates.styles = { ...s.styles, titleHeadingTag: updates.content.htmlTag as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' };
+                          }
+                          if (updates.content.text !== undefined) {
+                              sectionUpdates.content = { ...s.content, title: updates.content.text };
+                          }
+                      } else if (elementType === 'subtitle' && updates.content.text !== undefined) {
+                          sectionUpdates.content = { ...s.content, subtitle: updates.content.text };
+                      } else if (elementType === 'button' && updates.content.text !== undefined) {
+                          sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
+                      } else if (elementType === 'image' && updates.content.imageUrl !== undefined) {
+                          sectionUpdates.content = { ...s.content, imageUrl: updates.content.imageUrl };
+                      }
+                  }
+                  
+                  // Update styles based on element type
+                  if (updates.style) {
+                      const styleUpdates: any = {};
+                      
+                      if (elementType === 'title') {
+                          if (updates.style.color !== undefined) styleUpdates.titleColor = updates.style.color;
+                          if (updates.style.fontSize !== undefined) styleUpdates.titleSize = updates.style.fontSize;
+                          if (updates.style.fontWeight !== undefined) styleUpdates.titleFontWeight = updates.style.fontWeight;
+                          if (updates.style.textAlign !== undefined) styleUpdates.titleAlign = updates.style.textAlign;
+                      } else if (elementType === 'subtitle') {
+                          if (updates.style.color !== undefined) styleUpdates.subtitleColor = updates.style.color;
+                          if (updates.style.fontSize !== undefined) styleUpdates.subtitleSize = updates.style.fontSize;
+                          if (updates.style.fontWeight !== undefined) styleUpdates.subtitleFontWeight = updates.style.fontWeight;
+                          if (updates.style.textAlign !== undefined) styleUpdates.subtitleAlign = updates.style.textAlign;
+                      } else if (elementType === 'button') {
+                          if (updates.style.backgroundColor !== undefined) styleUpdates.buttonBackgroundColor = updates.style.backgroundColor;
+                          if (updates.style.color !== undefined) styleUpdates.buttonTextColor = updates.style.color;
+                          if (updates.style.fontSize !== undefined) styleUpdates.buttonFontSize = updates.style.fontSize;
+                          if (updates.style.fontWeight !== undefined) styleUpdates.buttonFontWeight = updates.style.fontWeight;
+                      }
+                      
+                      if (Object.keys(styleUpdates).length > 0) {
+                          sectionUpdates.styles = { ...s.styles, ...styleUpdates };
+                      }
+                  }
+                  
+                  return { ...s, ...sectionUpdates };
+              }
+              
+              // Regular element update - properly merge nested objects
               return {
                   ...s,
-                  elements: s.elements?.map(e => e.id === elementId ? { ...e, ...updates, content: {...e.content, ...updates.content}, style: {...e.style, ...updates.style}, settings: {...e.settings, ...updates.settings} } : e)
+                  elements: s.elements?.map(e => {
+                      if (e.id === elementId) {
+                          return {
+                              ...e,
+                              content: updates.content ? { ...e.content, ...updates.content } : e.content,
+                              style: updates.style ? { ...e.style, ...updates.style } : e.style,
+                              settings: updates.settings ? { ...e.settings, ...updates.settings } : e.settings
+                          };
+                      }
+                      return e;
+                  })
               };
           })
       }));
   };
 
+  const resetElementToDefault = async () => {
+    if (!selectedSection || !selectedElementId) return;
+
+    try {
+      const { projectId, pageId, token } = getUrlParams();
+      if (!projectId || !pageId || !token) {
+        alert('Missing projectId, pageId, or authentication token');
+        return;
+      }
+
+      const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:1111/admin/v1';
+      const sectionId = selectedSection.type; // Use section type as sectionId
+
+      // Fetch original content from SectionContent
+      const response = await fetch(`${apiUrl}/getSectionContent/${projectId}/${pageId}/${sectionId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch original content');
+      }
+
+      const result = await response.json();
+      if (!result.success || !result.data) {
+        throw new Error('No original content found');
+      }
+
+      const originalData = result.data;
+
+      // Handle Hero section virtual elements
+      if (selectedSection.type === 'hero' && selectedElementId.startsWith(`${selectedSection.id}-hero-`)) {
+        const elementType = selectedElementId.replace(`${selectedSection.id}-hero-`, '');
+        
+        if (elementType === 'title' && originalData.title) {
+          updateElement(selectedSection.id, selectedElementId, { content: { text: originalData.title } });
+        } else if (elementType === 'subtitle' && originalData.subtitle) {
+          updateElement(selectedSection.id, selectedElementId, { content: { text: originalData.subtitle } });
+        } else if (elementType === 'button' && originalData.ctaText) {
+          updateElement(selectedSection.id, selectedElementId, { content: { text: originalData.ctaText } });
+        } else if (elementType === 'image' && originalData.imageUrl) {
+          updateElement(selectedSection.id, selectedElementId, { content: { imageUrl: originalData.imageUrl } });
+        }
+      } else {
+        // Handle regular elements - find the element in the original data
+        // For now, we'll reset the entire section content if it's a regular element
+        // This is a simplified approach - you may need to adjust based on your element structure
+        if (selectedElement && originalData) {
+          // Try to find matching element content in originalData
+          // This depends on your element structure
+          const elementContent = originalData[selectedElement.type] || originalData;
+          if (elementContent) {
+            updateElement(selectedSection.id, selectedElementId, { content: elementContent });
+          }
+        }
+      }
+
+      alert('Content reset to default successfully!');
+    } catch (error: any) {
+      console.error('Error resetting element:', error);
+      alert(`Failed to reset: ${error.message}`);
+    }
+  };
+
   const updateSectionStyle = (id: string, key: string, value: any) => {
-    const section = siteData.sections.find(s => s.id === id);
-    if (section) updateSection(id, { styles: { ...section.styles, [key]: value } });
+    setSiteData(prev => ({
+      ...prev,
+      sections: prev.sections.map(s => {
+        if (s.id === id) {
+          return {
+            ...s,
+            styles: {
+              ...s.styles,
+              [key]: value
+            }
+          } as Section;
+        }
+        return s;
+      })
+    }));
   };
   
   const updateGlobalColor = (key: keyof typeof siteData.globalStyles.colors, value: string) => {
@@ -497,6 +920,17 @@ const App: React.FC = () => {
       );
   };
 
+  if (loadingPageData) {
+    return (
+      <div className="h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-sm text-gray-400">Loading page data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`h-screen bg-black text-white selection:bg-blue-500/30 overflow-hidden flex flex-col`} style={{ fontFamily: siteData.globalStyles.primaryFont }}>
         <header className="h-14 border-b border-white/10 bg-[#050505] flex items-center justify-between px-4 shrink-0 z-50">
@@ -511,6 +945,27 @@ const App: React.FC = () => {
                      <button onClick={() => setViewMode('mobile')} className={`px-2 py-1 rounded text-xs transition-colors ${viewMode === 'mobile' ? 'bg-[#333] text-white' : 'text-slate-500 hover:text-white'}`}><i className="fa-solid fa-mobile-screen"></i></button>
                  </div>
                  <button onClick={() => setIsPreviewMode(!isPreviewMode)} className={`px-3 py-1.5 rounded text-xs font-bold border transition-all ${isPreviewMode ? 'bg-blue-600 border-blue-600 text-white' : 'border-white/20 hover:bg-white/10'}`}>{isPreviewMode ? <><i className="fa-solid fa-eye-slash mr-2"></i>Edit</> : <><i className="fa-solid fa-eye mr-2"></i>Preview</>}</button>
+                 <button 
+                   onClick={savePageData} 
+                   disabled={savingPageData}
+                   className={`px-3 py-1.5 rounded text-xs font-bold border transition-all flex items-center gap-2 ${
+                     savingPageData 
+                       ? 'bg-gray-600 border-gray-600 text-white cursor-not-allowed' 
+                       : 'bg-green-600 border-green-600 text-white hover:bg-green-700'
+                   }`}
+                 >
+                   {savingPageData ? (
+                     <>
+                       <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                       Saving...
+                     </>
+                   ) : (
+                     <>
+                       <i className="fa-solid fa-save"></i>
+                       Save
+                     </>
+                   )}
+                 </button>
             </div>
         </header>
 
@@ -550,10 +1005,85 @@ const App: React.FC = () => {
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pb-20">
                              {selectedElementId && selectedElement && selectedSection ? (
-                                 editTab === 'design' ? (renderStyleEditor(selectedElement.style, (k,v) => updateElement(selectedSection.id, selectedElement.id, { style: { ...selectedElement.style, [k]: v } }), 'element')) : (<div className="space-y-4"><TextAreaInput label="Text" value={selectedElement.content.text} onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, text: v} })} /></div>)
+                                 editTab === 'design' ? (renderStyleEditor(selectedElement.style, (k,v) => updateElement(selectedSection.id, selectedElement.id, { style: { ...selectedElement.style, [k]: v } }), 'element')) : (
+                                     <div className="space-y-4">
+                                         {selectedElement.type === 'image' ? (
+                                             <ImageControl 
+                                                 label="Image URL" 
+                                                 value={selectedElement.content.imageUrl || ''} 
+                                                 onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, imageUrl: v} })} 
+                                                 onUpload={() => triggerUpload(selectedSection.id, selectedElement.id)}
+                                             />
+                                         ) : (
+                                             <>
+                                                 <TextAreaInput 
+                                                     label={selectedElement.type === 'heading' ? 'Heading' : selectedElement.type === 'button' ? 'Button Text' : 'Text'} 
+                                                     value={selectedElement.content.text || ''} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, text: v} })} 
+                                                 />
+                                                 {selectedElement.type === 'heading' && (
+                                                     <SelectInput 
+                                                         label="Heading Level" 
+                                                         value={
+                                                             // For Hero title virtual elements, read from styles.titleHeadingTag
+                                                             selectedElement.id.startsWith(`${selectedSection.id}-hero-title`) 
+                                                                 ? (selectedSection.styles.titleHeadingTag || 'h1')
+                                                                 : (selectedElement.content.htmlTag || 'h2')
+                                                         } 
+                                                         options={[
+                                                             {label: 'H1 (Largest)', value: 'h1'},
+                                                             {label: 'H2', value: 'h2'},
+                                                             {label: 'H3', value: 'h3'},
+                                                             {label: 'H4', value: 'h4'},
+                                                             {label: 'H5', value: 'h5'},
+                                                             {label: 'H6 (Smallest)', value: 'h6'}
+                                                         ]} 
+                                                         onChange={(v) => {
+                                                             // For Hero title virtual elements, update titleHeadingTag in styles
+                                                             if (selectedElement.id.startsWith(`${selectedSection.id}-hero-title`)) {
+                                                                 updateSectionStyle(selectedSection.id, 'titleHeadingTag', v);
+                                                             } else {
+                                                                 // For regular heading elements
+                                                                 updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, htmlTag: v as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'} });
+                                                             }
+                                                         }} 
+                                                     />
+                                                 )}
+                                             </>
+                                         )}
+                                         <button
+                                           onClick={resetElementToDefault}
+                                           className="w-full mt-4 px-3 py-2 bg-orange-600/20 hover:bg-orange-600/30 border border-orange-600/40 text-orange-400 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2"
+                                           title="Reset to original AI-generated content"
+                                         >
+                                           <i className="fa-solid fa-rotate-left"></i>
+                                           Reset to Default
+                                         </button>
+                                     </div>
+                                 )
                              ) : (
                                  selectedSection && (
-                                     editTab === 'design' ? (renderStyleEditor(selectedSection.styles, (k,v) => updateSectionStyle(selectedSection.id, k, v), 'section')) : (<div className="space-y-6"><TextAreaInput label="Heading" value={selectedSection.content.title} onChange={(v) => updateSection(selectedSection.id, { content: {...selectedSection.content, title: v} })} /></div>)
+                                     editTab === 'design' ? (renderStyleEditor(selectedSection.styles, (k,v) => updateSectionStyle(selectedSection.id, k, v), 'section')) : (
+                                         <div className="space-y-6">
+                                             <TextAreaInput label="Heading" value={selectedSection.content.title} onChange={(v) => updateSection(selectedSection.id, { content: {...selectedSection.content, title: v} })} />
+                                             <SelectInput 
+                                                 key={`section-heading-tag-${selectedSection.id}-${selectedSection.styles.titleHeadingTag || 'h2'}`}
+                                                 label="Heading Level" 
+                                                 value={selectedSection.styles.titleHeadingTag || 'h2'} 
+                                                 options={[
+                                                     {label: 'H1 (Largest)', value: 'h1'},
+                                                     {label: 'H2', value: 'h2'},
+                                                     {label: 'H3', value: 'h3'},
+                                                     {label: 'H4', value: 'h4'},
+                                                     {label: 'H5', value: 'h5'},
+                                                     {label: 'H6 (Smallest)', value: 'h6'}
+                                                 ]} 
+                                                 onChange={(v) => {
+                                                     updateSectionStyle(selectedSection.id, 'titleHeadingTag', v as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6');
+                                                 }} 
+                                             />
+                                         </div>
+                                     )
                                  )
                              )}
                         </div>
@@ -564,7 +1094,28 @@ const App: React.FC = () => {
                 <PreviewFrame className={`transition-all duration-500 ease-in-out shadow-2xl ring-1 ring-white/10 ${viewMode === 'desktop' ? 'w-full h-full rounded-xl' : 'w-[375px] h-[667px] rounded-2xl border-[8px] border-[#222]'}`} style={{ backgroundColor: 'var(--bg-color)' }}>
                     <div id="canvas-root" className="min-h-full">
                          {siteData.sections.map((section) => (
-                            <SectionRenderer key={section.id} section={section} onUpdate={updateSection} isSelected={selectedSectionId === section.id} readOnly={isPreviewMode} onClick={() => { setSelectedSectionId(section.id); setSelectedElementId(null); }} onDelete={deleteSection} onMoveUp={(id) => moveSection(id, 'up')} onMoveDown={(id) => moveSection(id, 'down')} onUpload={triggerUpload} selectedElementId={selectedElementId} onElementSelect={(elId) => { setSelectedSectionId(section.id); setSelectedElementId(elId); }} />
+                            <SectionRenderer 
+                              key={`${section.id}-${section.styles.titleHeadingTag || 'h2'}`} 
+                              section={section} 
+                              onUpdate={updateSection} 
+                              isSelected={selectedSectionId === section.id} 
+                              readOnly={isPreviewMode} 
+                              onClick={() => { 
+                                // When clicking section background, select section and clear element selection
+                                setSelectedSectionId(section.id); 
+                                setSelectedElementId(null); 
+                              }} 
+                              onDelete={deleteSection} 
+                              onMoveUp={(id) => moveSection(id, 'up')} 
+                              onMoveDown={(id) => moveSection(id, 'down')} 
+                              onUpload={triggerUpload} 
+                              selectedElementId={selectedElementId} 
+                              onElementSelect={(elId) => { 
+                                // When clicking element, select both section and element
+                                setSelectedSectionId(section.id); 
+                                setSelectedElementId(elId); 
+                              }} 
+                            />
                         ))}
                     </div>
                 </PreviewFrame>

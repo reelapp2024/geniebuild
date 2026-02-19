@@ -137,18 +137,19 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
 
     switch (type) {
         case 'heading':
-            const Tag = content.htmlTag || 'h2';
-            return (
-                <Tag 
-                    key={id} 
-                    className={`font-bold outline-none rounded px-1 relative transition-all cursor-pointer ${selectedClass}`}
-                    style={safeStyle}
-                    onClick={(e: React.MouseEvent) => handleClick(e, id)}
-                    contentEditable suppressContentEditableWarning
-                    onBlur={(e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent)}
-                >
-                    {content.text}
-                </Tag>
+            const headingTag = (content.htmlTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+            return React.createElement(
+                headingTag,
+                {
+                    key: `${id}-${headingTag}`, // Force re-render when tag changes
+                    className: `font-bold outline-none rounded px-1 relative transition-all cursor-pointer ${selectedClass}`,
+                    style: safeStyle,
+                    onClick: (e: React.MouseEvent) => handleClick(e, id),
+                    contentEditable: true,
+                    suppressContentEditableWarning: true,
+                    onBlur: (e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent)
+                },
+                content.text
             );
 
         case 'text':
