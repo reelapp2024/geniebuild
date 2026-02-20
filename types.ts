@@ -185,6 +185,7 @@ export interface WebsiteElement {
     text?: string; // Main Title / Heading / Button Text
     subText?: string; // Description / Subtitle
     htmlTag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'div' | 'span';
+    textSize?: 'base' | 'small' | 'large' | 'xl'; // Text size variant for p tags
     link?: string;
     src?: string; 
     alt?: string;

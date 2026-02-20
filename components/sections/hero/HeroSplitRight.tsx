@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Section } from '../../../types';
-import { getHeadingSizeClass } from '../../../utils/headingSizeUtils';
 
 interface HeroProps {
   section: Section;
@@ -15,11 +14,13 @@ interface HeroProps {
 export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onImageClick, buttonClass, onElementSelect, selectedElementId }) => {
   const { content, styles } = section;
   
-  const isTailwindClass = (val?: string) => val && val.startsWith('text-') && !val.includes('px') && !val.includes('rem');
   const isCustomColor = (value?: string) => value && (value.startsWith('#') || value.startsWith('rgb'));
 
-  const titleSize = styles.titleSize || 'text-4xl md:text-6xl';
-  const titleIsClass = isTailwindClass(titleSize);
+  // Get heading tag from styles, default to h1 for hero
+  const headingTag = (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+  
+  // Check if custom fontSize is provided (px/rem/em) - if so, use it; otherwise CSS defaults apply
+  const hasCustomFontSize = styles.titleSize && (styles.titleSize.includes('px') || styles.titleSize.includes('rem') || styles.titleSize.includes('em'));
   
   // Get alignment and font weight from styles
   const styleAny = styles as any;
@@ -30,7 +31,8 @@ export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onIma
   
   const titleStyle = {
     ...(isCustomColor(styles.titleColor) ? { color: styles.titleColor } : {}),
-    ...(!titleIsClass ? { fontSize: titleSize } : {}),
+    // Only apply fontSize if it's a custom override (px/rem/em), otherwise let CSS handle it
+    ...(hasCustomFontSize ? { fontSize: styles.titleSize } : {}),
     ...(titleAlign && !titleAlignClass.includes(titleAlign) ? { textAlign: titleAlign as any } : {})
   };
 
@@ -62,7 +64,7 @@ export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onIma
             headingTag,
             {
               key: `hero-title-${headingTag}-${section.id}`, // Force re-render when tag changes
-              className: `${titleFontWeightClass} ${titleAlignClass} mb-6 leading-tight ${titleIsClass ? titleSize : ''} outline-none focus:ring-2 ring-white rounded px-2 ${isTitleSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20'}`,
+              className: `${titleFontWeightClass} ${titleAlignClass} mb-6 leading-tight outline-none focus:ring-2 ring-white rounded px-2 ${isTitleSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20'}`,
               style: titleStyle,
               contentEditable: true,
               suppressContentEditableWarning: true,
@@ -73,19 +75,23 @@ export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onIma
           );
         })()}
         {(() => {
-          const subtitleSize = styles.subtitleSize || styleAny.fontSize || 'text-lg md:text-xl';
           const subtitleAlign = styleAny.subtitleAlign || styles.textAlign || 'left';
           const subtitleFontWeight = styleAny.subtitleFontWeight || styleAny.fontWeight || '400';
           const subtitleAlignClass = subtitleAlign === 'left' ? 'text-left' : subtitleAlign === 'right' ? 'text-right' : subtitleAlign === 'justify' ? 'text-justify' : 'text-center';
           const subtitleFontWeightClass = subtitleFontWeight === '300' ? 'font-light' : subtitleFontWeight === '400' ? 'font-normal' : subtitleFontWeight === '700' ? 'font-bold' : subtitleFontWeight === '900' ? 'font-black' : 'font-normal';
+          
+          // Check if custom fontSize is provided for subtitle (px/rem/em) - if not, CSS defaults apply
+          const hasCustomSubtitleSize = styles.subtitleSize && (styles.subtitleSize.includes('px') || styles.subtitleSize.includes('rem') || styles.subtitleSize.includes('em'));
+          
           const subtitleStyle = {
             color: styles.subtitleColor || styles.textColor,
+            ...(hasCustomSubtitleSize ? { fontSize: styles.subtitleSize } : {}),
             ...(subtitleAlign && !subtitleAlignClass.includes(subtitleAlign) ? { textAlign: subtitleAlign as any } : {})
           };
           
           return (
             <p 
-              className={`${subtitleSize} ${subtitleFontWeightClass} ${subtitleAlignClass} opacity-80 mb-8 outline-none focus:ring-2 ring-white rounded px-2 ${isSubtitleSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20'}`} 
+              className={`${subtitleFontWeightClass} ${subtitleAlignClass} opacity-80 mb-8 outline-none focus:ring-2 ring-white rounded px-2 ${isSubtitleSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20'}`} 
               style={subtitleStyle}
               contentEditable 
               suppressContentEditableWarning 

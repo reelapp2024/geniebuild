@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Section, WebsiteElement } from '../types';
 import { SectionRouter } from './sections/SectionRouter';
-import { getHeadingSizeClass } from '../utils/headingSizeUtils';
+// Removed getHeadingSizeClass - using CSS defaults with inline style overrides
 
 interface SectionRendererProps {
   section: Section;
@@ -175,17 +175,19 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
 
   const buttonClass = `${buttonBase} ${borderRadius}`;
   
-  // Get heading tag and adjust size accordingly
+  // Get heading tag - default sizes are applied via CSS, but can be overridden by titleSize
   const headingTag = (styles.titleHeadingTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-  const baseTitleSize = styles.titleSize || 'text-3xl md:text-5xl';
-  const titleSize = getHeadingSizeClass(headingTag, baseTitleSize);
-  const titleIsClass = isTailwindClass(titleSize);
   
-  const titleClass = `${titleIsClass ? titleSize : ''} font-bold mb-6 ${!isCustomColor(styles.titleColor) ? styles.titleColor || '' : ''}`;
+  // If titleSize is provided, use it (allows individual override)
+  // Otherwise, default CSS classes will apply
+  const hasCustomSize = styles.titleSize && (styles.titleSize.includes('px') || styles.titleSize.includes('rem') || styles.titleSize.includes('em'));
+  
+  const titleClass = `font-bold mb-6 ${!isCustomColor(styles.titleColor) ? styles.titleColor || '' : ''}`;
   
   const titleStyle = {
     ...(isCustomColor(styles.titleColor) ? { color: styles.titleColor } : {}),
-    ...(!titleIsClass ? { fontSize: titleSize } : {})
+    // Only apply fontSize if it's a custom override (px/rem/em), otherwise let CSS handle it
+    ...(hasCustomSize ? { fontSize: styles.titleSize } : {})
   };
 
   const isFixedSection = type === 'navbar' || type === 'footer';

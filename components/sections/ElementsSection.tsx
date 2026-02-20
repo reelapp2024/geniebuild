@@ -153,10 +153,14 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
 
         case 'text':
+            // Get text size class based on textSize variant
+            const textSizeClass = content.textSize === 'small' ? 'text-sm' : 
+                                  content.textSize === 'large' ? 'text-lg' : 
+                                  content.textSize === 'xl' ? 'text-xl' : '';
             return (
                 <p 
-                    key={id}
-                    className={`outline-none rounded px-1 relative transition-all cursor-pointer ${selectedClass}`}
+                    key={`${id}-${content.textSize || 'base'}`}
+                    className={`outline-none rounded px-1 relative transition-all cursor-pointer ${textSizeClass} ${selectedClass}`}
                     style={safeStyle}
                     onClick={(e: React.MouseEvent) => handleClick(e, id)}
                     contentEditable suppressContentEditableWarning

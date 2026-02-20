@@ -1,10 +1,11 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { WebsiteData, Section, SectionType, WebsiteElement, ElementType } from './types';
-import { INITIAL_TEMPLATE, SECTION_TEMPLATES, PRESET_THEMES } from './constants';
+import { INITIAL_TEMPLATE, SECTION_TEMPLATES, PRESET_THEMES, PRESET_FONTS } from './constants';
 import { geminiService } from './services/geminiService';
 import SectionRenderer from './components/SectionRenderer';
 import { PreviewFrame } from './components/PreviewFrame';
+import toast, { Toaster } from 'react-hot-toast';
 
 // Get URL parameters
 const getUrlParams = () => {
@@ -217,6 +218,108 @@ const RangeInput = ({ label, value, min = 0, max = 100, step = 1, onChange, unit
     </div>
 );
 
+const FontSizeInput = ({ label, value, onChange, placeholder }: { label: string, value: string, onChange: (val: string) => void, placeholder?: string }) => {
+  // Parse value to extract number and unit
+  const parseValue = (val: string) => {
+    const match = val.match(/^([\d.]+)(px|rem|em)$/);
+    if (match) {
+      return { num: parseFloat(match[1]), unit: match[2] };
+    }
+    return { num: 0, unit: 'rem' };
+  };
+
+  const currentValue = value || placeholder || '1rem';
+  const parsed = parseValue(currentValue);
+  const [selectedUnit, setSelectedUnit] = useState<'px' | 'rem' | 'em'>(parsed.unit as 'px' | 'rem' | 'em' || 'rem');
+  const [displayNum, setDisplayNum] = useState<string>(parsed.num.toString());
+  
+  // Update display when value prop changes
+  React.useEffect(() => {
+    const parsed = parseValue(value || placeholder || '1rem');
+    setDisplayNum(parsed.num.toString());
+    setSelectedUnit(parsed.unit as 'px' | 'rem' | 'em' || 'rem');
+  }, [value, placeholder]);
+
+  const handleIncrement = () => {
+    const step = selectedUnit === 'px' ? 1 : 0.125;
+    const currentNum = parseFloat(displayNum) || 0;
+    const newNum = currentNum + step;
+    const newValue = `${newNum}${selectedUnit}`;
+    setDisplayNum(newNum.toString());
+    onChange(newValue);
+  };
+
+  const handleDecrement = () => {
+    const step = selectedUnit === 'px' ? 1 : 0.125;
+    const currentNum = parseFloat(displayNum) || 0;
+    const newNum = Math.max(0.125, currentNum - step);
+    const newValue = `${newNum}${selectedUnit}`;
+    setDisplayNum(newNum.toString());
+    onChange(newValue);
+  };
+
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputVal = e.target.value;
+    setDisplayNum(inputVal);
+    
+    // If it's just a number, add the unit
+    if (/^\d+\.?\d*$/.test(inputVal)) {
+      onChange(`${inputVal}${selectedUnit}`);
+    } else if (/^\d+\.?\d*(px|rem|em)$/.test(inputVal)) {
+      onChange(inputVal);
+      // Update unit if changed
+      const match = inputVal.match(/(px|rem|em)$/);
+      if (match) setSelectedUnit(match[1] as 'px' | 'rem' | 'em');
+    } else {
+      onChange(inputVal);
+    }
+  };
+  
+  const handleUnitChange = (newUnit: 'px' | 'rem' | 'em') => {
+    setSelectedUnit(newUnit);
+    const currentNum = parseFloat(displayNum) || 0;
+    onChange(`${currentNum}${newUnit}`);
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[10px] font-bold text-white/40 capitalize ml-1">{label}</label>
+      <div className="flex gap-2 items-center">
+        <button
+          onClick={handleDecrement}
+          className="w-8 h-8 flex items-center justify-center bg-[#222] border border-[#333] rounded hover:bg-[#333] transition-colors text-white text-xs font-bold"
+        >
+          −
+        </button>
+        <div className="flex-1 flex gap-1 items-center bg-[#151515] border border-[#333] rounded p-1">
+          <input
+            type="text"
+            className="flex-1 bg-transparent border-none text-white text-xs focus:outline-none text-center font-mono"
+            value={displayNum}
+            onChange={handleValueChange}
+            placeholder={parsed.num.toString()}
+          />
+          <select
+            value={selectedUnit}
+            onChange={(e) => handleUnitChange(e.target.value as 'px' | 'rem' | 'em')}
+            className="bg-[#222] border border-[#333] rounded px-2 py-1 text-white text-[10px] focus:outline-none cursor-pointer"
+          >
+            <option value="px">px</option>
+            <option value="rem">rem</option>
+            <option value="em">em</option>
+          </select>
+        </div>
+        <button
+          onClick={handleIncrement}
+          className="w-8 h-8 flex items-center justify-center bg-[#222] border border-[#333] rounded hover:bg-[#333] transition-colors text-white text-xs font-bold"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const SelectInput = ({ label, value, options, onChange }: { label: string, value: string | undefined, options: {label: string, value: string}[], onChange: (val: string) => void }) => {
     const currentValue = value || options[0]?.value || '';
     return (
@@ -274,12 +377,34 @@ const App: React.FC = () => {
   const [uploadTarget, setUploadTarget] = useState<{sectionId: string, elementId?: string, field: string} | null>(null);
   const [loadingPageData, setLoadingPageData] = useState(false);
   const [savingPageData, setSavingPageData] = useState(false);
+  
+  // Theme settings state
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [defaultSizes, setDefaultSizes] = useState({
+    h1: '3rem',      // 48px
+    h2: '2.5rem',    // 40px
+    h3: '2rem',      // 32px
+    h4: '1.5rem',    // 24px
+    h5: '1.25rem',   // 20px
+    h6: '1rem',      // 16px
+    text: '1rem',    // 16px
+    textSmall: '0.875rem',  // 14px
+    textLarge: '1.125rem',  // 18px
+    textXl: '1.25rem'       // 20px
+  });
+  const [defaultTypography, setDefaultTypography] = useState({
+    fontFamily: 'Inter, sans-serif'
+  });
+  const [savingTheme, setSavingTheme] = useState(false);
 
   // Load page data from API if projectId and pageId are in URL
   useEffect(() => {
     const { projectId, pageId } = getUrlParams();
     if (projectId && pageId) {
       loadPageData(projectId, pageId);
+    }
+    if (projectId) {
+      loadThemeSettings(projectId);
     }
   }, []);
 
@@ -354,12 +479,12 @@ const App: React.FC = () => {
   const savePageData = async () => {
     const { projectId, pageId, token } = getUrlParams();
     if (!projectId || !pageId) {
-      alert('Missing projectId or pageId in URL');
+      toast.error('Missing projectId or pageId in URL');
       return;
     }
 
     if (!token) {
-      alert('Authentication token not found. Please open GenieBuild from the admin panel.');
+      toast.error('Authentication token not found. Please open GenieBuild from the admin panel.');
       return;
     }
 
@@ -438,10 +563,50 @@ const App: React.FC = () => {
         throw new Error(errorData.message || 'Failed to save website data');
       }
 
-      alert('Website changes saved successfully!');
+      // Also save theme settings if they exist
+      try {
+        const themePayload: any = {
+          projectId,
+          theme: selectedPresetId ? 
+            PRESET_THEMES[parseInt(selectedPresetId)]?.name.toLowerCase().replace(/\s+/g, '-') || 'custom' :
+            'custom',
+          presetId: null, // Backend will look up presetId from theme name
+          defaultSizes,
+          defaultTypography
+        };
+        
+        // Only include customColors if it's a custom theme
+        if (themePayload.theme === 'custom') {
+          themePayload.customColors = {
+            heading: siteData.globalStyles.colors.titleColor,
+            description: siteData.globalStyles.colors.textColor,
+            surface: siteData.globalStyles.colors.backgroundColor,
+            primaryButton: {
+              bg: siteData.globalStyles.colors.buttonBackgroundColor,
+              text: siteData.globalStyles.colors.buttonTextColor
+            },
+            accent: siteData.globalStyles.colors.accentColor
+          };
+        }
+        
+        const themeResponse = await fetch(`${apiUrl}/updateProjectTheme`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(themePayload)
+        });
+        
+        if (!themeResponse.ok) {
+          console.warn('Failed to save theme settings, but page data was saved');
+        }
+      } catch (themeError) {
+        console.warn('Error saving theme settings:', themeError);
+        // Don't fail the whole save if theme save fails
+      }
+
+      toast.success('Website changes saved successfully!');
     } catch (error: any) {
       console.error('Error saving page data:', error);
-      alert(`Failed to save: ${error.message}`);
+      toast.error(`Failed to save: ${error.message}`);
     } finally {
       setSavingPageData(false);
     }
@@ -484,13 +649,24 @@ const App: React.FC = () => {
           }
         };
       } else if (elementType === 'subtitle') {
+        // Determine textSize based on subtitleSize if it matches a default
+        let textSize: 'base' | 'small' | 'large' | 'xl' | undefined = undefined;
+        if (styleAny.subtitleSize) {
+          if (styleAny.subtitleSize === defaultSizes.textSmall) textSize = 'small';
+          else if (styleAny.subtitleSize === defaultSizes.textLarge) textSize = 'large';
+          else if (styleAny.subtitleSize === defaultSizes.textXl) textSize = 'xl';
+          else if (styleAny.subtitleSize === defaultSizes.text) textSize = 'base';
+        }
+        
         virtualElement = {
           id: selectedElementId,
           type: 'text',
-          content: { text: content.subtitle || '' },
+          content: { 
+            text: content.subtitle || '',
+            textSize: textSize || 'base'
+          },
           style: {
             color: styles.subtitleColor || styles.textColor || '',
-            fontSize: styles.subtitleSize || styleAny.fontSize || 'text-lg md:text-xl',
             fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
             textAlign: (styleAny.subtitleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
           }
@@ -547,9 +723,141 @@ const App: React.FC = () => {
       }
   }, [selectedElementId]);
 
+  // Apply font family to siteData.globalStyles in real-time
+  useEffect(() => {
+    setSiteData(prev => ({
+      ...prev,
+      globalStyles: {
+        ...prev.globalStyles,
+        primaryFont: defaultTypography.fontFamily
+      }
+    }));
+  }, [defaultTypography.fontFamily]);
+
+  // Update sections with default sizes in real-time when defaultSizes change
+  // Always clear titleSize/subtitleSize to let CSS defaults apply (unless custom override exists)
+  useEffect(() => {
+    setSiteData(prev => ({
+      ...prev,
+      sections: prev.sections.map(section => {
+        const updatedSection = { ...section };
+        const stylesAny = updatedSection.styles as any;
+        
+        // Always clear titleSize - CSS will apply the default based on titleHeadingTag
+        // Only keep titleSize if it's a custom override (doesn't match any default)
+        if (stylesAny.titleHeadingTag && stylesAny.titleSize) {
+          const headingTag = stylesAny.titleHeadingTag as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+          const currentDefaultSize = defaultSizes[headingTag];
+          
+          // If titleSize matches the default for this heading tag, clear it
+          if (stylesAny.titleSize === currentDefaultSize) {
+            const { titleSize, ...restStyles } = stylesAny;
+            updatedSection.styles = restStyles as typeof section.styles;
+          }
+        }
+        
+        // Always clear subtitleSize if it matches text defaults
+        if (stylesAny.subtitleSize && (
+            stylesAny.subtitleSize === defaultSizes.text ||
+            stylesAny.subtitleSize === defaultSizes.textSmall ||
+            stylesAny.subtitleSize === defaultSizes.textLarge ||
+            stylesAny.subtitleSize === defaultSizes.textXl
+          )) {
+          const { subtitleSize, ...restStyles } = stylesAny;
+          updatedSection.styles = restStyles as typeof section.styles;
+        }
+        
+        // Update elements that use heading tags
+        if (updatedSection.elements && Array.isArray(updatedSection.elements)) {
+          updatedSection.elements = updatedSection.elements.map(element => {
+            const htmlTag = element.content?.htmlTag;
+            if (htmlTag && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(htmlTag)) {
+              const headingTag = htmlTag as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+              const currentDefaultSize = defaultSizes[headingTag];
+              
+              // Clear fontSize if it matches the default for this heading tag
+              if (element.style?.fontSize === currentDefaultSize) {
+                const { fontSize, ...restStyle } = element.style;
+                return {
+                  ...element,
+                  style: restStyle
+                };
+              }
+            }
+            // Update text elements (p tags) - clear fontSize if it matches any text default
+            if (htmlTag === 'p' && element.style?.fontSize && (
+                element.style.fontSize === defaultSizes.text || 
+                element.style.fontSize === defaultSizes.textSmall ||
+                element.style.fontSize === defaultSizes.textLarge ||
+                element.style.fontSize === defaultSizes.textXl
+              )) {
+              const { fontSize, ...restStyle } = element.style;
+              return {
+                ...element,
+                style: restStyle
+              };
+            }
+            return element;
+          });
+        }
+        
+        return updatedSection;
+      })
+    }));
+  }, [defaultSizes]);
+
   useEffect(() => {
     const { colors } = siteData.globalStyles;
-    const styleString = `:root { --bg-color: ${colors.backgroundColor}; --text-color: ${colors.textColor}; --title-color: ${colors.titleColor}; --accent-color: ${colors.accentColor}; --btn-bg: ${colors.buttonBackgroundColor}; --btn-text: ${colors.buttonTextColor}; } #canvas-root { background-color: var(--bg-color); color: var(--text-color); min-height: 100vh; }`;
+    
+    // Generate CSS for default font sizes and typography
+    const fontSizesCSS = `
+      .h1-default { font-size: ${defaultSizes.h1}; }
+      .h2-default { font-size: ${defaultSizes.h2}; }
+      .h3-default { font-size: ${defaultSizes.h3}; }
+      .h4-default { font-size: ${defaultSizes.h4}; }
+      .h5-default { font-size: ${defaultSizes.h5}; }
+      .h6-default { font-size: ${defaultSizes.h6}; }
+      .text-default { font-size: ${defaultSizes.text}; }
+      .text-small { font-size: ${defaultSizes.textSmall}; }
+      .text-large { font-size: ${defaultSizes.textLarge}; }
+      .text-xl { font-size: ${defaultSizes.textXl}; }
+      
+      /* Apply default font family globally */
+      body, #canvas-root {
+        font-family: ${defaultTypography.fontFamily};
+      }
+      
+      /* Default heading sizes - apply to all headings, inline styles will override */
+      #canvas-root h1 { font-size: ${defaultSizes.h1}; }
+      #canvas-root h2 { font-size: ${defaultSizes.h2}; }
+      #canvas-root h3 { font-size: ${defaultSizes.h3}; }
+      #canvas-root h4 { font-size: ${defaultSizes.h4}; }
+      #canvas-root h5 { font-size: ${defaultSizes.h5}; }
+      #canvas-root h6 { font-size: ${defaultSizes.h6}; }
+      #canvas-root p { font-size: ${defaultSizes.text}; }
+      
+      /* Text size variants - override default p size */
+      #canvas-root p.text-sm { font-size: ${defaultSizes.textSmall}; }
+      #canvas-root p.text-lg { font-size: ${defaultSizes.textLarge}; }
+      #canvas-root p.text-xl { font-size: ${defaultSizes.textXl}; }
+    `;
+    
+    const styleString = `
+      :root { 
+        --bg-color: ${colors.backgroundColor}; 
+        --text-color: ${colors.textColor}; 
+        --title-color: ${colors.titleColor}; 
+        --accent-color: ${colors.accentColor}; 
+        --btn-bg: ${colors.buttonBackgroundColor}; 
+        --btn-text: ${colors.buttonTextColor}; 
+      } 
+      #canvas-root { 
+        background-color: var(--bg-color); 
+        color: var(--text-color); 
+        min-height: 100vh; 
+      }
+      ${fontSizesCSS}
+    `;
     const styleEl = document.createElement('style');
     styleEl.id = 'dynamic-theme-styles';
     styleEl.innerHTML = styleString;
@@ -557,7 +865,7 @@ const App: React.FC = () => {
     if (existing) existing.remove();
     document.head.appendChild(styleEl);
     return () => { styleEl.remove(); }
-  }, [siteData.globalStyles]);
+  }, [siteData.globalStyles.colors, defaultSizes, defaultTypography]);
 
 
   const updateSection = (id: string, updates: Partial<Section>) => {
@@ -594,6 +902,20 @@ const App: React.FC = () => {
                           sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
                       } else if (elementType === 'image' && updates.content.imageUrl !== undefined) {
                           sectionUpdates.content = { ...s.content, imageUrl: updates.content.imageUrl };
+                      }
+                      
+                      // Handle textSize for subtitle (Hero subtitle virtual elements)
+                      if (elementType === 'subtitle' && updates.content.textSize !== undefined) {
+                          const textSize = updates.content.textSize;
+                          const styleUpdates: any = {};
+                          // Map textSize to subtitleSize based on defaultSizes
+                          if (textSize === 'small') styleUpdates.subtitleSize = defaultSizes.textSmall;
+                          else if (textSize === 'large') styleUpdates.subtitleSize = defaultSizes.textLarge;
+                          else if (textSize === 'xl') styleUpdates.subtitleSize = defaultSizes.textXl;
+                          else if (textSize === 'base') styleUpdates.subtitleSize = defaultSizes.text;
+                          if (Object.keys(styleUpdates).length > 0) {
+                              sectionUpdates.styles = { ...s.styles, ...styleUpdates };
+                          }
                       }
                   }
                   
@@ -651,7 +973,7 @@ const App: React.FC = () => {
     try {
       const { projectId, pageId, token } = getUrlParams();
       if (!projectId || !pageId || !token) {
-        alert('Missing projectId, pageId, or authentication token');
+        toast.error('Missing projectId, pageId, or authentication token');
         return;
       }
 
@@ -706,10 +1028,10 @@ const App: React.FC = () => {
         }
       }
 
-      alert('Content reset to default successfully!');
+      toast.success('Content reset to default successfully!');
     } catch (error: any) {
       console.error('Error resetting element:', error);
-      alert(`Failed to reset: ${error.message}`);
+      toast.error(`Failed to reset: ${error.message}`);
     }
   };
 
@@ -738,7 +1060,181 @@ const App: React.FC = () => {
       }));
   };
 
-  const applyTheme = (theme: typeof PRESET_THEMES[0]) => {
+  const loadThemeSettings = async (projectId: string) => {
+    try {
+      const { token } = getUrlParams();
+      const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:1111/admin/v1';
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`${apiUrl}/getThemeSettings?projectId=${projectId}`, {
+        method: 'GET',
+        headers
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to load theme settings, using defaults');
+        // Use default values if API fails
+        return;
+      }
+      
+      const result = await response.json();
+      if (result.success && result.data) {
+        const { presetId, defaultSizes: savedSizes, defaultTypography: savedTypography, theme, customColors } = result.data;
+        
+        // Load default sizes - use saved values or fallback to defaults
+        setDefaultSizes({
+          h1: savedSizes?.h1 || '3rem',
+          h2: savedSizes?.h2 || '2.5rem',
+          h3: savedSizes?.h3 || '2rem',
+          h4: savedSizes?.h4 || '1.5rem',
+          h5: savedSizes?.h5 || '1.25rem',
+          h6: savedSizes?.h6 || '1rem',
+          text: savedSizes?.text || '1rem',
+          textSmall: savedSizes?.textSmall || '0.875rem',
+          textLarge: savedSizes?.textLarge || '1.125rem',
+          textXl: savedSizes?.textXl || '1.25rem'
+        });
+        
+        // Load default typography - use saved value or fallback to default
+        setDefaultTypography({
+          fontFamily: savedTypography?.fontFamily || 'Inter, sans-serif'
+        });
+        
+        // Apply custom colors if present (for custom theme)
+        if (customColors && theme === 'custom') {
+          const newGlobalStyles = {
+            ...siteData.globalStyles,
+            colors: {
+              backgroundColor: customColors.surface || siteData.globalStyles.colors.backgroundColor,
+              textColor: customColors.description || siteData.globalStyles.colors.textColor,
+              titleColor: customColors.heading || siteData.globalStyles.colors.titleColor,
+              subtitleColor: customColors.description || siteData.globalStyles.colors.subtitleColor,
+              accentColor: customColors.accent || siteData.globalStyles.colors.accentColor,
+              buttonBackgroundColor: customColors.primaryButton?.bg || siteData.globalStyles.colors.buttonBackgroundColor,
+              buttonTextColor: customColors.primaryButton?.text || siteData.globalStyles.colors.buttonTextColor,
+              linkColor: customColors.ring || siteData.globalStyles.colors.linkColor,
+              borderColor: customColors.ring || siteData.globalStyles.colors.borderColor,
+              overlayColor: customColors.overlay?.color || siteData.globalStyles.colors.overlayColor
+            }
+          };
+          setSiteData(prev => ({
+            ...prev,
+            globalStyles: newGlobalStyles,
+            sections: prev.sections.map(section => ({
+              ...section,
+              styles: {
+                ...section.styles,
+                backgroundColor: customColors.surface || section.styles.backgroundColor,
+                textColor: customColors.description || section.styles.textColor,
+                titleColor: customColors.heading || section.styles.titleColor,
+                subtitleColor: customColors.description || section.styles.subtitleColor,
+                accentColor: customColors.accent || section.styles.accentColor,
+                buttonBackgroundColor: customColors.primaryButton?.bg || section.styles.buttonBackgroundColor,
+                buttonTextColor: customColors.primaryButton?.text || section.styles.buttonTextColor
+              }
+            }))
+          }));
+        }
+        
+        // Apply theme if preset is selected - match by theme name and set index as selectedPresetId
+        if (theme && theme !== 'custom') {
+          const themeIndex = PRESET_THEMES.findIndex(t => t.name.toLowerCase().replace(/\s+/g, '-') === theme);
+          if (themeIndex >= 0) {
+            const presetTheme = PRESET_THEMES[themeIndex];
+            setSelectedPresetId(themeIndex.toString());
+            applyTheme(presetTheme, themeIndex.toString());
+          }
+        } else {
+          // Custom theme - clear preset selection
+          setSelectedPresetId(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading theme settings:', error);
+      // Use default values if error occurs
+    }
+  };
+
+  const saveThemeSettings = async () => {
+    try {
+      setSavingTheme(true);
+      const { projectId, token } = getUrlParams();
+      if (!projectId) {
+        toast.error('Project ID not found');
+        return;
+      }
+      
+      const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:1111/admin/v1';
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      // Determine theme name from selected preset or use 'custom'
+      // If selectedPresetId is set, find the theme name from PRESET_THEMES
+      // Otherwise, check if custom colors are being used
+      let themeName = 'custom';
+      if (selectedPresetId !== null && selectedPresetId !== undefined) {
+        const selectedTheme = PRESET_THEMES[parseInt(selectedPresetId)];
+        if (selectedTheme) {
+          themeName = selectedTheme.name.toLowerCase().replace(/\s+/g, '-');
+        }
+      }
+      
+      const payload: any = {
+        projectId,
+        theme: themeName,
+        presetId: null, // Backend will look up presetId from theme name
+        defaultSizes,
+        defaultTypography
+      };
+      
+      // Only include customColors if it's a custom theme
+      if (themeName === 'custom') {
+        payload.customColors = {
+          heading: siteData.globalStyles.colors.titleColor,
+          description: siteData.globalStyles.colors.textColor,
+          surface: siteData.globalStyles.colors.backgroundColor,
+          primaryButton: {
+            bg: siteData.globalStyles.colors.buttonBackgroundColor,
+            text: siteData.globalStyles.colors.buttonTextColor
+          },
+          accent: siteData.globalStyles.colors.accentColor
+        };
+      }
+      
+      const response = await fetch(`${apiUrl}/updateProjectTheme`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error(`Failed to save theme settings: ${errorData.message || 'Unknown error'}`);
+        return;
+      }
+      
+      const result = await response.json();
+      toast.success('Theme settings saved successfully!');
+    } catch (error) {
+      console.error('Error saving theme settings:', error);
+      toast.error('Failed to save theme settings');
+    } finally {
+      setSavingTheme(false);
+    }
+  };
+
+  const applyTheme = (theme: typeof PRESET_THEMES[0], presetId?: string | null) => {
       const colors = theme.elements;
       const newGlobalStyles = {
           ...siteData.globalStyles,
@@ -777,6 +1273,10 @@ const App: React.FC = () => {
           globalStyles: newGlobalStyles,
           sections: newSections
       }));
+      // Update selected preset ID
+      if (presetId !== undefined) {
+        setSelectedPresetId(presetId);
+      }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -890,9 +1390,9 @@ const App: React.FC = () => {
               </AccordionGroup>
               <AccordionGroup title="Typography" defaultOpen={true}>
                    <ColorInput label="Text Color" value={styles.textColor || styles.color} onChange={(v) => context === 'section' ? onUpdate('textColor', v) : onUpdate('color', v)} />
-                   <div className="grid grid-cols-2 gap-4">
-                        <TextInput label="Font Size" value={context === 'section' ? styles.titleSize : styles.fontSize} onChange={(v) => context === 'section' ? onUpdate('titleSize', v) : onUpdate('fontSize', v)} placeholder="1rem" />
-                        <SelectInput label="Font Weight" value={styles.fontWeight || '400'} options={[{label: 'Normal', value: '400'}, {label: 'Bold', value: '700'}, {label: 'Black', value: '900'}, {label: 'Light', value: '300'}]} onChange={(v) => onUpdate('fontWeight', v)} />
+                   <SelectInput label="Font Weight" value={styles.fontWeight || '400'} options={[{label: 'Normal', value: '400'}, {label: 'Bold', value: '700'}, {label: 'Black', value: '900'}, {label: 'Light', value: '300'}]} onChange={(v) => onUpdate('fontWeight', v)} />
+                   <div className="mt-2 text-[10px] text-white/40 italic">
+                     Font sizes are controlled by Theme Settings
                    </div>
                    <div className="mt-2">
                         <label className="text-[10px] font-bold text-white/40 capitalize ml-1 mb-1 block">Alignment</label>
@@ -937,7 +1437,7 @@ const App: React.FC = () => {
             <div className="flex items-center gap-4">
                 <span className="font-bold text-lg tracking-tighter">Genie<span className="text-blue-500">Build</span></span>
                 <div className="h-4 w-px bg-white/10 mx-2"></div>
-                <button onClick={() => { setSelectedSectionId(null); setSelectedElementId(null); setIsSidebarOpen(true); }} className={`px-3 py-1.5 rounded text-xs transition-colors flex items-center gap-2 ${!selectedSectionId ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`} title="Global Design System"><i className="fa-solid fa-palette"></i>Theme</button>
+                <button onClick={() => { setSelectedSectionId(null); setSelectedElementId(null); setGlobalTab('themes'); setIsSidebarOpen(true); }} className={`px-3 py-1.5 rounded text-xs transition-colors flex items-center gap-2 ${!selectedSectionId && isSidebarOpen ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`} title="Global Design System"><i className="fa-solid fa-palette"></i>Theme</button>
             </div>
              <div className="flex items-center gap-2">
                  <div className="flex bg-[#151515] rounded p-1 border border-[#333] mr-2">
@@ -978,21 +1478,88 @@ const App: React.FC = () => {
                             <div className="flex bg-[#151515] p-1 rounded">
                                 <button onClick={() => setGlobalTab('themes')} className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${globalTab === 'themes' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>Presets</button>
                                 <button onClick={() => setGlobalTab('colors')} className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${globalTab === 'colors' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>Colors</button>
+                                <button onClick={() => setGlobalTab('typography')} className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${globalTab === 'typography' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>Typography</button>
                             </div>
                          </div>
-                         <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+                         <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar pb-20">
                              {globalTab === 'themes' && (
                                  <div className="space-y-4">
                                      {PRESET_THEMES.map((theme, idx) => (
-                                         <button key={idx} onClick={() => applyTheme(theme)} className="group flex flex-col gap-2 p-3 rounded-xl border border-white/10 hover:border-white/30 bg-[#111] hover:bg-[#1a1a1a] transition-all"><div className="flex items-center justify-between w-full"><span className="font-bold text-xs uppercase tracking-wider text-white/80">{theme.name}</span><div className="flex gap-1"><div className="w-4 h-4 rounded-full border border-white/10" style={{backgroundColor: theme.elements.surface}}></div><div className="w-4 h-4 rounded-full border border-white/10" style={{backgroundColor: theme.elements.primaryButton.bg}}></div></div></div></button>
+                                         <button key={idx} onClick={() => applyTheme(theme, idx.toString())} className={`group flex flex-col gap-2 p-3 rounded-xl border transition-all ${selectedPresetId === idx.toString() ? 'border-blue-500 bg-blue-500/10' : 'border-white/10 hover:border-white/30 bg-[#111] hover:bg-[#1a1a1a]'}`}>
+                                             <div className="flex items-center justify-between w-full">
+                                                 <span className="font-bold text-xs uppercase tracking-wider text-white/80">{theme.name}</span>
+                                                 <div className="flex gap-1">
+                                                     <div className="w-4 h-4 rounded-full border border-white/10" style={{backgroundColor: theme.elements.surface}}></div>
+                                                     <div className="w-4 h-4 rounded-full border border-white/10" style={{backgroundColor: theme.elements.primaryButton.bg}}></div>
+                                                 </div>
+                                             </div>
+                                         </button>
                                      ))}
                                  </div>
                              )}
                              {globalTab === 'colors' && (
                                 <div className="space-y-4">
-                                    <ColorInput label="Background" value={siteData.globalStyles.colors.backgroundColor} onChange={(v) => updateGlobalColor('backgroundColor', v)} /><ColorInput label="Text" value={siteData.globalStyles.colors.textColor} onChange={(v) => updateGlobalColor('textColor', v)} /><ColorInput label="Title" value={siteData.globalStyles.colors.titleColor} onChange={(v) => updateGlobalColor('titleColor', v)} />
+                                    <ColorInput label="Background" value={siteData.globalStyles.colors.backgroundColor} onChange={(v) => updateGlobalColor('backgroundColor', v)} />
+                                    <ColorInput label="Text" value={siteData.globalStyles.colors.textColor} onChange={(v) => updateGlobalColor('textColor', v)} />
+                                    <ColorInput label="Title" value={siteData.globalStyles.colors.titleColor} onChange={(v) => updateGlobalColor('titleColor', v)} />
+                                    <ColorInput label="Accent" value={siteData.globalStyles.colors.accentColor} onChange={(v) => updateGlobalColor('accentColor', v)} />
+                                    <ColorInput label="Button Bg" value={siteData.globalStyles.colors.buttonBackgroundColor} onChange={(v) => updateGlobalColor('buttonBackgroundColor', v)} />
+                                    <ColorInput label="Button Text" value={siteData.globalStyles.colors.buttonTextColor} onChange={(v) => updateGlobalColor('buttonTextColor', v)} />
                                 </div>
                              )}
+                             {globalTab === 'typography' && (
+                                <div className="space-y-6">
+                                    <AccordionGroup title="Default Font" defaultOpen={true}>
+                                        <SelectInput 
+                                            label="Font Family" 
+                                            value={defaultTypography.fontFamily} 
+                                            options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))} 
+                                            onChange={(v) => setDefaultTypography(prev => ({ ...prev, fontFamily: v }))} 
+                                        />
+                                    </AccordionGroup>
+                                    <AccordionGroup title="Heading Sizes" defaultOpen={true}>
+                                        <div className="space-y-3">
+                                            <FontSizeInput label="H1 (Default: 3rem / 48px)" value={defaultSizes.h1} onChange={(v) => setDefaultSizes(prev => ({ ...prev, h1: v }))} placeholder="3rem" />
+                                            <FontSizeInput label="H2 (Default: 2.5rem / 40px)" value={defaultSizes.h2} onChange={(v) => setDefaultSizes(prev => ({ ...prev, h2: v }))} placeholder="2.5rem" />
+                                            <FontSizeInput label="H3 (Default: 2rem / 32px)" value={defaultSizes.h3} onChange={(v) => setDefaultSizes(prev => ({ ...prev, h3: v }))} placeholder="2rem" />
+                                            <FontSizeInput label="H4 (Default: 1.5rem / 24px)" value={defaultSizes.h4} onChange={(v) => setDefaultSizes(prev => ({ ...prev, h4: v }))} placeholder="1.5rem" />
+                                            <FontSizeInput label="H5 (Default: 1.25rem / 20px)" value={defaultSizes.h5} onChange={(v) => setDefaultSizes(prev => ({ ...prev, h5: v }))} placeholder="1.25rem" />
+                                            <FontSizeInput label="H6 (Default: 1rem / 16px)" value={defaultSizes.h6} onChange={(v) => setDefaultSizes(prev => ({ ...prev, h6: v }))} placeholder="1rem" />
+                                        </div>
+                                    </AccordionGroup>
+                                    <AccordionGroup title="Text Sizes" defaultOpen={true}>
+                                        <div className="space-y-3">
+                                            <FontSizeInput label="Base Text (Default: 1rem / 16px)" value={defaultSizes.text} onChange={(v) => setDefaultSizes(prev => ({ ...prev, text: v }))} placeholder="1rem" />
+                                            <FontSizeInput label="Small Text (Default: 0.875rem / 14px)" value={defaultSizes.textSmall} onChange={(v) => setDefaultSizes(prev => ({ ...prev, textSmall: v }))} placeholder="0.875rem" />
+                                            <FontSizeInput label="Large Text (Default: 1.125rem / 18px)" value={defaultSizes.textLarge} onChange={(v) => setDefaultSizes(prev => ({ ...prev, textLarge: v }))} placeholder="1.125rem" />
+                                            <FontSizeInput label="XL Text (Default: 1.25rem / 20px)" value={defaultSizes.textXl} onChange={(v) => setDefaultSizes(prev => ({ ...prev, textXl: v }))} placeholder="1.25rem" />
+                                        </div>
+                                    </AccordionGroup>
+                                </div>
+                             )}
+                         </div>
+                         <div className="p-4 border-t border-white/10 bg-[#080808]">
+                             <button 
+                                 onClick={saveThemeSettings}
+                                 disabled={savingTheme}
+                                 className={`w-full px-4 py-2 rounded text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                                     savingTheme 
+                                       ? 'bg-gray-600 border-gray-600 text-white cursor-not-allowed' 
+                                       : 'bg-green-600 border-green-600 text-white hover:bg-green-700'
+                                 }`}
+                             >
+                                 {savingTheme ? (
+                                     <>
+                                         <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                         Saving...
+                                     </>
+                                 ) : (
+                                     <>
+                                         <i className="fa-solid fa-save"></i>
+                                         Save Theme Settings
+                                     </>
+                                 )}
+                             </button>
                          </div>
                      </div>
                 ) : (
@@ -1023,6 +1590,7 @@ const App: React.FC = () => {
                                                  />
                                                  {selectedElement.type === 'heading' && (
                                                      <SelectInput 
+                                                         key={`heading-tag-${selectedElement.id}-${selectedElement.content.htmlTag || 'h2'}`}
                                                          label="Heading Level" 
                                                          value={
                                                              // For Hero title virtual elements, read from styles.titleHeadingTag
@@ -1046,6 +1614,24 @@ const App: React.FC = () => {
                                                                  // For regular heading elements
                                                                  updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, htmlTag: v as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'} });
                                                              }
+                                                         }} 
+                                                     />
+                                                 )}
+                                                 {selectedElement.type === 'text' && (
+                                                     <SelectInput 
+                                                         key={`text-size-${selectedElement.id}-${selectedElement.content.textSize || 'base'}`}
+                                                         label="Text Size" 
+                                                         value={selectedElement.content.textSize || 'base'}
+                                                         options={[
+                                                             {label: 'Base', value: 'base'},
+                                                             {label: 'Small', value: 'small'},
+                                                             {label: 'Large', value: 'large'},
+                                                             {label: 'XL', value: 'xl'}
+                                                         ]} 
+                                                         onChange={(v) => {
+                                                             updateElement(selectedSection.id, selectedElement.id, { 
+                                                                 content: {...selectedElement.content, textSize: v as 'base' | 'small' | 'large' | 'xl'} 
+                                                             });
                                                          }} 
                                                      />
                                                  )}
@@ -1095,7 +1681,7 @@ const App: React.FC = () => {
                     <div id="canvas-root" className="min-h-full">
                          {siteData.sections.map((section) => (
                             <SectionRenderer 
-                              key={`${section.id}-${section.styles.titleHeadingTag || 'h2'}`} 
+                              key={`${section.id}-${section.styles.titleHeadingTag || 'h2'}-${JSON.stringify(defaultSizes)}`} 
                               section={section} 
                               onUpdate={updateSection} 
                               isSelected={selectedSectionId === section.id} 
@@ -1122,6 +1708,41 @@ const App: React.FC = () => {
             </main>
         </div>
         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: '#1a1a1a',
+              color: '#ffffff',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '14px',
+              fontFamily: 'Inter, sans-serif',
+            },
+            success: {
+              iconTheme: {
+                primary: '#22c55e',
+                secondary: '#ffffff',
+              },
+              style: {
+                background: '#1a1a1a',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#ffffff',
+              },
+              style: {
+                background: '#1a1a1a',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+              },
+            },
+          }}
+        />
     </div>
   );
 };

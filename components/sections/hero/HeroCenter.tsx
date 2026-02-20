@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Section } from '../../../types';
-import { getHeadingSizeClass } from '../../../utils/headingSizeUtils';
 
 interface HeroProps {
   section: Section;
@@ -15,16 +14,10 @@ interface HeroProps {
 export const HeroCenter: React.FC<HeroProps> = ({ section, onTextEdit, onImageClick, buttonClass, onElementSelect, selectedElementId }) => {
   const { content, styles } = section;
   
-  const isTailwindClass = (val?: string) => val && val.startsWith('text-') && !val.includes('px') && !val.includes('rem');
   const isCustomColor = (value?: string) => value && (value.startsWith('#') || value.startsWith('rgb'));
 
   // Get heading tag from styles, default to h1 for hero
   const headingTag = (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-  
-  // Default to responsive class if specific size not provided or not responsive
-  const baseTitleSize = styles.titleSize || 'text-4xl md:text-6xl';
-  const titleSize = getHeadingSizeClass(headingTag, baseTitleSize);
-  const titleIsClass = isTailwindClass(titleSize);
   
   // Get alignment and font weight from styles
   const styleAny = styles as any;
@@ -33,21 +26,30 @@ export const HeroCenter: React.FC<HeroProps> = ({ section, onTextEdit, onImageCl
   const titleAlignClass = titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : titleAlign === 'justify' ? 'text-justify' : 'text-center';
   const titleFontWeightClass = titleFontWeight === '300' ? 'font-light' : titleFontWeight === '400' ? 'font-normal' : titleFontWeight === '700' ? 'font-bold' : titleFontWeight === '900' ? 'font-black' : 'font-bold';
   
+  // Only apply custom fontSize if titleSize is set and doesn't match default (custom override)
+  const hasCustomTitleSize = styles.titleSize && (styles.titleSize.includes('px') || styles.titleSize.includes('rem') || styles.titleSize.includes('em'));
+  
   const titleStyle = {
     ...(isCustomColor(styles.titleColor) ? { color: styles.titleColor } : {}),
-    ...(!titleIsClass ? { fontSize: titleSize } : {}),
+    // Only apply fontSize if it's a custom override, otherwise CSS defaults apply
+    ...(hasCustomTitleSize ? { fontSize: styles.titleSize } : {}),
     ...(titleAlign && !titleAlignClass.includes(titleAlign) ? { textAlign: titleAlign as any } : {})
   };
-  const titleClass = `${titleIsClass ? titleSize : ''} ${titleFontWeightClass} mb-6 leading-tight ${titleAlignClass} ${!isCustomColor(styles.titleColor) ? styles.titleColor || '' : ''}`;
+  const titleClass = `${titleFontWeightClass} mb-6 leading-tight ${titleAlignClass} ${!isCustomColor(styles.titleColor) ? styles.titleColor || '' : ''}`;
 
-  // Subtitle alignment and font weight
-  const subtitleSize = styles.subtitleSize || styleAny.fontSize || 'text-lg md:text-xl';
+  // Subtitle alignment and font weight - CSS handles font size via p tag defaults
   const subtitleAlign = styleAny.subtitleAlign || styles.textAlign || 'center';
   const subtitleFontWeight = styleAny.subtitleFontWeight || styleAny.fontWeight || '400';
   const subtitleAlignClass = subtitleAlign === 'left' ? 'text-left' : subtitleAlign === 'right' ? 'text-right' : subtitleAlign === 'justify' ? 'text-justify' : 'text-center';
   const subtitleFontWeightClass = subtitleFontWeight === '300' ? 'font-light' : subtitleFontWeight === '400' ? 'font-normal' : subtitleFontWeight === '700' ? 'font-bold' : subtitleFontWeight === '900' ? 'font-black' : 'font-normal';
+  
+  // Only apply custom fontSize if subtitleSize is set and is a custom override (px/rem/em)
+  // Otherwise, CSS will handle it via p tag defaults or text size classes
+  const hasCustomSubtitleSize = styles.subtitleSize && (styles.subtitleSize.includes('px') || styles.subtitleSize.includes('rem') || styles.subtitleSize.includes('em'));
+  
   const subtitleStyle = {
     color: styles.subtitleColor || styles.textColor,
+    ...(hasCustomSubtitleSize ? { fontSize: styles.subtitleSize } : {}),
     ...(subtitleAlign && !subtitleAlignClass.includes(subtitleAlign) ? { textAlign: subtitleAlign as any } : {})
   };
 
@@ -87,7 +89,7 @@ export const HeroCenter: React.FC<HeroProps> = ({ section, onTextEdit, onImageCl
         content.title
       )}
       <p 
-        className={`${subtitleSize} ${subtitleFontWeightClass} ${subtitleAlignClass} opacity-80 mb-10 mx-auto max-w-2xl outline-none focus:ring-2 ring-white rounded px-2 min-h-[1.5em] ${isSubtitleSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20'}`} 
+        className={`${subtitleFontWeightClass} ${subtitleAlignClass} opacity-80 mb-10 mx-auto max-w-2xl outline-none focus:ring-2 ring-white rounded px-2 min-h-[1.5em] ${isSubtitleSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20'}`} 
         style={subtitleStyle}
         contentEditable 
         suppressContentEditableWarning 
