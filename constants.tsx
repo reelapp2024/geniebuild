@@ -2,13 +2,31 @@
 import { WebsiteData, Section, WebsiteElement } from './types';
 
 export const PRESET_FONTS = [
-  { name: 'Poppins', value: '"Poppins", sans-serif' },
+  // Sans-serif fonts
   { name: 'Inter', value: '"Inter", sans-serif' },
+  { name: 'Poppins', value: '"Poppins", sans-serif' },
   { name: 'Montserrat', value: '"Montserrat", sans-serif' },
-  { name: 'Playfair Display', value: '"Playfair Display", serif' },
-  { name: 'Lato', value: '"Lato", sans-serif' },
   { name: 'Roboto', value: '"Roboto", sans-serif' },
   { name: 'Open Sans', value: '"Open Sans", sans-serif' },
+  { name: 'Lato', value: '"Lato", sans-serif' },
+  { name: 'Nunito', value: '"Nunito", sans-serif' },
+  { name: 'Raleway', value: '"Raleway", sans-serif' },
+  { name: 'Ubuntu', value: '"Ubuntu", sans-serif' },
+  { name: 'Work Sans', value: '"Work Sans", sans-serif' },
+  { name: 'Source Sans Pro', value: '"Source Sans Pro", sans-serif' },
+  { name: 'DM Sans', value: '"DM Sans", sans-serif' },
+  
+  // Serif fonts
+  { name: 'Playfair Display', value: '"Playfair Display", serif' },
+  { name: 'Merriweather', value: '"Merriweather", serif' },
+  { name: 'Lora', value: '"Lora", serif' },
+  { name: 'Crimson Text', value: '"Crimson Text", serif' },
+  
+  // Script/Display fonts
+  { name: 'Dancing Script', value: '"Dancing Script", cursive' },
+  { name: 'Pacifico', value: '"Pacifico", cursive' },
+  { name: 'Great Vibes', value: '"Great Vibes", cursive' },
+  { name: 'Satisfy', value: '"Satisfy", cursive' },
 ];
 
 export const PRESET_THEMES = [
@@ -377,6 +395,56 @@ export const INITIAL_TEMPLATE: WebsiteData = {
 };
 
 export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
+  allelementsTest: {
+    type: 'allelementsTest',
+    content: {
+      title: 'All Elements Test Section',
+      subtitle: 'This section contains all 25 elements for testing and debugging purposes.'
+    },
+    elements: [
+      // Basic Elements (13)
+      { id: 'test-heading', type: 'heading', content: { text: 'Sample Heading', htmlTag: 'h2' }, style: { color: '#F8FAFC' } },
+      { id: 'test-text', type: 'text', content: { text: 'This is a sample text element for testing.', textSize: 'base' }, style: { color: '#D1D5DB' } },
+      { id: 'test-button', type: 'button', content: { text: 'Click Me', link: '' }, style: { backgroundColor: '#E11D48', color: '#FFFFFF' } },
+      { id: 'test-image', type: 'image', content: { imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400', imageAlt: 'Sample Image' }, style: { width: '200px', height: '150px' } },
+      { id: 'test-video', type: 'video', content: { videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', videoTitle: 'Sample Video' }, style: { width: '100%', maxWidth: '560px' } },
+      { id: 'test-icon', type: 'icon', content: { icon: 'fa-star', iconSize: '24px' }, style: { color: '#F59E0B' } },
+      { id: 'test-icon-box', type: 'icon-box', content: { icon: 'fa-check-circle', title: 'Icon Box', description: 'Sample icon box element' }, style: { backgroundColor: 'transparent' } },
+      { id: 'test-image-box', type: 'image-box', content: { imageUrl: 'http://localhost:1111/files/placeholder.jpg', title: 'Image Box', description: 'Sample image box element' }, style: {} },
+      { id: 'test-list', type: 'list', content: { items: ['Item 1', 'Item 2', 'Item 3'], listType: 'ul' }, style: { color: '#D1D5DB' } },
+      { id: 'test-star-rating', type: 'star-rating', content: { rating: 4.5, maxRating: 5 }, style: { color: '#F59E0B' } },
+      { id: 'test-badge', type: 'badge', content: { text: 'New', variant: 'primary' }, style: { backgroundColor: '#F59E0B', color: '#FFFFFF' } },
+      { id: 'test-highlight-text', type: 'highlight-text', content: { text: 'This is highlighted text', highlightColor: '#F59E0B' }, style: { color: '#D1D5DB' } },
+      { id: 'test-blockquote', type: 'blockquote', content: { text: 'This is a sample blockquote for testing purposes.', author: 'Test Author' }, style: { borderColor: '#F59E0B', color: '#D1D5DB' } },
+      // Advanced Elements (12)
+      { id: 'test-accordion', type: 'accordion', content: { items: [{ title: 'Item 1', content: 'Content 1' }, { title: 'Item 2', content: 'Content 2' }] }, style: {} },
+      { id: 'test-toggle', type: 'toggle', content: { label: 'Toggle Switch', checked: false }, style: {} },
+      { id: 'test-tabs', type: 'tabs', content: { tabs: [{ label: 'Tab 1', content: 'Content 1' }, { label: 'Tab 2', content: 'Content 2' }] }, style: {} },
+      { id: 'test-progress-bar', type: 'progress-bar', content: { value: 75, max: 100, label: 'Progress' }, style: { backgroundColor: '#F59E0B' } },
+      { id: 'test-counter', type: 'counter', content: { value: 100, label: 'Count', prefix: '', suffix: '+' }, style: { color: '#F8FAFC' } },
+      { id: 'test-testimonial', type: 'testimonial', content: { quote: 'Great service!', author: 'John Doe', role: 'CEO', avatar: 'https://randomuser.me/api/portraits/men/1.jpg' }, style: {} },
+      { id: 'test-review-carousel', type: 'review-carousel', content: { reviews: [{ rating: 5, text: 'Excellent!', author: 'Jane' }] }, style: {} },
+      { id: 'test-alert-box', type: 'alert-box', content: { message: 'This is an alert message', type: 'info' }, style: { backgroundColor: '#3B82F6', color: '#FFFFFF' } },
+      { id: 'test-pricing-table', type: 'pricing-table', content: { plans: [{ name: 'Basic', price: '$9', features: ['Feature 1', 'Feature 2'] }] }, style: {} },
+      { id: 'test-flip-box', type: 'flip-box', content: { frontTitle: 'Front', backTitle: 'Back', frontContent: 'Front content', backContent: 'Back content' }, style: {} },
+      { id: 'test-call-to-action', type: 'call-to-action', content: { text: 'Get Started', subText: 'Start your free trial today' }, style: { backgroundColor: '#E11D48', color: '#FFFFFF' } },
+      { id: 'test-countdown-timer', type: 'countdown-timer', content: { targetDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), text: 'Offer Ends In' }, style: { accentColor: '#F59E0B' } },
+    ],
+    styles: {
+      backgroundColor: '#0E1214',
+      textColor: '#D1D5DB',
+      titleColor: '#F8FAFC',
+      accentColor: '#F59E0B',
+      buttonBackgroundColor: '#E11D48',
+      buttonTextColor: '#FFFFFF',
+      paddingTop: 'py-24',
+      paddingBottom: 'py-24',
+      paddingX: 'px-6',
+      textAlign: 'center',
+      titleSize: 'text-4xl',
+      variant: 'AllElementsTest'
+    }
+  },
   elements: {
       type: 'elements',
       content: { title: 'New Elements Section' },

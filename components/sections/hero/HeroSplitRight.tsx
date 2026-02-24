@@ -9,9 +9,10 @@ interface HeroProps {
   buttonClass: string;
   onElementSelect?: (elementId: string) => void;
   selectedElementId?: string | null;
+  readOnly?: boolean;
 }
 
-export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onImageClick, buttonClass, onElementSelect, selectedElementId }) => {
+export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onImageClick, buttonClass, onElementSelect, selectedElementId, readOnly = false }) => {
   const { content, styles } = section;
   
   const isCustomColor = (value?: string) => value && (value.startsWith('#') || value.startsWith('rgb'));
@@ -29,12 +30,18 @@ export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onIma
   const titleAlignClass = titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : titleAlign === 'justify' ? 'text-justify' : 'text-center';
   const titleFontWeightClass = titleFontWeight === '300' ? 'font-light' : titleFontWeight === '400' ? 'font-normal' : titleFontWeight === '700' ? 'font-bold' : titleFontWeight === '900' ? 'font-black' : 'font-bold';
   
-  const titleStyle = {
+  // Get fontFamily from titleFontFamily or fontFamily, only if explicitly set
+  const titleFontFamily = (styleAny.titleFontFamily || styleAny.fontFamily);
+  const titleStyle: React.CSSProperties = {
     ...(isCustomColor(styles.titleColor) ? { color: styles.titleColor } : {}),
     // Only apply fontSize if it's a custom override (px/rem/em), otherwise let CSS handle it
     ...(hasCustomFontSize ? { fontSize: styles.titleSize } : {}),
     ...(titleAlign && !titleAlignClass.includes(titleAlign) ? { textAlign: titleAlign as any } : {})
   };
+  // Only add fontFamily if it's explicitly set (not undefined, null, or empty string)
+  if (titleFontFamily && titleFontFamily.trim() !== '') {
+    titleStyle.fontFamily = titleFontFamily;
+  }
 
   // Element IDs - unique per section instance
   const titleId = `${section.id}-hero-title`;
@@ -64,12 +71,12 @@ export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onIma
             headingTag,
             {
               key: `hero-title-${headingTag}-${section.id}`, // Force re-render when tag changes
-              className: `${titleFontWeightClass} ${titleAlignClass} mb-6 leading-tight outline-none focus:ring-2 ring-white rounded px-2 ${isTitleSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20'}`,
+              className: `${titleFontWeightClass} ${titleAlignClass} mb-6 leading-tight ${!readOnly ? 'outline-none focus:ring-2 ring-white rounded px-2' : ''} ${!readOnly && isTitleSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''}`,
               style: titleStyle,
-              contentEditable: true,
-              suppressContentEditableWarning: true,
-              onBlur: (e: any) => onTextEdit('title', e.currentTarget.textContent || ''),
-              onClick: (e: React.MouseEvent) => handleElementClick(e, titleId)
+              contentEditable: !readOnly,
+              suppressContentEditableWarning: !readOnly,
+              onBlur: !readOnly ? (e: any) => onTextEdit('title', e.currentTarget.textContent || '') : undefined,
+              onClick: !readOnly ? (e: React.MouseEvent) => handleElementClick(e, titleId) : undefined
             },
             content.title
           );
@@ -83,48 +90,77 @@ export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onIma
           // Check if custom fontSize is provided for subtitle (px/rem/em) - if not, CSS defaults apply
           const hasCustomSubtitleSize = styles.subtitleSize && (styles.subtitleSize.includes('px') || styles.subtitleSize.includes('rem') || styles.subtitleSize.includes('em'));
           
-          const subtitleStyle = {
+          // Get fontFamily from subtitleFontFamily or fontFamily, only if explicitly set
+          const subtitleFontFamily = (styleAny.subtitleFontFamily || styleAny.fontFamily);
+          const subtitleStyle: React.CSSProperties = {
             color: styles.subtitleColor || styles.textColor,
             ...(hasCustomSubtitleSize ? { fontSize: styles.subtitleSize } : {}),
             ...(subtitleAlign && !subtitleAlignClass.includes(subtitleAlign) ? { textAlign: subtitleAlign as any } : {})
           };
+          // Only add fontFamily if it's explicitly set (not undefined, null, or empty string)
+          if (subtitleFontFamily && subtitleFontFamily.trim() !== '') {
+            subtitleStyle.fontFamily = subtitleFontFamily;
+          }
           
           return (
             <p 
-              className={`${subtitleFontWeightClass} ${subtitleAlignClass} opacity-80 mb-8 outline-none focus:ring-2 ring-white rounded px-2 ${isSubtitleSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20'}`} 
+              className={`${subtitleFontWeightClass} ${subtitleAlignClass} opacity-80 mb-8 ${!readOnly ? 'outline-none focus:ring-2 ring-white rounded px-2' : ''} ${!readOnly && isSubtitleSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''}`} 
               style={subtitleStyle}
-              contentEditable 
-              suppressContentEditableWarning 
-              onBlur={(e) => onTextEdit('subtitle', e.currentTarget.textContent || '')}
-              onClick={(e) => handleElementClick(e, subtitleId)}
+              contentEditable={!readOnly}
+              suppressContentEditableWarning={!readOnly}
+              onBlur={!readOnly ? (e) => onTextEdit('subtitle', e.currentTarget.textContent || '') : undefined}
+              onClick={!readOnly ? (e) => handleElementClick(e, subtitleId) : undefined}
             >
                 {content.subtitle}
             </p>
           );
         })()}
-        <button 
-          className={`${buttonClass} text-lg px-8 py-3 font-bold ${isButtonSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20'}`} 
-          contentEditable 
-          suppressContentEditableWarning 
-          onBlur={(e) => onTextEdit('ctaText', e.currentTarget.textContent || '')}
-          onClick={(e) => handleElementClick(e, buttonId)}
-        >
-          {content.ctaText}
-        </button>
+        {content.ctaHref ? (
+          <a
+            href={content.ctaHref}
+            target={content.ctaHref.startsWith('http') ? '_blank' : '_self'}
+            rel={content.ctaHref.startsWith('http') ? 'noopener noreferrer' : undefined}
+            onClick={!readOnly ? (e) => {
+              handleElementClick(e, buttonId);
+            } : undefined}
+            className="inline-block"
+          >
+            <button 
+              className={`${buttonClass} text-lg px-8 py-3 font-bold ${!readOnly && isButtonSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''}`} 
+              contentEditable={!readOnly}
+              suppressContentEditableWarning={!readOnly}
+              onBlur={!readOnly ? (e) => onTextEdit('ctaText', e.currentTarget.textContent || '') : undefined}
+            >
+              {content.ctaText}
+            </button>
+          </a>
+        ) : (
+          <button 
+            className={`${buttonClass} text-lg px-8 py-3 font-bold ${!readOnly && isButtonSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''}`} 
+            contentEditable={!readOnly}
+            suppressContentEditableWarning={!readOnly}
+            onBlur={!readOnly ? (e) => onTextEdit('ctaText', e.currentTarget.textContent || '') : undefined}
+            onClick={!readOnly ? (e) => handleElementClick(e, buttonId) : undefined}
+          >
+            {content.ctaText}
+          </button>
+        )}
       </div>
       {content.imageUrl && (
         <div 
-          className={`relative group/img cursor-pointer w-full ${isImageSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20'}`} 
-          onClick={(e) => {
+          className={`relative group/img ${!readOnly ? 'cursor-pointer' : ''} w-full ${!readOnly && isImageSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''}`} 
+          onClick={!readOnly ? (e) => {
             e.stopPropagation();
             handleElementClick(e, imageId);
             onImageClick();
-          }}
+          } : undefined}
         >
           <img src={content.imageUrl} alt="Hero" className="rounded-2xl shadow-2xl w-full object-cover" />
-           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity rounded-2xl">
-              <span className="bg-white text-black px-4 py-2 rounded-full text-sm font-bold shadow-lg">Change Image</span>
-          </div>
+          {!readOnly && (
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity rounded-2xl">
+                <span className="bg-white text-black px-4 py-2 rounded-full text-sm font-bold shadow-lg">Change Image</span>
+            </div>
+          )}
         </div>
       )}
     </div>

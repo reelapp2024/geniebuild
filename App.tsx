@@ -169,16 +169,49 @@ const TextAreaInput = ({ label, value, onChange, rows = 3 }: { label: string, va
 );
 
 const ImageControl = ({ label, value, onChange, onUpload }: { label: string, value: string | undefined, onChange: (val: string) => void, onUpload: () => void }) => {
+    // Construct full image URL for preview
+    const getImageUrl = (url: string | undefined): string => {
+        if (!url || url.trim().length < 5) return '';
+        // If it's already a full URL, use it; otherwise prepend localhost:1111
+        if (url.startsWith('http')) return url;
+        return `http://localhost:1111${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+    
+    const previewUrl = getImageUrl(value);
+    
     return (
         <div className="flex flex-col gap-2">
             <label className="text-[10px] font-bold text-white/40 capitalize ml-1">{label}</label>
             
             {/* Image Preview */}
-            {value && value.length > 10 && (
+            {previewUrl ? (
                 <div className="relative w-full aspect-video bg-[#151515] rounded border border-[#333] overflow-hidden group">
-                    <img src={value} className="w-full h-full object-cover" alt="Preview" />
+                    <img 
+                        src={previewUrl} 
+                        className="w-full h-full object-cover" 
+                        alt="Preview"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x400';
+                        }}
+                    />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                         <button onClick={onUpload} className="px-3 py-1 bg-white text-black text-xs font-bold rounded hover:scale-105 transition-transform shadow-lg">Change Image</button>
+                         <button 
+                             onClick={(e) => {
+                                 e.preventDefault();
+                                 e.stopPropagation();
+                                 onUpload();
+                             }} 
+                             className="px-3 py-1 bg-white text-black text-xs font-bold rounded hover:scale-105 transition-transform shadow-lg"
+                         >
+                             Change Image
+                         </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="w-full aspect-video bg-[#151515] rounded border border-[#333] flex items-center justify-center">
+                    <div className="text-center text-white/40 text-xs">
+                        <i className="fa-solid fa-image text-2xl mb-2 block"></i>
+                        <span>No image preview</span>
                     </div>
                 </div>
             )}
@@ -189,16 +222,264 @@ const ImageControl = ({ label, value, onChange, onUpload }: { label: string, val
                     className="w-full bg-[#151515] border border-[#333] rounded p-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-colors"
                     value={value || ''}
                     onChange={(e) => onChange(e.target.value)}
-                    placeholder="https://..."
+                    placeholder="Paste image URL or click upload"
                 />
                 <button 
-                    onClick={onUpload}
-                    className="px-3 bg-[#222] border border-[#333] rounded hover:bg-[#333] text-white shrink-0"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onUpload();
+                    }}
+                    className="px-3 bg-[#222] border border-[#333] rounded hover:bg-[#333] text-white shrink-0 transition-colors"
                     title="Upload Image"
                 >
                     <i className="fa-solid fa-upload text-xs"></i>
                 </button>
             </div>
+        </div>
+    );
+};
+
+const VideoControl = ({ label, value, onChange, onUpload }: { label: string, value: string | undefined, onChange: (val: string) => void, onUpload: () => void }) => {
+    // Helper to check if URL is YouTube
+    const isYouTubeUrl = (url: string): boolean => {
+        return /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/.test(url);
+    };
+    
+    // Helper to convert YouTube URL to embed format
+    const convertToEmbedUrl = (url: string): string => {
+        if (url.includes('youtube.com/embed/') || url.includes('youtu.be/')) {
+            return url;
+        }
+        const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+        if (match && match[1]) {
+            return `https://www.youtube.com/embed/${match[1]}`;
+        }
+        return url;
+    };
+    
+    // Construct full video URL for preview
+    const getVideoUrl = (url: string | undefined): string => {
+        if (!url || url.trim().length < 5) return '';
+        // If it's already a full URL, use it; otherwise prepend localhost:1111
+        if (url.startsWith('http')) {
+            // If it's YouTube, convert to embed format
+            if (isYouTubeUrl(url)) {
+                return convertToEmbedUrl(url);
+            }
+            return url;
+        }
+        return `http://localhost:1111${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+    
+    const previewUrl = getVideoUrl(value);
+    const isYouTube = value ? isYouTubeUrl(value) : false;
+    
+    return (
+        <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-bold text-white/40 capitalize ml-1">{label}</label>
+            
+            {/* Video Preview */}
+            {previewUrl ? (
+                <div className="relative w-full aspect-video bg-[#151515] rounded border border-[#333] overflow-hidden group">
+                    {isYouTube || previewUrl.includes('youtube.com/embed/') ? (
+                        <iframe 
+                            src={previewUrl} 
+                            className="w-full h-full border-0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowFullScreen
+                        />
+                    ) : (
+                        <video 
+                            src={previewUrl} 
+                            className="w-full h-full object-contain"
+                            controls
+                        />
+                    )}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                         <button 
+                             onClick={(e) => {
+                                 e.preventDefault();
+                                 e.stopPropagation();
+                                 onUpload();
+                             }} 
+                             className="px-3 py-1 bg-white text-black text-xs font-bold rounded hover:scale-105 transition-transform shadow-lg"
+                         >
+                             Change Video
+                         </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="w-full aspect-video bg-[#151515] rounded border border-[#333] flex items-center justify-center">
+                    <span className="text-white/30 text-xs">No Video Selected</span>
+                </div>
+            )}
+
+            <div className="flex gap-2">
+                <input 
+                    type="text" 
+                    className="w-full bg-[#151515] border border-[#333] rounded p-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-colors"
+                    value={value || ''}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="Paste YouTube URL, video URL, or click upload"
+                />
+                <button 
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUpload(); }}
+                    className="px-3 bg-[#222] border border-[#333] rounded hover:bg-[#333] text-white shrink-0"
+                    title="Upload Video"
+                >
+                    <i className="fa-solid fa-upload text-xs"></i>
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// Popular FontAwesome icons list
+const POPULAR_ICONS = [
+    // Common
+    'fa-star', 'fa-heart', 'fa-thumbs-up', 'fa-check', 'fa-times', 'fa-plus', 'fa-minus', 'fa-edit', 'fa-trash', 'fa-save',
+    // Arrows & Navigation
+    'fa-arrow-right', 'fa-arrow-left', 'fa-arrow-up', 'fa-arrow-down', 'fa-chevron-right', 'fa-chevron-left', 'fa-chevron-up', 'fa-chevron-down',
+    // Social & Communication
+    'fa-envelope', 'fa-phone', 'fa-comment', 'fa-share', 'fa-link', 'fa-user', 'fa-users', 'fa-bell', 'fa-message',
+    // Business & Finance
+    'fa-dollar-sign', 'fa-credit-card', 'fa-shopping-cart', 'fa-bag-shopping', 'fa-chart-line', 'fa-briefcase', 'fa-building',
+    // Technology
+    'fa-laptop', 'fa-mobile-screen', 'fa-tablet', 'fa-wifi', 'fa-cloud', 'fa-database', 'fa-code', 'fa-server',
+    // Media & Entertainment
+    'fa-play', 'fa-pause', 'fa-stop', 'fa-music', 'fa-video', 'fa-image', 'fa-camera', 'fa-microphone',
+    // Location & Travel
+    'fa-map-marker-alt', 'fa-globe', 'fa-plane', 'fa-car', 'fa-home', 'fa-building',
+    // Food & Drink
+    'fa-utensils', 'fa-coffee', 'fa-pizza-slice', 'fa-burger', 'fa-wine-glass',
+    // Health & Fitness
+    'fa-heartbeat', 'fa-dumbbell', 'fa-running', 'fa-bicycle', 'fa-swimming-pool',
+    // Education & Learning
+    'fa-graduation-cap', 'fa-book', 'fa-pencil', 'fa-chalkboard', 'fa-lightbulb',
+    // Tools & Settings
+    'fa-wrench', 'fa-cog', 'fa-tools', 'fa-screwdriver', 'fa-hammer', 'fa-key', 'fa-lock', 'fa-unlock',
+    // Weather & Nature
+    'fa-sun', 'fa-moon', 'fa-cloud-sun', 'fa-cloud-rain', 'fa-snowflake', 'fa-leaf', 'fa-tree', 'fa-mountain',
+    // Shapes & Symbols
+    'fa-circle', 'fa-square', 'fa-triangle', 'fa-diamond', 'fa-hexagon', 'fa-pentagon',
+    // Time & Calendar
+    'fa-clock', 'fa-calendar', 'fa-calendar-alt', 'fa-hourglass', 'fa-stopwatch',
+    // Security & Safety
+    'fa-shield', 'fa-shield-alt', 'fa-fire', 'fa-exclamation-triangle', 'fa-info-circle', 'fa-question-circle',
+    // Transport
+    'fa-truck', 'fa-ship', 'fa-train', 'fa-bus', 'fa-motorcycle',
+    // Sports & Games
+    'fa-football', 'fa-basketball', 'fa-baseball', 'fa-volleyball', 'fa-chess', 'fa-dice',
+    // Miscellaneous
+    'fa-gift', 'fa-trophy', 'fa-medal', 'fa-flag', 'fa-palette', 'fa-paint-brush', 'fa-magic', 'fa-rocket', 'fa-gem'
+];
+
+const IconPicker = ({ label, value, onChange }: { label: string, value: string | undefined, onChange: (val: string) => void }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showPicker, setShowPicker] = useState(false);
+    
+    // Normalize icon value to 'fa-icon-name' format
+    const normalizeIcon = (iconValue: string | undefined): string => {
+        if (!iconValue) return 'fa-star';
+        // Remove 'fa-solid fa-' or 'fa-solid ' prefix if present
+        if (iconValue.startsWith('fa-solid fa-')) {
+            return iconValue.replace('fa-solid fa-', 'fa-');
+        }
+        if (iconValue.startsWith('fa-solid ')) {
+            return iconValue.replace('fa-solid ', 'fa-');
+        }
+        // If it already starts with 'fa-', return as is
+        if (iconValue.startsWith('fa-')) {
+            return iconValue;
+        }
+        // Otherwise, add 'fa-' prefix
+        return `fa-${iconValue}`;
+    };
+    
+    const normalizedValue = normalizeIcon(value);
+    
+    // Get current icon name for display (remove 'fa-' prefix)
+    const currentIcon = normalizedValue.replace('fa-', '');
+    
+    // Filter icons based on search
+    const filteredIcons = POPULAR_ICONS.filter(icon => 
+        icon.replace('fa-', '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    // Get icon class for display
+    const getIconClass = (iconName: string) => {
+        const normalized = normalizeIcon(iconName);
+        return `fa-solid ${normalized}`;
+    };
+    
+    return (
+        <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-bold text-white/40 capitalize ml-1">{label}</label>
+            
+            {/* Current Icon Display */}
+            <div 
+                className="w-full bg-[#151515] border border-[#333] rounded p-3 flex items-center justify-between cursor-pointer hover:border-blue-500 transition-colors"
+                onClick={() => setShowPicker(!showPicker)}
+            >
+                <div className="flex items-center gap-3">
+                    <i className={`${getIconClass(normalizedValue)} text-xl`} style={{ color: '#F59E0B' }}></i>
+                    <span className="text-white text-xs font-medium">
+                        {currentIcon.charAt(0).toUpperCase() + currentIcon.slice(1).replace(/-/g, ' ')}
+                    </span>
+                </div>
+                <i className={`fa-solid fa-chevron-${showPicker ? 'up' : 'down'} text-xs text-white/40`}></i>
+            </div>
+            
+            {/* Icon Picker Dropdown */}
+            {showPicker && (
+                <div className="bg-[#151515] border border-[#333] rounded p-3 max-h-64 overflow-y-auto custom-scrollbar">
+                    {/* Search Input */}
+                    <div className="mb-3">
+                        <input
+                            type="text"
+                            className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2 text-white text-xs focus:border-blue-500 focus:outline-none"
+                            placeholder="Search icons..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>
+                    
+                    {/* Icons Grid */}
+                    <div className="grid grid-cols-6 gap-2">
+                        {filteredIcons.map((icon) => {
+                            const iconName = icon.replace('fa-', '');
+                            const isSelected = normalizedValue === icon;
+                            return (
+                                <button
+                                    key={icon}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onChange(icon);
+                                        setShowPicker(false);
+                                        setSearchTerm('');
+                                    }}
+                                    className={`p-2 rounded border transition-all hover:border-blue-500 hover:bg-[#1a1a1a] ${
+                                        isSelected 
+                                            ? 'border-blue-500 bg-blue-500/10' 
+                                            : 'border-[#333] bg-[#0a0a0a]'
+                                    }`}
+                                    title={iconName.replace(/-/g, ' ')}
+                                >
+                                    <i className={`fa-solid ${icon} text-lg`} style={{ color: isSelected ? '#60A5FA' : '#D1D5DB' }}></i>
+                                </button>
+                            );
+                        })}
+                    </div>
+                    
+                    {filteredIcons.length === 0 && (
+                        <div className="text-center text-white/40 text-xs py-4">
+                            No icons found matching "{searchTerm}"
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
@@ -321,7 +602,8 @@ const FontSizeInput = ({ label, value, onChange, placeholder }: { label: string,
 };
 
 const SelectInput = ({ label, value, options, onChange }: { label: string, value: string | undefined, options: {label: string, value: string}[], onChange: (val: string) => void }) => {
-    const currentValue = value || options[0]?.value || '';
+    // Ensure value is exactly one of the option values, or use first option as default
+    const currentValue = (value && options.some(opt => opt.value === value)) ? value : (options[0]?.value || '');
     return (
         <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-white/40 capitalize ml-1">{label}</label>
@@ -335,6 +617,65 @@ const SelectInput = ({ label, value, options, onChange }: { label: string, value
                     }}
                 >
                     {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+                <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/30 pointer-events-none"></i>
+            </div>
+        </div>
+    );
+};
+
+const FontSelectInput = ({ label, value, options, onChange, defaultFont }: { label: string, value: string | undefined, options: {label: string, value: string}[], onChange: (val: string) => void, defaultFont?: string }) => {
+    // Only show default option if defaultFont is provided
+    const showDefaultOption = !!defaultFont;
+    
+    // If value is empty/null/undefined or matches defaultFont, show default option
+    const isUsingDefault = showDefaultOption && (!value || value === '' || value === defaultFont);
+    const currentValue = isUsingDefault ? '__default__' : (value || options[0]?.value || '');
+    
+    // Find the default font option from PRESET_FONTS to get its display name
+    const defaultFontOption = defaultFont ? PRESET_FONTS.find(f => f.value === defaultFont) : null;
+    const defaultFontName = defaultFontOption?.name || 'Default Theme Font';
+    
+    // Get current option for display
+    const currentOption = isUsingDefault 
+        ? { value: '__default__', label: `${defaultFontName} (Default Theme Font)` }
+        : options.find(opt => opt.value === currentValue);
+    
+    // Build options list with default as first option (only if defaultFont is provided)
+    const allOptions = showDefaultOption
+        ? [
+            { value: '__default__', label: `${defaultFontName} (Default Theme Font)` },
+            ...options
+          ]
+        : options;
+    
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold text-white/40 capitalize ml-1">{label}</label>
+            <div className="relative">
+                <select 
+                    className="w-full bg-[#151515] border border-[#333] rounded p-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-colors appearance-none cursor-pointer"
+                    value={currentValue}
+                    onChange={(e) => {
+                        e.preventDefault();
+                        // If default is selected, pass empty string to clear fontFamily
+                        if (e.target.value === '__default__') {
+                            onChange('');
+                        } else {
+                            onChange(e.target.value);
+                        }
+                    }}
+                    style={{ fontFamily: isUsingDefault ? (defaultFont || 'inherit') : (currentOption?.value || 'inherit') }}
+                >
+                    {allOptions.map(opt => (
+                        <option 
+                            key={opt.value} 
+                            value={opt.value}
+                            style={{ fontFamily: opt.value === '__default__' ? (defaultFont || 'inherit') : opt.value }}
+                        >
+                            {opt.label}
+                        </option>
+                    ))}
                 </select>
                 <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/30 pointer-events-none"></i>
             </div>
@@ -646,16 +987,67 @@ const App: React.FC = () => {
             fontSize: styles.titleSize || 'text-4xl md:text-6xl',
             fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
             textAlign: (styleAny.titleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
+            fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined, // Include fontFamily for Hero title
           }
         };
       } else if (elementType === 'subtitle') {
-        // Determine textSize based on subtitleSize if it matches a default
-        let textSize: 'base' | 'small' | 'large' | 'xl' | undefined = undefined;
-        if (styleAny.subtitleSize) {
-          if (styleAny.subtitleSize === defaultSizes.textSmall) textSize = 'small';
-          else if (styleAny.subtitleSize === defaultSizes.textLarge) textSize = 'large';
-          else if (styleAny.subtitleSize === defaultSizes.textXl) textSize = 'xl';
-          else if (styleAny.subtitleSize === defaultSizes.text) textSize = 'base';
+        // Read textSize directly from content.subtitleTextSize (stored directly, no inference needed)
+        // Fallback to inferring from subtitleSize only if subtitleTextSize is not set (for backward compatibility)
+        let textSize: 'base' | 'small' | 'large' | 'xl' = 'base';
+        
+        if (content.subtitleTextSize) {
+          // Direct storage - most reliable
+          textSize = content.subtitleTextSize;
+        } else if (styleAny.subtitleSize) {
+          // Fallback: infer from subtitleSize (for backward compatibility with old data)
+          const normalizeSize = (size: string): string => {
+            if (!size) return '';
+            return size.trim().toLowerCase().replace(/\s+/g, '');
+          };
+          const convertToPixels = (size: string): number | null => {
+            if (!size) return null;
+            const trimmed = size.trim();
+            const match = trimmed.match(/^([\d.]+)(px|rem|em)$/i);
+            if (!match) return null;
+            const value = parseFloat(match[1]);
+            const unit = match[2].toLowerCase();
+            if (unit === 'rem' || unit === 'em') return value * 16;
+            return value;
+          };
+          
+          const subtitleSize = styleAny.subtitleSize;
+          const normalizedSubtitleSize = normalizeSize(subtitleSize);
+          const subtitlePixels = convertToPixels(subtitleSize);
+          
+          const normalizedTextSmall = normalizeSize(defaultSizes.textSmall);
+          const normalizedTextLarge = normalizeSize(defaultSizes.textLarge);
+          const normalizedTextXl = normalizeSize(defaultSizes.textXl);
+          const normalizedText = normalizeSize(defaultSizes.text);
+          
+          if (normalizedSubtitleSize === normalizedTextSmall) {
+            textSize = 'small';
+          } else if (normalizedSubtitleSize === normalizedTextLarge) {
+            textSize = 'large';
+          } else if (normalizedSubtitleSize === normalizedTextXl) {
+            textSize = 'xl';
+          } else if (normalizedSubtitleSize === normalizedText) {
+            textSize = 'base';
+          } else if (subtitlePixels !== null) {
+            const textSmallPixels = convertToPixels(defaultSizes.textSmall);
+            const textLargePixels = convertToPixels(defaultSizes.textLarge);
+            const textXlPixels = convertToPixels(defaultSizes.textXl);
+            const textPixels = convertToPixels(defaultSizes.text);
+            
+            if (textSmallPixels !== null && Math.abs(subtitlePixels - textSmallPixels) < 0.1) {
+              textSize = 'small';
+            } else if (textLargePixels !== null && Math.abs(subtitlePixels - textLargePixels) < 0.1) {
+              textSize = 'large';
+            } else if (textXlPixels !== null && Math.abs(subtitlePixels - textXlPixels) < 0.1) {
+              textSize = 'xl';
+            } else if (textPixels !== null && Math.abs(subtitlePixels - textPixels) < 0.1) {
+              textSize = 'base';
+            }
+          }
         }
         
         virtualElement = {
@@ -663,19 +1055,23 @@ const App: React.FC = () => {
           type: 'text',
           content: { 
             text: content.subtitle || '',
-            textSize: textSize || 'base'
+            textSize: textSize
           },
           style: {
             color: styles.subtitleColor || styles.textColor || '',
             fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
             textAlign: (styleAny.subtitleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
+            fontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || undefined, // Include fontFamily for Hero subtitle
           }
         };
       } else if (elementType === 'button') {
         virtualElement = {
           id: selectedElementId,
           type: 'button',
-          content: { text: content.ctaText || '' },
+          content: { 
+            text: content.ctaText || '',
+            link: content.ctaHref || '' // Include link in virtual element
+          },
           style: {
             backgroundColor: styles.buttonBackgroundColor || '',
             color: styles.buttonTextColor || '',
@@ -699,7 +1095,7 @@ const App: React.FC = () => {
     }
     
     return null;
-  }, [selectedSection, selectedElementId, siteData.sections]);
+  }, [selectedSection, selectedElementId, siteData.sections, defaultSizes]);
 
   useEffect(() => {
     if (selectedSectionId && !isPreviewMode) {
@@ -723,15 +1119,72 @@ const App: React.FC = () => {
       }
   }, [selectedElementId]);
 
-  // Apply font family to siteData.globalStyles in real-time
+  // Auto-save theme settings when font family changes
+  const isInitialMount = useRef(true);
   useEffect(() => {
-    setSiteData(prev => ({
-      ...prev,
-      globalStyles: {
-        ...prev.globalStyles,
-        primaryFont: defaultTypography.fontFamily
+    const { projectId, token } = getUrlParams();
+    if (!projectId || !token) return;
+    
+    // Skip initial mount - only save when font actually changes
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    // Debounce auto-save to avoid too many API calls
+    const timeoutId = setTimeout(async () => {
+      try {
+        const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:1111/admin/v1';
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        };
+        
+        let themeName = 'custom';
+        if (selectedPresetId !== null && selectedPresetId !== undefined) {
+          const selectedTheme = PRESET_THEMES[parseInt(selectedPresetId)];
+          if (selectedTheme) {
+            themeName = selectedTheme.name.toLowerCase().replace(/\s+/g, '-');
+          }
+        }
+        
+        const payload: any = {
+          projectId,
+          theme: themeName,
+          presetId: null,
+          defaultSizes,
+          defaultTypography
+        };
+        
+        if (themeName === 'custom') {
+          payload.customColors = {
+            heading: siteData.globalStyles.colors.titleColor,
+            description: siteData.globalStyles.colors.textColor,
+            surface: siteData.globalStyles.colors.backgroundColor,
+            primaryButton: {
+              bg: siteData.globalStyles.colors.buttonBackgroundColor,
+              text: siteData.globalStyles.colors.buttonTextColor
+            },
+            accent: siteData.globalStyles.colors.accentColor
+          };
+        }
+        
+        const response = await fetch(`${apiUrl}/updateProjectTheme`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload)
+        });
+        
+        if (response.ok) {
+          toast.success('Font updated and saved!', { duration: 2000 });
+        }
+      } catch (error) {
+        console.error('Error auto-saving font:', error);
+        // Don't show error toast for auto-save to avoid annoyance
       }
-    }));
+    }, 1000); // 1 second debounce
+    
+    return () => clearTimeout(timeoutId);
   }, [defaultTypography.fontFamily]);
 
   // Update sections with default sizes in real-time when defaultSizes change
@@ -756,16 +1209,9 @@ const App: React.FC = () => {
           }
         }
         
-        // Always clear subtitleSize if it matches text defaults
-        if (stylesAny.subtitleSize && (
-            stylesAny.subtitleSize === defaultSizes.text ||
-            stylesAny.subtitleSize === defaultSizes.textSmall ||
-            stylesAny.subtitleSize === defaultSizes.textLarge ||
-            stylesAny.subtitleSize === defaultSizes.textXl
-          )) {
-          const { subtitleSize, ...restStyles } = stylesAny;
-          updatedSection.styles = restStyles as typeof section.styles;
-        }
+        // Don't clear subtitleSize - we need it to map to textSize for Hero subtitle virtual elements
+        // The subtitleSize is used to determine which textSize variant (base/small/large/xl) to show in the dropdown
+        // Clearing it would break the textSize selection functionality
         
         // Update elements that use heading tags
         if (updatedSection.elements && Array.isArray(updatedSection.elements)) {
@@ -822,8 +1268,23 @@ const App: React.FC = () => {
       .text-large { font-size: ${defaultSizes.textLarge}; }
       .text-xl { font-size: ${defaultSizes.textXl}; }
       
-      /* Apply default font family globally */
-      body, #canvas-root {
+      /* Apply default font family only to canvas content, not GenieBuild UI */
+      /* Inline styles (with fontFamily) will automatically override this CSS rule */
+      #canvas-root {
+        font-family: ${defaultTypography.fontFamily};
+      }
+      
+      /* Apply font family to all text elements within canvas */
+      /* Inline fontFamily styles will automatically override this (higher specificity) */
+      #canvas-root h1,
+      #canvas-root h2,
+      #canvas-root h3,
+      #canvas-root h4,
+      #canvas-root h5,
+      #canvas-root h6,
+      #canvas-root p,
+      #canvas-root span,
+      #canvas-root div {
         font-family: ${defaultTypography.fontFamily};
       }
       
@@ -898,8 +1359,13 @@ const App: React.FC = () => {
                           }
                       } else if (elementType === 'subtitle' && updates.content.text !== undefined) {
                           sectionUpdates.content = { ...s.content, subtitle: updates.content.text };
-                      } else if (elementType === 'button' && updates.content.text !== undefined) {
-                          sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
+                      } else if (elementType === 'button') {
+                          if (updates.content.text !== undefined) {
+                              sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
+                          }
+                          if (updates.content.link !== undefined) {
+                              sectionUpdates.content = { ...s.content, ctaHref: updates.content.link };
+                          }
                       } else if (elementType === 'image' && updates.content.imageUrl !== undefined) {
                           sectionUpdates.content = { ...s.content, imageUrl: updates.content.imageUrl };
                       }
@@ -907,8 +1373,15 @@ const App: React.FC = () => {
                       // Handle textSize for subtitle (Hero subtitle virtual elements)
                       if (elementType === 'subtitle' && updates.content.textSize !== undefined) {
                           const textSize = updates.content.textSize;
+                          
+                          // Store textSize directly in content.subtitleTextSize (primary storage)
+                          sectionUpdates.content = { 
+                              ...s.content, 
+                              subtitleTextSize: textSize as 'base' | 'small' | 'large' | 'xl'
+                          };
+                          
+                          // Also update subtitleSize in styles for rendering (keep both for compatibility)
                           const styleUpdates: any = {};
-                          // Map textSize to subtitleSize based on defaultSizes
                           if (textSize === 'small') styleUpdates.subtitleSize = defaultSizes.textSmall;
                           else if (textSize === 'large') styleUpdates.subtitleSize = defaultSizes.textLarge;
                           else if (textSize === 'xl') styleUpdates.subtitleSize = defaultSizes.textXl;
@@ -928,10 +1401,12 @@ const App: React.FC = () => {
                           if (updates.style.fontSize !== undefined) styleUpdates.titleSize = updates.style.fontSize;
                           if (updates.style.fontWeight !== undefined) styleUpdates.titleFontWeight = updates.style.fontWeight;
                           if (updates.style.textAlign !== undefined) styleUpdates.titleAlign = updates.style.textAlign;
+                          if (updates.style.fontFamily !== undefined) styleUpdates.titleFontFamily = updates.style.fontFamily;
                       } else if (elementType === 'subtitle') {
                           if (updates.style.color !== undefined) styleUpdates.subtitleColor = updates.style.color;
                           if (updates.style.fontSize !== undefined) styleUpdates.subtitleSize = updates.style.fontSize;
                           if (updates.style.fontWeight !== undefined) styleUpdates.subtitleFontWeight = updates.style.fontWeight;
+                          if (updates.style.fontFamily !== undefined) styleUpdates.subtitleFontFamily = updates.style.fontFamily;
                           if (updates.style.textAlign !== undefined) styleUpdates.subtitleAlign = updates.style.textAlign;
                       } else if (elementType === 'button') {
                           if (updates.style.backgroundColor !== undefined) styleUpdates.buttonBackgroundColor = updates.style.backgroundColor;
@@ -1279,33 +1754,74 @@ const App: React.FC = () => {
       }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && uploadTarget) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        if (uploadTarget.elementId) {
-             const section = siteData.sections.find(s => s.id === uploadTarget.sectionId);
-             const element = section?.elements?.find(el => el.id === uploadTarget.elementId);
-             if (section && element) {
-                 const newContent = { ...element.content, [uploadTarget.field]: base64String };
-                 updateElement(uploadTarget.sectionId, uploadTarget.elementId, { content: newContent });
-             }
-        } else {
-             if (uploadTarget.field === 'backgroundImage') {
-                 updateSectionStyle(uploadTarget.sectionId, uploadTarget.field, base64String);
-             } else {
-                 const section = siteData.sections.find(s => s.id === uploadTarget.sectionId);
-                 if(section) {
-                    updateSection(uploadTarget.sectionId, { content: {...section.content, [uploadTarget.field]: base64String} });
-                 }
-             }
+      try {
+        // Use uploadFile API instead of base64
+        const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:1111/admin/v1';
+        const { projectId, token } = getUrlParams();
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const headers: HeadersInit = {
+          'Authorization': token ? `Bearer ${token}` : '',
+        };
+        
+        const response = await fetch(`${apiUrl}/uploadFile`, {
+          method: 'POST',
+          headers,
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error('Upload failed');
         }
+        
+        const data = await response.json();
+        const uploadedUrl = data.data?.url || data.url || '';
+        
+        // Construct full URL with localhost:1111 base
+        const fullImageUrl = uploadedUrl.startsWith('http') 
+          ? uploadedUrl 
+          : `http://localhost:1111${uploadedUrl.startsWith('/') ? '' : '/'}${uploadedUrl}`;
+        
+        if (uploadTarget.elementId) {
+          const section = siteData.sections.find(s => s.id === uploadTarget.sectionId);
+          const element = section?.elements?.find(el => el.id === uploadTarget.elementId);
+          if (section && element) {
+            const fieldName = uploadTarget.field === 'imageUrl' || uploadTarget.field === 'videoUrl' ? uploadTarget.field : uploadTarget.field;
+            // For video elements, use 'src' field; for images, use 'imageUrl'
+            const updateField = uploadTarget.field === 'videoUrl' ? 'src' : (fieldName === 'imageUrl' ? 'imageUrl' : fieldName);
+            const newContent = { ...element.content, [updateField]: fullImageUrl };
+            // Also update src for video elements
+            if (uploadTarget.field === 'videoUrl' && element.type === 'video') {
+                newContent.src = fullImageUrl;
+            }
+            updateElement(uploadTarget.sectionId, uploadTarget.elementId, { content: newContent });
+          }
+        } else {
+          if (uploadTarget.field === 'backgroundImage') {
+            updateSectionStyle(uploadTarget.sectionId, uploadTarget.field, fullImageUrl);
+          } else {
+            const section = siteData.sections.find(s => s.id === uploadTarget.sectionId);
+            if (section) {
+              updateSection(uploadTarget.sectionId, { content: {...section.content, [uploadTarget.field]: fullImageUrl} });
+            }
+          }
+        }
+        
+        const fileType = file.type.startsWith('video/') ? 'Video' : 'Image';
+        toast.success(`${fileType} uploaded successfully`);
+      } catch (error: any) {
+        console.error('Upload error:', error);
+        const fileType = file.type?.startsWith('video/') ? 'video' : 'image';
+        toast.error(error?.message || `Failed to upload ${fileType}`);
+      } finally {
         setUploadTarget(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -1346,7 +1862,7 @@ const App: React.FC = () => {
     setIsAddMenuOpen(false);
   };
 
-  const renderStyleEditor = (styles: any, onUpdate: (key: string, val: any) => void, context: 'section' | 'element') => {
+  const renderStyleEditor = (styles: any, onUpdate: (key: string, val: any) => void, context: 'section' | 'element', elementType?: string) => {
       const getSpacingValues = (type: 'margin' | 'padding') => {
         if (context === 'element') {
             const val = styles[type];
@@ -1390,6 +1906,22 @@ const App: React.FC = () => {
               </AccordionGroup>
               <AccordionGroup title="Typography" defaultOpen={true}>
                    <ColorInput label="Text Color" value={styles.textColor || styles.color} onChange={(v) => context === 'section' ? onUpdate('textColor', v) : onUpdate('color', v)} />
+                   {context === 'element' && (elementType === 'heading' || elementType === 'text') && (
+                       <FontSelectInput 
+                           label="Font Family" 
+                           value={styles.fontFamily || ''} 
+                           options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))} 
+                           onChange={(v) => {
+                               // If empty string, remove fontFamily to use theme default
+                               if (v === '') {
+                                   onUpdate('fontFamily', undefined);
+                               } else {
+                                   onUpdate('fontFamily', v);
+                               }
+                           }} 
+                           defaultFont={defaultTypography.fontFamily}
+                       />
+                   )}
                    <SelectInput label="Font Weight" value={styles.fontWeight || '400'} options={[{label: 'Normal', value: '400'}, {label: 'Bold', value: '700'}, {label: 'Black', value: '900'}, {label: 'Light', value: '300'}]} onChange={(v) => onUpdate('fontWeight', v)} />
                    <div className="mt-2 text-[10px] text-white/40 italic">
                      Font sizes are controlled by Theme Settings
@@ -1416,6 +1948,141 @@ const App: React.FC = () => {
                    <ColorInput label="Background Color" value={styles.backgroundColor} onChange={(v) => onUpdate('backgroundColor', v)} />
                    <div className="mt-4"><ImageControl label="Background Image" value={styles.backgroundImage} onChange={(v) => onUpdate('backgroundImage', v)} onUpload={() => triggerUpload(selectedSectionId!, 'backgroundImage')} /></div>
               </AccordionGroup>
+              {context === 'element' && elementType === 'image' && (
+                  <>
+                      <AccordionGroup title="Image Effects" defaultOpen={true}>
+                          <RangeInput 
+                              label="Opacity" 
+                              value={styles.opacity !== undefined ? Math.round(parseFloat(styles.opacity) * 100) : 100} 
+                              min={0} 
+                              max={100} 
+                              step={1} 
+                              unit="%" 
+                              onChange={(v) => onUpdate('opacity', (v / 100).toString())} 
+                          />
+                          <ColorInput 
+                              label="Overlay Color" 
+                              value={styles.overlayColor || ''} 
+                              onChange={(v) => onUpdate('overlayColor', v)} 
+                          />
+                          <RangeInput 
+                              label="Overlay Opacity" 
+                              value={styles.overlayOpacity !== undefined ? Math.round(parseFloat(styles.overlayOpacity) * 100) : 0} 
+                              min={0} 
+                              max={100} 
+                              step={1} 
+                              unit="%" 
+                              onChange={(v) => onUpdate('overlayOpacity', (v / 100).toString())} 
+                          />
+                          <SelectInput 
+                              label="Object Fit" 
+                              value={styles.objectFit || 'cover'} 
+                              options={[
+                                  {label: 'Cover', value: 'cover'},
+                                  {label: 'Contain', value: 'contain'},
+                                  {label: 'Fill', value: 'fill'},
+                                  {label: 'None', value: 'none'},
+                                  {label: 'Scale Down', value: 'scale-down'}
+                              ]} 
+                              onChange={(v) => onUpdate('objectFit', v)} 
+                          />
+                          <SelectInput 
+                              label="Object Position" 
+                              value={styles.objectPosition || 'center'} 
+                              options={[
+                                  {label: 'Center', value: 'center'},
+                                  {label: 'Top', value: 'top'},
+                                  {label: 'Bottom', value: 'bottom'},
+                                  {label: 'Left', value: 'left'},
+                                  {label: 'Right', value: 'right'},
+                                  {label: 'Top Left', value: 'top left'},
+                                  {label: 'Top Right', value: 'top right'},
+                                  {label: 'Bottom Left', value: 'bottom left'},
+                                  {label: 'Bottom Right', value: 'bottom right'}
+                              ]} 
+                              onChange={(v) => onUpdate('objectPosition', v)} 
+                          />
+                      </AccordionGroup>
+                      <AccordionGroup title="Filters">
+                          <RangeInput 
+                              label="Brightness" 
+                              value={styles.filter?.includes('brightness') ? Math.round(parseFloat(styles.filter.match(/brightness\(([^)]+)\)/)?.[1] || '1') * 100) : 100} 
+                              min={0} 
+                              max={200} 
+                              step={1} 
+                              unit="%" 
+                              onChange={(v) => {
+                                  const currentFilter = styles.filter || '';
+                                  const brightness = `brightness(${v / 100})`;
+                                  const newFilter = currentFilter.replace(/brightness\([^)]+\)/g, '').trim() + ' ' + brightness;
+                                  onUpdate('filter', newFilter.trim());
+                              }} 
+                          />
+                          <RangeInput 
+                              label="Contrast" 
+                              value={styles.filter?.includes('contrast') ? Math.round(parseFloat(styles.filter.match(/contrast\(([^)]+)\)/)?.[1] || '1') * 100) : 100} 
+                              min={0} 
+                              max={200} 
+                              step={1} 
+                              unit="%" 
+                              onChange={(v) => {
+                                  const currentFilter = styles.filter || '';
+                                  const contrast = `contrast(${v / 100})`;
+                                  const newFilter = currentFilter.replace(/contrast\([^)]+\)/g, '').trim() + ' ' + contrast;
+                                  onUpdate('filter', newFilter.trim());
+                              }} 
+                          />
+                          <RangeInput 
+                              label="Saturation" 
+                              value={styles.filter?.includes('saturate') ? Math.round(parseFloat(styles.filter.match(/saturate\(([^)]+)\)/)?.[1] || '1') * 100) : 100} 
+                              min={0} 
+                              max={200} 
+                              step={1} 
+                              unit="%" 
+                              onChange={(v) => {
+                                  const currentFilter = styles.filter || '';
+                                  const saturate = `saturate(${v / 100})`;
+                                  const newFilter = currentFilter.replace(/saturate\([^)]+\)/g, '').trim() + ' ' + saturate;
+                                  onUpdate('filter', newFilter.trim());
+                              }} 
+                          />
+                          <RangeInput 
+                              label="Blur" 
+                              value={styles.filter?.includes('blur') ? Math.round(parseFloat(styles.filter.match(/blur\(([^)]+)\)/)?.[1] || '0') * 10) : 0} 
+                              min={0} 
+                              max={100} 
+                              step={1} 
+                              unit="px" 
+                              onChange={(v) => {
+                                  const currentFilter = styles.filter || '';
+                                  const blur = `blur(${v / 10}px)`;
+                                  const newFilter = currentFilter.replace(/blur\([^)]+\)/g, '').trim() + ' ' + blur;
+                                  onUpdate('filter', newFilter.trim());
+                              }} 
+                          />
+                          <RangeInput 
+                              label="Hue Rotate" 
+                              value={styles.filter?.includes('hue-rotate') ? Math.round(parseFloat(styles.filter.match(/hue-rotate\(([^)]+)\)/)?.[1] || '0')) : 0} 
+                              min={0} 
+                              max={360} 
+                              step={1} 
+                              unit="deg" 
+                              onChange={(v) => {
+                                  const currentFilter = styles.filter || '';
+                                  const hueRotate = `hue-rotate(${v}deg)`;
+                                  const newFilter = currentFilter.replace(/hue-rotate\([^)]+\)/g, '').trim() + ' ' + hueRotate;
+                                  onUpdate('filter', newFilter.trim());
+                              }} 
+                          />
+                      </AccordionGroup>
+                      <AccordionGroup title="Border & Shadow">
+                          <TextInput label="Border Radius" value={styles.borderRadius || ''} onChange={(v) => onUpdate('borderRadius', v)} placeholder="e.g., 8px, 50%, 1rem" />
+                          <TextInput label="Border Width" value={styles.borderWidth || ''} onChange={(v) => onUpdate('borderWidth', v)} placeholder="e.g., 2px, 1rem" />
+                          <ColorInput label="Border Color" value={styles.borderColor || ''} onChange={(v) => onUpdate('borderColor', v)} />
+                          <TextInput label="Box Shadow" value={styles.boxShadow || ''} onChange={(v) => onUpdate('boxShadow', v)} placeholder="e.g., 0 4px 6px rgba(0,0,0,0.1)" />
+                      </AccordionGroup>
+                  </>
+              )}
           </div>
       );
   };
@@ -1432,12 +2099,13 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`h-screen bg-black text-white selection:bg-blue-500/30 overflow-hidden flex flex-col`} style={{ fontFamily: siteData.globalStyles.primaryFont }}>
+    <div className={`h-screen bg-black text-white selection:bg-blue-500/30 overflow-hidden flex flex-col`}>
         <header className="h-14 border-b border-white/10 bg-[#050505] flex items-center justify-between px-4 shrink-0 z-50">
             <div className="flex items-center gap-4">
                 <span className="font-bold text-lg tracking-tighter">Genie<span className="text-blue-500">Build</span></span>
                 <div className="h-4 w-px bg-white/10 mx-2"></div>
                 <button onClick={() => { setSelectedSectionId(null); setSelectedElementId(null); setGlobalTab('themes'); setIsSidebarOpen(true); }} className={`px-3 py-1.5 rounded text-xs transition-colors flex items-center gap-2 ${!selectedSectionId && isSidebarOpen ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`} title="Global Design System"><i className="fa-solid fa-palette"></i>Theme</button>
+                <button onClick={() => addNewSection('allelementsTest')} className="px-3 py-1.5 rounded text-xs transition-colors flex items-center gap-2 text-slate-400 hover:text-white hover:bg-white/5" title="Add All Elements Test Section"><i className="fa-solid fa-vial"></i>Test All Elements</button>
             </div>
              <div className="flex items-center gap-2">
                  <div className="flex bg-[#151515] rounded p-1 border border-[#333] mr-2">
@@ -1510,7 +2178,7 @@ const App: React.FC = () => {
                              {globalTab === 'typography' && (
                                 <div className="space-y-6">
                                     <AccordionGroup title="Default Font" defaultOpen={true}>
-                                        <SelectInput 
+                                        <FontSelectInput 
                                             label="Font Family" 
                                             value={defaultTypography.fontFamily} 
                                             options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))} 
@@ -1572,15 +2240,87 @@ const App: React.FC = () => {
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pb-20">
                              {selectedElementId && selectedElement && selectedSection ? (
-                                 editTab === 'design' ? (renderStyleEditor(selectedElement.style, (k,v) => updateElement(selectedSection.id, selectedElement.id, { style: { ...selectedElement.style, [k]: v } }), 'element')) : (
+                                 editTab === 'design' ? (renderStyleEditor(selectedElement.style, (k,v) => updateElement(selectedSection.id, selectedElement.id, { style: { ...selectedElement.style, [k]: v } }), 'element', selectedElement.type)) : (
                                      <div className="space-y-4">
                                          {selectedElement.type === 'image' ? (
-                                             <ImageControl 
-                                                 label="Image URL" 
-                                                 value={selectedElement.content.imageUrl || ''} 
-                                                 onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, imageUrl: v} })} 
-                                                 onUpload={() => triggerUpload(selectedSection.id, selectedElement.id)}
-                                             />
+                                             <div className="space-y-4">
+                                                 <ImageControl 
+                                                     label="Image URL" 
+                                                     value={selectedElement.content.imageUrl || ''} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, imageUrl: v} })} 
+                                                     onUpload={() => triggerUpload(selectedSection.id, 'imageUrl', selectedElement.id)}
+                                                 />
+                                                 <TextInput 
+                                                     label="Alt Text" 
+                                                     value={selectedElement.content.imageAlt || selectedElement.content.alt || ''} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, imageAlt: v, alt: v} })} 
+                                                     placeholder="Enter image alt text"
+                                                 />
+                                             </div>
+                                         ) : selectedElement.type === 'image-box' ? (
+                                             <div className="space-y-4">
+                                                 <ImageControl 
+                                                     label="Image URL" 
+                                                     value={selectedElement.content.imageUrl || selectedElement.content.src || ''} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, imageUrl: v, src: v} })} 
+                                                     onUpload={() => triggerUpload(selectedSection.id, 'imageUrl', selectedElement.id)}
+                                                 />
+                                                 <TextInput 
+                                                     label="Alt Text" 
+                                                     value={selectedElement.content.imageAlt || selectedElement.content.alt || ''} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, imageAlt: v, alt: v} })} 
+                                                     placeholder="Enter image alt text"
+                                                 />
+                                                 <TextInput 
+                                                     label="Title" 
+                                                     value={selectedElement.content.title || selectedElement.content.text || ''} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, title: v, text: v} })} 
+                                                     placeholder="Enter image box title"
+                                                 />
+                                                 <TextAreaInput 
+                                                     label="Subtitle / Description" 
+                                                     value={selectedElement.content.description || selectedElement.content.subText || ''} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, description: v, subText: v} })} 
+                                                 />
+                                             </div>
+                                         ) : selectedElement.type === 'video' ? (
+                                             <div className="space-y-4">
+                                                 <VideoControl 
+                                                     label="Video URL" 
+                                                     value={selectedElement.content.src || ''} 
+                                                     onChange={(v) => {
+                                                         // If it's a YouTube URL, convert to embed format
+                                                         const isYouTube = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/.test(v);
+                                                         let finalUrl = v;
+                                                         if (isYouTube && !v.includes('youtube.com/embed/')) {
+                                                             const match = v.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+                                                             if (match && match[1]) {
+                                                                 finalUrl = `https://www.youtube.com/embed/${match[1]}`;
+                                                             }
+                                                         }
+                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, src: finalUrl} });
+                                                     }} 
+                                                     onUpload={() => triggerUpload(selectedSection.id, 'videoUrl', selectedElement.id)}
+                                                 />
+                                             </div>
+                                         ) : selectedElement.type === 'icon' ? (
+                                             <div className="space-y-4">
+                                                 <IconPicker 
+                                                     label="Icon" 
+                                                     value={selectedElement.content.icon || 'fa-star'} 
+                                                     onChange={(v) => {
+                                                         // Ensure icon is in correct format (fa-icon-name)
+                                                         const iconValue = v.startsWith('fa-') ? v : `fa-${v}`;
+                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, icon: iconValue} });
+                                                     }} 
+                                                 />
+                                                 <TextInput 
+                                                     label="Icon Size" 
+                                                     value={selectedElement.content.iconSize || '2rem'} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, iconSize: v} })} 
+                                                     placeholder="e.g., 2rem, 24px, 1.5em"
+                                                 />
+                                             </div>
                                          ) : (
                                              <>
                                                  <TextAreaInput 
@@ -1617,22 +2357,74 @@ const App: React.FC = () => {
                                                          }} 
                                                      />
                                                  )}
-                                                 {selectedElement.type === 'text' && (
-                                                     <SelectInput 
-                                                         key={`text-size-${selectedElement.id}-${selectedElement.content.textSize || 'base'}`}
-                                                         label="Text Size" 
-                                                         value={selectedElement.content.textSize || 'base'}
-                                                         options={[
-                                                             {label: 'Base', value: 'base'},
-                                                             {label: 'Small', value: 'small'},
-                                                             {label: 'Large', value: 'large'},
-                                                             {label: 'XL', value: 'xl'}
-                                                         ]} 
+                                                 {selectedElement.type === 'text' && (() => {
+                                                     // For Hero subtitle virtual elements, we need to compute textSize from subtitleSize
+                                                     // For regular text elements, read from content.textSize
+                                                     let currentTextSize: 'base' | 'small' | 'large' | 'xl' = 'base';
+                                                     
+                                                     if (selectedElement.id.includes('-hero-subtitle')) {
+                                                         // Hero subtitle virtual element - read textSize directly from content.subtitleTextSize
+                                                         const currentSection = siteData.sections.find(s => s.id === selectedSection.id);
+                                                         if (currentSection && currentSection.content.subtitleTextSize) {
+                                                             // Direct storage - most reliable
+                                                             currentTextSize = currentSection.content.subtitleTextSize;
+                                                         } else {
+                                                             // Fallback to selectedElement (from useMemo)
+                                                             currentTextSize = selectedElement.content?.textSize || 'base';
+                                                         }
+                                                     } else {
+                                                         // Regular text element - read from content.textSize
+                                                         const currentSection = siteData.sections.find(s => s.id === selectedSection.id);
+                                                         const currentElement = currentSection?.elements?.find(e => e.id === selectedElement.id);
+                                                         currentTextSize = (currentElement?.content?.textSize || selectedElement.content?.textSize || 'base') as 'base' | 'small' | 'large' | 'xl';
+                                                     }
+                                                     
+                                                     return (
+                                                         <SelectInput 
+                                                             key={`text-size-${selectedElement.id}-${currentTextSize}`}
+                                                             label="Text Size" 
+                                                             value={currentTextSize}
+                                                             options={[
+                                                                 {label: 'Base', value: 'base'},
+                                                                 {label: 'Small', value: 'small'},
+                                                                 {label: 'Large', value: 'large'},
+                                                                 {label: 'XL', value: 'xl'}
+                                                             ]} 
+                                                             onChange={(v) => {
+                                                                 const newTextSize = v as 'base' | 'small' | 'large' | 'xl';
+                                                                 updateElement(selectedSection.id, selectedElement.id, { 
+                                                                     content: {...selectedElement.content, textSize: newTextSize} 
+                                                                 });
+                                                             }} 
+                                                         />
+                                                     );
+                                                 })()}
+                                                 {selectedElement.type === 'button' && (
+                                                     <TextInput 
+                                                         label="Button Link (URL)" 
+                                                         value={
+                                                             // For Hero button virtual elements, read from section content
+                                                             selectedElement.id.includes('-hero-button')
+                                                                 ? (selectedSection.content.ctaHref || '')
+                                                                 : (selectedElement.content.link || '')
+                                                         }
                                                          onChange={(v) => {
-                                                             updateElement(selectedSection.id, selectedElement.id, { 
-                                                                 content: {...selectedElement.content, textSize: v as 'base' | 'small' | 'large' | 'xl'} 
-                                                             });
-                                                         }} 
+                                                             // For Hero button virtual elements, update ctaHref in section content
+                                                             if (selectedElement.id.includes('-hero-button')) {
+                                                                 updateElement(selectedSection.id, selectedElement.id, {
+                                                                     content: {
+                                                                         ...selectedElement.content,
+                                                                         link: v
+                                                                     }
+                                                                 });
+                                                             } else {
+                                                                 // For regular button elements
+                                                                 updateElement(selectedSection.id, selectedElement.id, { 
+                                                                     content: {...selectedElement.content, link: v} 
+                                                                 });
+                                                             }
+                                                         }}
+                                                         placeholder="https://example.com or /page"
                                                      />
                                                  )}
                                              </>
@@ -1707,7 +2499,7 @@ const App: React.FC = () => {
                 </PreviewFrame>
             </main>
         </div>
-        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+        <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileUpload} />
         <Toaster
           position="top-right"
           toastOptions={{

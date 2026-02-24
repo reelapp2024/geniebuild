@@ -76,6 +76,11 @@ export const SECTIONS_REGISTRY: SectionConfig[] = [
     sectionType: 'image-banner',
     variants: ['BannerCenter', 'BannerSplit', 'BannerBottomLeft'],
     defaultVariant: 'BannerCenter'
+  },
+  {
+    sectionType: 'allelementsTest',
+    variants: ['AllElementsTest'],
+    defaultVariant: 'AllElementsTest'
   }
 ];
 

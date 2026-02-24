@@ -1,5 +1,5 @@
 
-export type SectionType = 'navbar' | 'hero' | 'features' | 'cta' | 'footer' | 'testimonials' | 'pricing' | 'image-banner' | 'elements';
+export type SectionType = 'navbar' | 'hero' | 'features' | 'cta' | 'footer' | 'testimonials' | 'pricing' | 'image-banner' | 'elements' | 'allelementsTest';
 
 export type ElementType = 
   // Basic
@@ -282,6 +282,7 @@ export interface Section {
   content: {
     title?: string;
     subtitle?: string;
+    subtitleTextSize?: 'base' | 'small' | 'large' | 'xl'; // Store textSize directly for Hero subtitle
     description?: string;
     ctaText?: string;
     ctaHref?: string;

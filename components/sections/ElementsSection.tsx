@@ -10,6 +10,15 @@ interface ElementsSectionProps {
   onElementSelect?: (elementId: string) => void;
   selectedElementId?: string | null;
   buttonClass: string;
+  readOnly?: boolean;
+  themeColors?: {
+    titleColor?: string;
+    textColor?: string;
+    accentColor?: string;
+    buttonBackgroundColor?: string;
+    buttonTextColor?: string;
+    backgroundColor?: string;
+  };
 }
 
 // Helper for Countdown
@@ -106,13 +115,41 @@ const getSafeStyle = (style: any): React.CSSProperties => {
   delete css.hiddenOnDesktop;
   delete css.hiddenOnTablet;
   delete css.hiddenOnMobile;
+  
+  // Remove fontFamily if it's undefined, null, or empty string (let CSS theme handle it)
+  if (!css.fontFamily || css.fontFamily.trim() === '') {
+    delete css.fontFamily;
+  }
 
   return css as React.CSSProperties;
 };
 
-export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onElementUpdate, onElementSelect, selectedElementId, buttonClass }) => {
+export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onElementUpdate, onElementSelect, selectedElementId, buttonClass, readOnly = false, themeColors }) => {
   const elements = section.elements || [];
   const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
+  
+  // Get theme colors from section styles or passed prop
+  const theme = themeColors || {
+    titleColor: section.styles?.titleColor,
+    textColor: section.styles?.textColor,
+    accentColor: section.styles?.accentColor,
+    buttonBackgroundColor: section.styles?.buttonBackgroundColor,
+    buttonTextColor: section.styles?.buttonTextColor,
+    backgroundColor: section.styles?.backgroundColor,
+  };
+  
+  // Helper to merge element style with theme defaults
+  // Only uses element color if it's explicitly set (not undefined/null/empty)
+  const getThemeAwareStyle = (elementStyle: any, colorKey: 'color' | 'backgroundColor' | 'borderColor', themeColor?: string): any => {
+    const mergedStyle = { ...elementStyle };
+    
+    // If element has explicit color, use it; otherwise use theme color
+    if (themeColor && (!elementStyle[colorKey] || elementStyle[colorKey] === 'transparent' || elementStyle[colorKey] === '')) {
+      mergedStyle[colorKey] = themeColor;
+    }
+    
+    return mergedStyle;
+  };
 
   const handleContentUpdate = (id: string, key: string, value: any) => {
     const el = elements.find(e => e.id === id);
@@ -133,21 +170,47 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
     const isSelected = selectedElementId === id;
     const selectedClass = isSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20';
 
-    const safeStyle = getSafeStyle(style);
+    // Merge element style with theme colors (only if element doesn't have explicit colors)
+    let mergedStyle = { ...style };
+    if (theme) {
+      // Only apply theme colors if element doesn't have explicit colors
+      if (!style?.color || style.color === 'transparent' || style.color === '') {
+        mergedStyle.color = theme.textColor;
+      }
+      // For buttons, use button theme colors
+      if ((type === 'button' || type === 'call-to-action') && (!style?.backgroundColor || style.backgroundColor === 'transparent' || style.backgroundColor === '')) {
+        mergedStyle.backgroundColor = theme.buttonBackgroundColor;
+        if (!style?.color || style.color === 'transparent' || style.color === '') {
+          mergedStyle.color = theme.buttonTextColor;
+        }
+      }
+    }
+    
+    const safeStyle = getSafeStyle(mergedStyle);
 
     switch (type) {
         case 'heading':
             const headingTag = (content.htmlTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+            // Use theme titleColor if element color is not explicitly set
+            // Only apply fontFamily if explicitly set (not undefined/null/empty)
+            const headingStyle: React.CSSProperties = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.titleColor || '#F8FAFC',
+            };
+            // Only add fontFamily if it's explicitly set (not undefined, null, or empty string)
+            if (safeStyle.fontFamily && safeStyle.fontFamily.trim() !== '') {
+                headingStyle.fontFamily = safeStyle.fontFamily;
+            }
             return React.createElement(
                 headingTag,
                 {
                     key: `${id}-${headingTag}`, // Force re-render when tag changes
                     className: `font-bold outline-none rounded px-1 relative transition-all cursor-pointer ${selectedClass}`,
-                    style: safeStyle,
+                    style: headingStyle,
                     onClick: (e: React.MouseEvent) => handleClick(e, id),
-                    contentEditable: true,
-                    suppressContentEditableWarning: true,
-                    onBlur: (e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent)
+                    contentEditable: !readOnly,
+                    suppressContentEditableWarning: !readOnly,
+                    onBlur: !readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined
                 },
                 content.text
             );
@@ -157,14 +220,25 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             const textSizeClass = content.textSize === 'small' ? 'text-sm' : 
                                   content.textSize === 'large' ? 'text-lg' : 
                                   content.textSize === 'xl' ? 'text-xl' : '';
+            // Use theme textColor if element color is not explicitly set
+            // Only apply fontFamily if explicitly set (not undefined/null/empty)
+            const textStyle: React.CSSProperties = {
+                ...safeStyle,
+                color: safeStyle.color || theme.textColor || '#D1D5DB',
+            };
+            // Only add fontFamily if it's explicitly set (not undefined, null, or empty string)
+            if (safeStyle.fontFamily && safeStyle.fontFamily.trim() !== '') {
+                textStyle.fontFamily = safeStyle.fontFamily;
+            }
             return (
                 <p 
                     key={`${id}-${content.textSize || 'base'}`}
                     className={`outline-none rounded px-1 relative transition-all cursor-pointer ${textSizeClass} ${selectedClass}`}
-                    style={safeStyle}
-                    onClick={(e: React.MouseEvent) => handleClick(e, id)}
-                    contentEditable suppressContentEditableWarning
-                    onBlur={(e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent)}
+                    style={textStyle}
+                    onClick={!readOnly ? (e: React.MouseEvent) => handleClick(e, id) : undefined}
+                    contentEditable={!readOnly}
+                    suppressContentEditableWarning={!readOnly}
+                    onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}
                 >
                     {content.text}
                 </p>
@@ -172,88 +246,296 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
 
         case 'button':
         case 'call-to-action':
+            // Use theme button colors if element colors are not explicitly set
+            const buttonStyle = {
+                ...safeStyle,
+                backgroundColor: safeStyle.backgroundColor || theme?.buttonBackgroundColor || '#E11D48',
+                color: safeStyle.color || theme?.buttonTextColor || '#FFFFFF',
+                textAlign: 'center' as const
+            };
+            const buttonElement = (
+                <button 
+                    className={`${buttonClass} ${!readOnly ? 'outline-none relative transition-all cursor-pointer' : ''} ${selectedClass}`}
+                    style={buttonStyle}
+                    onClick={!readOnly ? (e) => handleClick(e, id) : undefined}
+                    contentEditable={!readOnly}
+                    suppressContentEditableWarning={!readOnly}
+                    onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}
+                >
+                    {content.text}
+                </button>
+            );
+            
             return (
                 <div key={id} style={{ textAlign: safeStyle.textAlign }}>
-                    <button 
-                        className={`${buttonClass} outline-none relative transition-all cursor-pointer ${selectedClass}`}
-                        style={{ ...safeStyle, textAlign: 'center' }}
-                        onClick={(e) => handleClick(e, id)}
-                        contentEditable suppressContentEditableWarning
-                        onBlur={(e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent)}
-                    >
-                        {content.text}
-                    </button>
+                    {content.link ? (
+                        <a 
+                            href={content.link}
+                            target={content.link.startsWith('http') ? '_blank' : '_self'}
+                            rel={content.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                            onClick={!readOnly ? (e) => {
+                                handleClick(e, id);
+                            } : undefined}
+                            className="inline-block"
+                        >
+                            {buttonElement}
+                        </a>
+                    ) : (
+                        buttonElement
+                    )}
                     {type === 'call-to-action' && content.subText && (
-                        <p className="mt-2 text-sm opacity-70" contentEditable suppressContentEditableWarning onBlur={(e) => handleContentUpdate(id, 'subText', e.currentTarget.textContent)}>{content.subText}</p>
+                        <p className="mt-2 text-sm opacity-70" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'subText', e.currentTarget.textContent) : undefined}>{content.subText}</p>
                     )}
                 </div>
             );
 
         case 'image':
+            // Construct full image URL - if it's a relative path, prepend base URL
+            const imageUrl = content.imageUrl || content.src || '';
+            const fullImageUrl = imageUrl 
+                ? (imageUrl.startsWith('http') ? imageUrl : `http://localhost:1111${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`)
+                : 'https://via.placeholder.com/600x400';
+            
+            // Extract image-specific styles from original style (before getSafeStyle removes custom properties)
+            const imageOpacity = (style?.opacity !== undefined ? (typeof style.opacity === 'string' ? parseFloat(style.opacity) : style.opacity) : (safeStyle.opacity !== undefined ? (typeof safeStyle.opacity === 'string' ? parseFloat(safeStyle.opacity) : safeStyle.opacity) : 1));
+            const objectFit = (style?.objectFit || safeStyle.objectFit || 'cover') as any;
+            const objectPosition = (style?.objectPosition || safeStyle.objectPosition || 'center') as string;
+            const imageFilter = (style?.filter || safeStyle.filter || '') as string;
+            const overlayColor = (style as any)?.overlayColor;
+            const overlayOpacity = (style as any)?.overlayOpacity !== undefined ? (typeof (style as any).overlayOpacity === 'string' ? parseFloat((style as any).overlayOpacity) : (style as any).overlayOpacity) : 0;
+            
+            // Build image style
+            const imageStyle: React.CSSProperties = {
+                borderRadius: safeStyle.borderRadius,
+                width: '100%',
+                height: '100%',
+                opacity: imageOpacity,
+                objectFit: objectFit as any,
+                objectPosition: objectPosition,
+                filter: imageFilter || undefined,
+                borderWidth: safeStyle.borderWidth,
+                borderColor: safeStyle.borderColor,
+                borderStyle: safeStyle.borderWidth ? 'solid' : undefined,
+                boxShadow: safeStyle.boxShadow,
+            };
+            
             return (
-                <div key={id} className={`relative group cursor-pointer inline-block max-w-full ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
-                    <img 
-                        src={content.src || 'https://via.placeholder.com/600x400'} 
-                        alt={content.alt} 
-                        className="max-w-full h-auto object-cover shadow-lg"
-                        style={{ borderRadius: safeStyle.borderRadius, width: '100%', height: '100%' }}
-                    />
+                <div key={id} className={`relative group cursor-pointer inline-block max-w-full ${selectedClass}`} onClick={!readOnly ? (e) => handleClick(e, id) : undefined} style={{ ...safeStyle, opacity: undefined }}>
+                    <div className="relative w-full h-full">
+                        <img 
+                            src={fullImageUrl} 
+                            alt={content.imageAlt || content.alt || 'Image'} 
+                            className="max-w-full h-auto"
+                            style={imageStyle}
+                            onError={(e) => {
+                                // Fallback to placeholder if image fails to load
+                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x400';
+                            }}
+                        />
+                        {/* Overlay */}
+                        {overlayColor && overlayOpacity > 0 && (
+                            <div 
+                                className="absolute inset-0 pointer-events-none"
+                                style={{
+                                    backgroundColor: overlayColor,
+                                    opacity: overlayOpacity,
+                                }}
+                            />
+                        )}
+                    </div>
                 </div>
             );
 
         case 'video':
-             return (
-                 <div key={id} className={`relative w-full aspect-video bg-black rounded-lg overflow-hidden ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
-                     {content.src ? (
-                         <iframe 
-                            src={content.src.replace('watch?v=', 'embed/')} 
-                            className="w-full h-full border-0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowFullScreen
-                         />
-                     ) : (
-                         <div className="flex items-center justify-center h-full text-white/20 flex-col gap-4">
-                             <i className="fa-solid fa-play text-4xl"></i>
-                             <span className="text-sm font-bold uppercase tracking-widest">Add Video URL</span>
-                         </div>
-                     )}
-                 </div>
-             );
+            // Helper to check if URL is YouTube
+            const isYouTubeUrl = (url: string): boolean => {
+                return /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/.test(url);
+            };
+            
+            // Helper to convert YouTube URL to embed format
+            const convertToEmbedUrl = (url: string): string => {
+                if (url.includes('youtube.com/embed/') || url.includes('youtu.be/')) {
+                    return url;
+                }
+                const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+                if (match && match[1]) {
+                    return `https://www.youtube.com/embed/${match[1]}`;
+                }
+                return url;
+            };
+            
+            // Construct full video URL
+            const videoUrl = content.src || '';
+            const fullVideoUrl = videoUrl 
+                ? (videoUrl.startsWith('http') 
+                    ? (isYouTubeUrl(videoUrl) ? convertToEmbedUrl(videoUrl) : videoUrl)
+                    : `http://localhost:1111${videoUrl.startsWith('/') ? '' : '/'}${videoUrl}`)
+                : '';
+            
+            return (
+                <div 
+                    key={id} 
+                    className={`relative w-full aspect-video bg-black rounded-lg overflow-hidden group ${selectedClass}`} 
+                    onClick={!readOnly ? (e) => {
+                        // Only handle click if not clicking on the overlay
+                        if ((e.target as HTMLElement).closest('.video-edit-overlay')) {
+                            return;
+                        }
+                        handleClick(e, id);
+                    } : undefined} 
+                    style={safeStyle}
+                >
+                    {fullVideoUrl ? (
+                        <>
+                            {isYouTubeUrl(videoUrl) || fullVideoUrl.includes('youtube.com/embed/') ? (
+                                <>
+                                    <iframe 
+                                        src={fullVideoUrl} 
+                                        className={`w-full h-full border-0 ${!readOnly ? 'pointer-events-none' : ''}`}
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowFullScreen
+                                    />
+                                    {!readOnly && (
+                                        <div 
+                                            className="video-edit-overlay absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer z-10"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleClick(e, id);
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.opacity = '1';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (selectedElementId !== id) {
+                                                    e.currentTarget.style.opacity = '0';
+                                                }
+                                            }}
+                                            style={{ 
+                                                opacity: selectedElementId === id ? 1 : 0 
+                                            }}
+                                        >
+                                            <div className="bg-white text-black px-4 py-2 rounded text-xs font-bold flex items-center gap-2">
+                                                <i className="fa-solid fa-edit"></i>
+                                                Edit Video
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <video 
+                                        src={fullVideoUrl} 
+                                        className={`w-full h-full object-contain ${!readOnly ? 'pointer-events-none' : ''}`}
+                                        controls={readOnly}
+                                        onClick={!readOnly ? (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleClick(e, id);
+                                        } : undefined}
+                                    />
+                                    {!readOnly && (
+                                        <div 
+                                            className="video-edit-overlay absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer z-10"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleClick(e, id);
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.opacity = '1';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (selectedElementId !== id) {
+                                                    e.currentTarget.style.opacity = '0';
+                                                }
+                                            }}
+                                            style={{ 
+                                                opacity: selectedElementId === id ? 1 : 0 
+                                            }}
+                                        >
+                                            <div className="bg-white text-black px-4 py-2 rounded text-xs font-bold flex items-center gap-2">
+                                                <i className="fa-solid fa-edit"></i>
+                                                Edit Video
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </>
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-white/20 flex-col gap-4">
+                            <i className="fa-solid fa-play text-4xl"></i>
+                            <span className="text-sm font-bold uppercase tracking-widest">Add Video URL</span>
+                        </div>
+                    )}
+                </div>
+            );
 
         case 'icon':
+            // Ensure icon class is properly formatted (handle both 'fa-star' and 'star' formats)
+            const iconClass = content.icon 
+                ? (content.icon.startsWith('fa-') ? `fa-solid ${content.icon}` : `fa-solid fa-${content.icon}`)
+                : 'fa-solid fa-star';
+            // Use theme accentColor if element color is not explicitly set
+            const iconColor = safeStyle.color || style?.accentColor || theme?.accentColor || '#F59E0B';
             return (
                 <div key={id} className={`inline-block ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
-                    <i className={`fa-solid ${content.icon || 'fa-star'}`} style={{ fontSize: safeStyle.fontSize || '2rem', color: safeStyle.color }}></i>
+                    <i className={iconClass} style={{ fontSize: content.iconSize || safeStyle.fontSize || '2rem', color: iconColor }}></i>
                 </div>
             );
             
         case 'icon-box':
+            // Ensure icon class is properly formatted
+            const iconBoxClass = content.icon 
+                ? (content.icon.startsWith('fa-') ? `fa-solid ${content.icon}` : `fa-solid fa-${content.icon}`)
+                : 'fa-solid fa-layer-group';
+            // Use theme accentColor if element color is not explicitly set
+            const iconBoxColor = style?.accentColor || theme?.accentColor || '#F59E0B';
             return (
                 <div key={id} className={`flex gap-4 p-4 rounded-lg bg-white/5 border border-white/5 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
                     <div className="shrink-0">
-                         <i className={`fa-solid ${content.icon || 'fa-layer-group'}`} style={{ fontSize: '2rem', color: style.accentColor }}></i>
+                         <i className={iconBoxClass} style={{ fontSize: '2rem', color: iconBoxColor }}></i>
                     </div>
                     <div>
-                        <h3 className="font-bold text-lg mb-1" contentEditable suppressContentEditableWarning onBlur={(e) => handleContentUpdate(id, 'text', e.currentTarget.textContent)}>{content.text || 'Icon Box Title'}</h3>
-                        <p className="opacity-70 text-sm" contentEditable suppressContentEditableWarning onBlur={(e) => handleContentUpdate(id, 'subText', e.currentTarget.textContent)}>{content.subText || 'Description for this icon box goes here.'}</p>
+                        <h3 className="font-bold text-lg mb-1" style={{ color: theme?.titleColor || safeStyle.color }} contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}>{content.text || 'Icon Box Title'}</h3>
+                        <p className="opacity-70 text-sm" style={{ color: theme?.textColor || safeStyle.color }} contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'subText', e.currentTarget.textContent) : undefined}>{content.subText || 'Description for this icon box goes here.'}</p>
                     </div>
                 </div>
             );
 
         case 'image-box':
+            // Construct full image URL for image-box
+            const imageBoxUrl = content.imageUrl || content.src || '';
+            const fullImageBoxUrl = imageBoxUrl 
+                ? (imageBoxUrl.startsWith('http') ? imageBoxUrl : `http://localhost:1111${imageBoxUrl.startsWith('/') ? '' : '/'}${imageBoxUrl}`)
+                : 'https://via.placeholder.com/400x250';
+            
             return (
-                <div key={id} className={`flex flex-col gap-4 p-0 rounded-lg overflow-hidden bg-white/5 border border-white/5 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
-                     <img src={content.src || 'https://via.placeholder.com/400x250'} className="w-full h-48 object-cover" alt="Box" />
+                <div key={id} className={`flex flex-col gap-4 p-0 rounded-lg overflow-hidden bg-white/5 border border-white/5 ${selectedClass}`} onClick={!readOnly ? (e) => handleClick(e, id) : undefined} style={safeStyle}>
+                     <img 
+                        src={fullImageBoxUrl} 
+                        className="w-full h-48 object-cover" 
+                        alt={content.title || content.text || 'Image Box'} 
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x250';
+                        }}
+                     />
                      <div className="p-6 pt-2">
-                        <h3 className="font-bold text-xl mb-2" contentEditable suppressContentEditableWarning onBlur={(e) => handleContentUpdate(id, 'text', e.currentTarget.textContent)}>{content.text || 'Image Box Title'}</h3>
-                        <p className="opacity-70 text-sm" contentEditable suppressContentEditableWarning onBlur={(e) => handleContentUpdate(id, 'subText', e.currentTarget.textContent)}>{content.subText || 'Description text for the image box element.'}</p>
+                        <h3 className="font-bold text-xl mb-2" style={{ color: theme?.titleColor || safeStyle.color }} contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}>{content.title || content.text || 'Image Box Title'}</h3>
+                        <p className="opacity-70 text-sm" style={{ color: theme?.textColor || safeStyle.color }} contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'description', e.currentTarget.textContent) : undefined}>{content.description || content.subText || 'Description text for the image box element.'}</p>
                      </div>
                 </div>
             );
 
         case 'list':
+            // Use theme textColor if element color is not explicitly set
+            const listStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB'
+            };
             return (
-                <ul key={id} className={`list-disc list-inside space-y-2 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
+                <ul key={id} className={`list-disc list-inside space-y-2 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={listStyle}>
                     {(content.items || [{title: 'List Item 1'}, {title: 'List Item 2'}, {title: 'List Item 3'}]).map((item, i) => (
                         <li key={i} className="opacity-90">
                             {item.title}
@@ -272,40 +554,61 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
             
         case 'badge':
+            // Use theme accentColor if element backgroundColor is not explicitly set
+            const badgeBgColor = style?.backgroundColor || style?.accentColor || theme?.accentColor || '#3b82f6';
             return (
                 <span 
                     key={id} 
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${selectedClass}`} 
-                    style={{ backgroundColor: style.accentColor || '#3b82f6', color: '#fff', ...safeStyle }}
-                    onClick={(e) => handleClick(e, id)}
-                    contentEditable suppressContentEditableWarning 
-                    onBlur={(e) => handleContentUpdate(id, 'text', e.currentTarget.textContent)}
+                    style={{ backgroundColor: badgeBgColor, color: '#fff', ...safeStyle }}
+                    onClick={!readOnly ? (e) => handleClick(e, id) : undefined}
+                    contentEditable={!readOnly}
+                    suppressContentEditableWarning={!readOnly}
+                    onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}
                 >
                     {content.text || 'Badge'}
                 </span>
             );
 
         case 'highlight-text':
+            // Use theme accentColor if element backgroundColor is not explicitly set
+            const highlightBgColor = style?.accentColor || theme?.accentColor || '#facc15';
+            const highlightTextStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB'
+            };
             return (
-                <p key={id} className={`${selectedClass}`} style={safeStyle} onClick={(e) => handleClick(e, id)}>
-                    Here is some <span className="px-1 rounded" style={{ backgroundColor: style.accentColor || '#facc15', color: '#000' }}>{content.text || 'Highlighted'}</span> text example.
+                <p key={id} className={`${selectedClass}`} style={highlightTextStyle} onClick={!readOnly ? (e) => handleClick(e, id) : undefined}>
+                    Here is some <span className="px-1 rounded" style={{ backgroundColor: highlightBgColor, color: '#000' }}>{content.text || 'Highlighted'}</span> text example.
                 </p>
             );
 
         case 'blockquote':
+            // Use theme accentColor and textColor if element colors are not explicitly set
+            const blockquoteBorderColor = style?.borderColor || style?.accentColor || theme?.accentColor || '#fff';
+            const blockquoteStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB',
+                borderColor: blockquoteBorderColor
+            };
             return (
-                <blockquote key={id} className={`border-l-4 pl-4 py-2 italic opacity-80 ${selectedClass}`} style={{ borderColor: style.accentColor || '#fff', ...safeStyle }} onClick={(e) => handleClick(e, id)}>
-                    <p className="mb-2" contentEditable suppressContentEditableWarning onBlur={(e) => handleContentUpdate(id, 'text', e.currentTarget.textContent)}>"{content.text || 'This is a quote.'}"</p>
+                <blockquote key={id} className={`border-l-4 pl-4 py-2 italic opacity-80 ${selectedClass}`} style={blockquoteStyle} onClick={!readOnly ? (e) => handleClick(e, id) : undefined}>
+                    <p className="mb-2" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}>"{content.text || 'This is a quote.'}"</p>
                     <cite className="text-sm font-bold not-italic opacity-70">- {content.author || 'Author Name'}</cite>
                 </blockquote>
             );
 
         case 'accordion':
+            // Use theme textColor if element color is not explicitly set
+            const accordionStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB'
+            };
             return (
-                <div key={id} className={`space-y-2 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
+                <div key={id} className={`space-y-2 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={accordionStyle}>
                     {content.items?.map((item, idx) => (
                         <details key={idx} className="group bg-white/5 border border-white/10 rounded-lg open:bg-white/10 transition-colors">
-                            <summary className="flex items-center justify-between p-4 cursor-pointer font-bold list-none">
+                            <summary className="flex items-center justify-between p-4 cursor-pointer font-bold list-none" style={{ color: theme?.titleColor }}>
                                 <span>{item.title}</span>
                                 <i className="fa-solid fa-chevron-down text-xs transition-transform group-open:rotate-180"></i>
                             </summary>
@@ -318,10 +621,15 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
 
         case 'toggle':
+            // Use theme textColor if element color is not explicitly set
+            const toggleStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB'
+            };
             return (
-                <div key={id} className={`bg-white/5 border border-white/10 rounded-lg ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
+                <div key={id} className={`bg-white/5 border border-white/10 rounded-lg ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={toggleStyle}>
                      <details className="group">
-                        <summary className="flex items-center gap-3 p-4 cursor-pointer font-bold list-none">
+                        <summary className="flex items-center gap-3 p-4 cursor-pointer font-bold list-none" style={{ color: theme?.titleColor }}>
                              <div className="w-10 h-6 bg-white/10 rounded-full relative group-open:bg-green-500 transition-colors">
                                  <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all group-open:left-5"></div>
                              </div>
@@ -336,15 +644,21 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
 
         case 'tabs':
             const currentTab = activeTabs[id] || 0;
+            // Use theme accentColor and textColor if element colors are not explicitly set
+            const tabsAccentColor = style?.accentColor || theme?.accentColor || '#3b82f6';
+            const tabsStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB'
+            };
             return (
-                <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
+                <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, id)} style={tabsStyle}>
                     <div className="flex border-b border-white/10 mb-4 overflow-x-auto">
                         {content.items?.map((item, idx) => (
                             <button 
                                 key={idx}
                                 onClick={(e) => { e.stopPropagation(); setActiveTabs({...activeTabs, [id]: idx}); }}
                                 className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${currentTab === idx ? 'border-blue-500 text-white' : 'border-transparent text-white/50 hover:text-white'}`}
-                                style={{ borderColor: currentTab === idx ? style.accentColor : 'transparent' }}
+                                style={{ borderColor: currentTab === idx ? tabsAccentColor : 'transparent' }}
                             >
                                 {item.title}
                             </button>
@@ -357,8 +671,14 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
 
         case 'progress-bar':
+            // Use theme accentColor and textColor if element colors are not explicitly set
+            const progressBarColor = style?.accentColor || theme?.accentColor || '#3b82f6';
+            const progressBarStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB'
+            };
             return (
-                <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
+                <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, id)} style={progressBarStyle}>
                     <div className="flex justify-between mb-1 text-xs font-bold uppercase tracking-wider">
                         <span>{content.text}</span>
                         <span>{content.percentage}%</span>
@@ -366,16 +686,22 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                     <div className="w-full bg-white/10 rounded-full h-2.5">
                         <div 
                             className="bg-blue-600 h-2.5 rounded-full transition-all duration-1000" 
-                            style={{ width: `${content.percentage}%`, backgroundColor: style.accentColor || '#3b82f6' }}
+                            style={{ width: `${content.percentage}%`, backgroundColor: progressBarColor }}
                         ></div>
                     </div>
                 </div>
             );
 
         case 'counter':
+            // Use theme accentColor and textColor if element colors are not explicitly set
+            const counterAccentColor = style?.accentColor || theme?.accentColor || '#ffffff';
+            const counterStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB'
+            };
             return (
-                <div key={id} className={`text-center p-6 border border-white/10 bg-white/5 rounded-xl ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
-                    <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: style.accentColor || '#ffffff' }}>
+                <div key={id} className={`text-center p-6 border border-white/10 bg-white/5 rounded-xl ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={counterStyle}>
+                    <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: counterAccentColor }}>
                         {content.prefix}{content.targetNumber}{content.suffix}
                     </div>
                     <div className="text-sm font-bold uppercase tracking-widest opacity-60">
@@ -409,19 +735,24 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 >
                      <div style={{ color: alertBorder[alertBoxType] }}><i className={`fa-solid ${content.icon || 'fa-circle-info'}`}></i></div>
                      <div>
-                         <strong className="block font-bold mb-1" contentEditable suppressContentEditableWarning onBlur={(e) => handleContentUpdate(id, 'text', e.currentTarget.textContent)}>{content.text || 'Alert Title'}</strong>
-                         <p className="text-sm opacity-80" contentEditable suppressContentEditableWarning onBlur={(e) => handleContentUpdate(id, 'subText', e.currentTarget.textContent)}>{content.subText || 'Alert description.'}</p>
+                         <strong className="block font-bold mb-1" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}>{content.text || 'Alert Title'}</strong>
+                         <p className="text-sm opacity-80" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'subText', e.currentTarget.textContent) : undefined}>{content.subText || 'Alert description.'}</p>
                      </div>
                 </div>
             );
 
         case 'testimonial':
+            // Use theme textColor if element color is not explicitly set
+            const testimonialStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB'
+            };
             return (
-                 <div key={id} className={`p-6 rounded-xl bg-white/5 border border-white/10 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
+                 <div key={id} className={`p-6 rounded-xl bg-white/5 border border-white/10 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={testimonialStyle}>
                      <div className="flex items-center gap-4 mb-4">
                          <img src={content.items?.[0]?.avatar || 'https://via.placeholder.com/50'} className="w-12 h-12 rounded-full object-cover" alt="Avatar" />
                          <div>
-                             <div className="font-bold">{content.items?.[0]?.author || 'John Doe'}</div>
+                             <div className="font-bold" style={{ color: theme?.titleColor }}>{content.items?.[0]?.author || 'John Doe'}</div>
                              <div className="text-xs opacity-50">{content.items?.[0]?.role || 'Customer'}</div>
                          </div>
                          <div className="ml-auto text-yellow-500 text-sm">
@@ -433,10 +764,17 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
 
         case 'pricing-table':
+            // Use theme accentColor and textColor if element colors are not explicitly set
+            const pricingBorderColor = style?.borderColor || style?.accentColor || theme?.accentColor || '#3b82f6';
+            const pricingStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB',
+                borderColor: pricingBorderColor
+            };
              return (
-                 <div key={id} className={`p-8 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center text-center ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={{ borderColor: style.accentColor, ...safeStyle }}>
-                     <h3 className="text-xl font-bold mb-2">{content.text || 'Plan Name'}</h3>
-                     <div className="text-4xl font-bold mb-1">{content.price || '$99'}</div>
+                 <div key={id} className={`p-8 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center text-center ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={pricingStyle}>
+                     <h3 className="text-xl font-bold mb-2" style={{ color: theme?.titleColor }}>{content.text || 'Plan Name'}</h3>
+                     <div className="text-4xl font-bold mb-1" style={{ color: theme?.accentColor }}>{content.price || '$99'}</div>
                      <div className="text-sm opacity-50 mb-6">{content.period || 'per month'}</div>
                      <ul className="space-y-3 mb-8 w-full text-left">
                          {content.items?.map((feature, i) => (
@@ -460,16 +798,23 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             const rotateClass = directionClass[dir] || directionClass.left;
             
             const backRotate = (dir === 'top' || dir === 'bottom') ? 'rotate-x-180' : 'rotate-y-180';
+            
+            // Use theme accentColor if element color is not explicitly set
+            const flipBoxAccentColor = style?.accentColor || theme?.accentColor || '#3b82f6';
+            const flipBoxStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB'
+            };
 
             return (
-                 <div key={id} className={`group h-64 perspective-1000 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
+                 <div key={id} className={`group h-64 perspective-1000 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={flipBoxStyle}>
                      <div className={`relative w-full h-full transition-transform duration-700 transform-style-3d ${rotateClass}`}>
                          <div className="absolute inset-0 backface-hidden bg-white/10 border border-white/10 rounded-xl flex flex-col items-center justify-center p-6 text-center">
-                              <i className={`fa-solid ${content.icon || 'fa-star'} text-4xl mb-4`} style={{color: style.accentColor}}></i>
-                              <h3 className="font-bold text-xl">{content.frontTitle || 'Front Title'}</h3>
+                              <i className={`fa-solid ${content.icon || 'fa-star'} text-4xl mb-4`} style={{color: flipBoxAccentColor}}></i>
+                              <h3 className="font-bold text-xl" style={{ color: theme?.titleColor }}>{content.frontTitle || 'Front Title'}</h3>
                               <p className="text-sm opacity-70 mt-2">{content.frontDesc || 'Hover to flip'}</p>
                          </div>
-                         <div className={`absolute inset-0 backface-hidden ${backRotate} bg-blue-600 rounded-xl flex flex-col items-center justify-center p-6 text-center`} style={{ backgroundColor: style.accentColor }}>
+                         <div className={`absolute inset-0 backface-hidden ${backRotate} bg-blue-600 rounded-xl flex flex-col items-center justify-center p-6 text-center`} style={{ backgroundColor: flipBoxAccentColor }}>
                               <h3 className="font-bold text-xl">{content.backTitle || 'Back Title'}</h3>
                               <p className="text-sm opacity-90 mt-2 mb-4">{content.backDesc || 'Hidden details revealed.'}</p>
                               <button className="px-4 py-2 bg-white text-black text-xs font-bold rounded-full">Action</button>
@@ -479,22 +824,33 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
 
         case 'countdown-timer':
+            // Use theme accentColor and textColor if element colors are not explicitly set
+            const countdownAccentColor = style?.accentColor || theme?.accentColor || '#F59E0B';
+            const countdownStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB'
+            };
              return (
-                 <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
+                 <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, id)} style={countdownStyle}>
                      <h4 className="font-bold mb-4 uppercase tracking-widest text-xs opacity-50" style={{textAlign: safeStyle.textAlign}}>{content.text || 'Offer Ends In'}</h4>
-                     <CountdownTimer targetDate={content.targetDate || new Date(Date.now() + 86400000).toISOString()} style={style} />
+                     <CountdownTimer targetDate={content.targetDate || new Date(Date.now() + 86400000).toISOString()} style={{ ...style, accentColor: countdownAccentColor }} />
                  </div>
              );
 
         case 'review-carousel':
+            // Use theme textColor if element color is not explicitly set
+            const reviewCarouselStyle = {
+                ...safeStyle,
+                color: safeStyle.color || theme?.textColor || '#D1D5DB'
+            };
             return (
-                 <div key={id} className={`p-6 bg-white/5 border border-white/10 rounded-xl ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
+                 <div key={id} className={`p-6 bg-white/5 border border-white/10 rounded-xl ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={reviewCarouselStyle}>
                      <div className="flex gap-4 overflow-hidden mask-linear-gradient">
                          {(content.items || [{title: 'Review 1'}, {title: 'Review 2'}]).map((item, i) => (
                              <div key={i} className="min-w-[250px] p-4 bg-black/20 rounded border border-white/5">
                                  <div className="text-yellow-500 text-xs mb-2"><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i></div>
                                  <p className="text-sm italic opacity-80 mb-2">"{item.content || 'Excellent product.'}"</p>
-                                 <div className="font-bold text-xs">{item.author || 'User'}</div>
+                                 <div className="font-bold text-xs" style={{ color: theme?.titleColor }}>{item.author || 'User'}</div>
                              </div>
                          ))}
                      </div>

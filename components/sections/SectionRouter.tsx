@@ -55,6 +55,7 @@ import { BannerBottomLeft } from './image-banner/BannerBottomLeft';
 // Single-component sections
 import { TestimonialsSection } from './TestimonialsSection';
 import { ElementsSection } from './ElementsSection';
+import { AllElementsTest } from './allelementsTest/AllElementsTest';
 
 interface SectionRouterProps {
   section: Section;
@@ -282,6 +283,14 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           onElementUpdate={props.onElementUpdate}
           onElementSelect={props.onElementSelect}
           selectedElementId={props.selectedElementId}
+          themeColors={{
+            titleColor: props.section.styles?.titleColor,
+            textColor: props.section.styles?.textColor,
+            accentColor: props.section.styles?.accentColor,
+            buttonBackgroundColor: props.section.styles?.buttonBackgroundColor,
+            buttonTextColor: props.section.styles?.buttonTextColor,
+            backgroundColor: props.section.styles?.backgroundColor,
+          }}
         />
       );
 
@@ -295,6 +304,17 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
         default:
           return <BannerCenter {...baseProps} />;
       }
+
+    case 'allelementsTest':
+      return (
+        <AllElementsTest
+          {...baseProps}
+          onElementUpdate={props.onElementUpdate}
+          onElementSelect={props.onElementSelect}
+          selectedElementId={props.selectedElementId}
+          onTextEdit={props.onTextEdit}
+        />
+      );
 
     default:
       return <div className="p-10 text-center">Unsupported Section Type: {sectionType}</div>;
