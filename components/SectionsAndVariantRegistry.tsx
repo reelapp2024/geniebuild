@@ -29,7 +29,7 @@ export interface SectionConfig {
 export const SECTIONS_REGISTRY: SectionConfig[] = [
   {
     sectionType: 'hero',
-    variants: ['HeroCenter', 'HeroSplitLeft', 'HeroSplitRight'],
+    variants: ['HeroCenter', 'HeroSplitLeft', 'HeroSplitRight', 'HeroGradient', 'HeroGeometric'],
     defaultVariant: 'HeroCenter'
   },
   {

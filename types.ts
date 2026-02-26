@@ -305,6 +305,7 @@ export interface Section {
     imageUrl?: string;
     videoUrl?: string;
     badgeText?: string;
+    icon?: string; // For icon elements in sections
     blockquote?: string;
     blockquoteAuthor?: string;
     highlightText?: string;
@@ -315,9 +316,54 @@ export interface Section {
   // The new flexible structure for custom/elements sections
   elements?: WebsiteElement[]; 
   
+  // Variant-specific styles storage (styles per variant)
+  variantStyles?: Record<string, Partial<{
+    backgroundColor: string;
+    paddingTop: string;
+    paddingBottom: string;
+    paddingLeft?: string;
+    paddingRight?: string;
+    marginTop?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+    marginRight?: string;
+    textAlign: 'left' | 'center' | 'right';
+    maxWidth?: 'max-w-4xl' | 'max-w-5xl' | 'max-w-6xl' | 'max-w-7xl' | 'max-w-full';
+    background?: any;
+    backgroundImage?: string;
+    overlayOpacity?: string;
+    overlayColor?: string;
+    overlayOpacityValue?: string;
+    overlayBlendMode?: string;
+    enableGeometry?: boolean;
+    textColor: string;
+    titleColor?: string;
+    titleSize?: string;
+    titleAlign?: 'left' | 'center' | 'right' | 'justify';
+    titleFontWeight?: string;
+    titleHeadingTag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+    subtitleColor?: string;
+    subtitleSize?: string;
+    subtitleAlign?: 'left' | 'center' | 'right' | 'justify';
+    subtitleFontWeight?: string;
+    descriptionColor?: string;
+    descriptionSize?: string;
+    fontSize?: string;
+    fontWeight?: string;
+    accentColor: string;
+    buttonBackgroundColor: string;
+    buttonTextColor: string;
+    buttonStyle?: 'rounded' | 'pill' | 'square';
+    borderRadius?: string;
+    secondaryButtonBackgroundColor?: string;
+    secondaryButtonTextColor?: string;
+    linkColor?: string;
+    fontFamily?: string;
+  }>>;
+  
   styles: {
     // Container
-    backgroundColor: string;
+    backgroundColor: string; // Deprecated - use background.type instead
     
     // Spacing
     paddingTop: string;
@@ -327,20 +373,51 @@ export interface Section {
     paddingX?: string; // Deprecated but kept for backward compatibility if needed
     
     marginTop?: string; 
-    marginBottom?: string; 
+    marginBottom?: string;
     marginLeft?: string;
     marginRight?: string;
 
     textAlign: 'left' | 'center' | 'right';
     maxWidth?: 'max-w-4xl' | 'max-w-5xl' | 'max-w-6xl' | 'max-w-7xl' | 'max-w-full';
-    backgroundImage?: string;
     
+    // New comprehensive background system
+    background?: {
+      type: 'color' | 'gradient' | 'image';
+      // For color
+      color?: string;
+      // For gradient
+      gradient?: {
+        type: 'linear' | 'radial';
+        direction?: number; // 0-360 for linear
+        stops: Array<{ color: string; position: number }>; // position: 0-100
+      };
+      // For image
+      image?: {
+        url: string;
+        position?: 'center' | 'top' | 'bottom' | 'left' | 'right' | 'top left' | 'top right' | 'bottom left' | 'bottom right';
+        size?: 'cover' | 'contain' | 'auto' | string; // Can be custom like "50% 50%"
+        repeat?: 'no-repeat' | 'repeat' | 'repeat-x' | 'repeat-y';
+        attachment?: 'scroll' | 'fixed' | 'local';
+        overlay?: {
+          enabled: boolean;
+          color?: string;
+          opacity?: number; // 0-1
+          blendMode?: 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn' | 'hard-light' | 'soft-light' | 'difference' | 'exclusion';
+        };
+      };
+    };
+    
+    // Legacy fields (deprecated, kept for backward compatibility)
+    backgroundImage?: string;
     overlayOpacity?: string; 
     overlayColor?: string; 
     overlayOpacityValue?: string; 
     overlayBlendMode?: string; 
     
-    variant?: string; 
+    // Geometry settings
+    enableGeometry?: boolean;
+    
+    variant?: string;
 
     // Typography & Colors
     textColor: string; 

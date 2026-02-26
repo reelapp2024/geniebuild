@@ -121,10 +121,49 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
   };
   const isCustomColor = (value?: string) => value && (value.startsWith('#') || value.startsWith('rgb') || value.startsWith('hsl'));
 
+  // Generate background styles from new background system
+  const getBackgroundStyles = (): React.CSSProperties => {
+    const bgStyles: React.CSSProperties = {};
+    
+    // Use new background system if available, otherwise fall back to legacy
+    if (styles.background) {
+      if (styles.background.type === 'color') {
+        bgStyles.backgroundColor = styles.background.color || styles.backgroundColor || '#000000';
+      } else if (styles.background.type === 'gradient') {
+        const gradient = styles.background.gradient;
+        if (gradient) {
+          const stops = gradient.stops.map((stop: any) => `${stop.color} ${stop.position}%`).join(', ');
+          if (gradient.type === 'linear') {
+            bgStyles.backgroundImage = `linear-gradient(${gradient.direction || 90}deg, ${stops})`;
+          } else {
+            bgStyles.backgroundImage = `radial-gradient(circle, ${stops})`;
+          }
+        }
+      } else if (styles.background.type === 'image' && styles.background.image?.url) {
+        bgStyles.backgroundImage = `url(${styles.background.image.url})`;
+        bgStyles.backgroundPosition = styles.background.image.position || 'center';
+        bgStyles.backgroundSize = styles.background.image.size || 'cover';
+        bgStyles.backgroundRepeat = styles.background.image.repeat || 'no-repeat';
+        bgStyles.backgroundAttachment = styles.background.image.attachment || 'scroll';
+      }
+    } else {
+      // Legacy support: migrate old backgroundImage and backgroundColor
+      if (styles.backgroundImage) {
+        bgStyles.backgroundImage = `url(${styles.backgroundImage})`;
+        bgStyles.backgroundSize = 'cover';
+        bgStyles.backgroundPosition = 'center';
+      }
+      if (isCustomColor(styles.backgroundColor)) {
+        bgStyles.backgroundColor = styles.backgroundColor;
+      }
+    }
+    
+    return bgStyles;
+  };
+
   const inlineStyles: React.CSSProperties = {
-    ...(isCustomColor(styles.backgroundColor) ? { backgroundColor: styles.backgroundColor } : {}),
+    ...getBackgroundStyles(),
     ...(isCustomColor(styles.textColor) ? { color: styles.textColor } : {}),
-    ...(styles.backgroundImage ? { backgroundImage: `url(${styles.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
     // Explicit mappings for non-tailwind style values
     ...(!isTailwindClass(styles.marginTop) ? { marginTop: styles.marginTop } : {}),
     ...(!isTailwindClass(styles.marginBottom) ? { marginBottom: styles.marginBottom } : {}),
@@ -136,7 +175,8 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     ...(!isTailwindClass(styles.paddingRight) ? { paddingRight: styles.paddingRight } : {}),
   };
 
-  const bgClass = !isCustomColor(styles.backgroundColor) ? styles.backgroundColor : '';
+  // Only use bgClass if it's a Tailwind class (not custom color)
+  const bgClass = !styles.background && !isCustomColor(styles.backgroundColor) ? styles.backgroundColor : '';
   const textClass = !isCustomColor(styles.textColor) ? styles.textColor : '';
   
   // Collect all potential Tailwind classes
@@ -192,23 +232,36 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
 
   const isFixedSection = type === 'navbar' || type === 'footer';
 
-  let overlayStyle: React.CSSProperties = {};
-  let overlayClass = '';
-
-  if (styles.overlayOpacity && (styles.overlayOpacity.startsWith('bg-') || styles.overlayOpacity.startsWith('opacity-'))) {
-      overlayClass = styles.overlayOpacity;
-  } else if (styles.overlayOpacity && styles.overlayOpacity.startsWith('rgba')) {
-      overlayStyle = { backgroundColor: styles.overlayOpacity };
-  } 
-  
-  if (styles.overlayColor) {
-      overlayStyle = { 
+  // Get overlay styles from new background system
+  const getOverlayStyles = (): { style: React.CSSProperties, show: boolean } => {
+    if (styles.background?.type === 'image' && styles.background.image?.overlay?.enabled) {
+      const overlay = styles.background.image.overlay;
+      return {
+        show: true,
+        style: {
+          backgroundColor: overlay.color || '#000000',
+          opacity: overlay.opacity || 0.5,
+          mixBlendMode: overlay.blendMode || 'normal'
+        }
+      };
+    }
+    
+    // Legacy overlay support
+    if (styles.overlayColor) {
+      return {
+        show: true,
+        style: {
           backgroundColor: styles.overlayColor,
           opacity: styles.overlayOpacityValue ? (parseFloat(styles.overlayOpacityValue) > 1 ? parseFloat(styles.overlayOpacityValue)/100 : parseFloat(styles.overlayOpacityValue)) : (styles.overlayColor.startsWith('rgba') ? 1 : 0.5),
           mixBlendMode: (styles.overlayBlendMode as any) || 'normal'
+        }
       };
-      overlayClass = '';
-  }
+    }
+    
+    return { show: false, style: {} };
+  };
+
+  const overlay = getOverlayStyles();
 
 
   const renderContent = () => {
@@ -236,13 +289,25 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     );
   };
 
+  // Check if geometry is enabled (default to false, but true for HeroGeometric variant)
+  const enableGeometry = styles.enableGeometry !== undefined ? styles.enableGeometry : (styles.variant === 'HeroGeometric');
+  
   return (
     <div className={containerClass} style={inlineStyles} onClick={(e) => { if(!readOnly) { e.stopPropagation(); onClick(); }}}>
-      {styles.backgroundImage && (
+      {/* Background overlay (for image backgrounds) */}
+      {overlay.show && (
           <div 
-            className={`absolute inset-0 z-0 ${overlayClass}`} 
-            style={overlayStyle}
+            className="absolute inset-0 z-0" 
+            style={overlay.style}
           ></div>
+      )}
+      {/* Geometry overlay - appears above background, below content */}
+      {enableGeometry && (
+        <div className="absolute inset-0 z-[1] pointer-events-none">
+          {/* Geometric Grid Overlay */}
+          <div className="absolute inset-0 opacity-[0.03]" 
+               style={{ backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`, backgroundSize: '50px 50px' }} />
+        </div>
       )}
       {isSelected && !readOnly && (
         <div className="absolute top-4 right-4 z-20 flex items-center space-x-2 bg-black/90 backdrop-blur-md p-1.5 rounded-lg shadow-2xl border border-white/10">

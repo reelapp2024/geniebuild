@@ -6,6 +6,7 @@ import { geminiService } from './services/geminiService';
 import SectionRenderer from './components/SectionRenderer';
 import { PreviewFrame } from './components/PreviewFrame';
 import toast, { Toaster } from 'react-hot-toast';
+import { getDefaultVariant, getVariantsForSection } from './components/SectionsAndVariantRegistry';
 
 // Get URL parameters
 const getUrlParams = () => {
@@ -31,6 +32,28 @@ const getUrlParams = () => {
 // Helper lists for sidebar categorization
 const BASIC_ELEMENTS: ElementType[] = ['heading', 'text', 'button', 'image', 'video', 'icon', 'icon-box', 'image-box', 'list', 'star-rating', 'badge', 'highlight-text', 'blockquote'];
 const ADVANCED_ELEMENTS: ElementType[] = ['accordion', 'toggle', 'tabs', 'progress-bar', 'counter', 'testimonial', 'review-carousel', 'alert-box', 'pricing-table', 'flip-box', 'call-to-action', 'countdown-timer'];
+
+// Helper function to format variant name for display
+const formatVariantName = (variant: string | undefined, sectionType: string | undefined): string | null => {
+  if (!variant) return null;
+  
+  // Remove the section type prefix (e.g., "Hero" from "HeroCenter")
+  const sectionTypeCapitalized = sectionType ? sectionType.charAt(0).toUpperCase() + sectionType.slice(1) : '';
+  let formatted = variant;
+  
+  // Remove common prefixes
+  if (variant.startsWith(sectionTypeCapitalized)) {
+    formatted = variant.slice(sectionTypeCapitalized.length);
+  }
+  
+  // Handle camelCase: insert spaces before capital letters
+  formatted = formatted.replace(/([a-z])([A-Z])/g, '$1 $2');
+  
+  // Capitalize first letter
+  formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  
+  return formatted;
+};
 
 // --- UI Components for Sidebar ---
 
@@ -168,7 +191,7 @@ const TextAreaInput = ({ label, value, onChange, rows = 3 }: { label: string, va
     </div>
 );
 
-const ImageControl = ({ label, value, onChange, onUpload }: { label: string, value: string | undefined, onChange: (val: string) => void, onUpload: () => void }) => {
+const ImageControl = ({ label, value, onChange, onUpload, uploading = false, uploadProgress = 0 }: { label: string, value: string | undefined, onChange: (val: string) => void, onUpload: () => void, uploading?: boolean, uploadProgress?: number }) => {
     // Construct full image URL for preview
     const getImageUrl = (url: string | undefined): string => {
         if (!url || url.trim().length < 5) return '';
@@ -186,6 +209,20 @@ const ImageControl = ({ label, value, onChange, onUpload }: { label: string, val
             {/* Image Preview */}
             {previewUrl ? (
                 <div className="relative w-full aspect-video bg-[#151515] rounded border border-[#333] overflow-hidden group">
+                    {uploading && (
+                        <div className="absolute inset-0 bg-black/80 z-10 flex flex-col items-center justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-3"></div>
+                            <span className="text-white text-xs font-medium">Uploading...</span>
+                            {uploadProgress > 0 && (
+                                <div className="w-32 h-1 bg-[#333] rounded-full mt-2 overflow-hidden">
+                                    <div 
+                                        className="h-full bg-blue-500 transition-all duration-300"
+                                        style={{ width: `${uploadProgress}%` }}
+                                    ></div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     <img 
                         src={previewUrl} 
                         className="w-full h-full object-cover" 
@@ -194,25 +231,42 @@ const ImageControl = ({ label, value, onChange, onUpload }: { label: string, val
                             (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x400';
                         }}
                     />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                         <button 
-                             onClick={(e) => {
-                                 e.preventDefault();
-                                 e.stopPropagation();
-                                 onUpload();
-                             }} 
-                             className="px-3 py-1 bg-white text-black text-xs font-bold rounded hover:scale-105 transition-transform shadow-lg"
-                         >
-                             Change Image
-                         </button>
-                    </div>
+                    {!uploading && (
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                             <button 
+                                 onClick={(e) => {
+                                     e.preventDefault();
+                                     e.stopPropagation();
+                                     onUpload();
+                                 }} 
+                                 className="px-3 py-1 bg-white text-black text-xs font-bold rounded hover:scale-105 transition-transform shadow-lg"
+                             >
+                                 Change Image
+                             </button>
+                        </div>
+                    )}
                 </div>
             ) : (
-                <div className="w-full aspect-video bg-[#151515] rounded border border-[#333] flex items-center justify-center">
-                    <div className="text-center text-white/40 text-xs">
-                        <i className="fa-solid fa-image text-2xl mb-2 block"></i>
-                        <span>No image preview</span>
-                    </div>
+                <div className="relative w-full aspect-video bg-[#151515] rounded border border-[#333] flex items-center justify-center">
+                    {uploading ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-3"></div>
+                            <span className="text-white text-xs font-medium">Uploading...</span>
+                            {uploadProgress > 0 && (
+                                <div className="w-32 h-1 bg-[#333] rounded-full mt-2 overflow-hidden">
+                                    <div 
+                                        className="h-full bg-blue-500 transition-all duration-300"
+                                        style={{ width: `${uploadProgress}%` }}
+                                    ></div>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="text-center text-white/40 text-xs">
+                            <i className="fa-solid fa-image text-2xl mb-2 block"></i>
+                            <span>No image preview</span>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -228,12 +282,20 @@ const ImageControl = ({ label, value, onChange, onUpload }: { label: string, val
                     onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        onUpload();
+                        if (!uploading) onUpload();
                     }}
-                    className="px-3 bg-[#222] border border-[#333] rounded hover:bg-[#333] text-white shrink-0 transition-colors"
+                    disabled={uploading}
+                    className={`px-3 bg-[#222] border border-[#333] rounded hover:bg-[#333] text-white shrink-0 transition-colors flex items-center gap-2 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     title="Upload Image"
                 >
-                    <i className="fa-solid fa-upload text-xs"></i>
+                    {uploading ? (
+                        <>
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                            <span className="text-[10px]">Uploading...</span>
+                        </>
+                    ) : (
+                        <i className="fa-solid fa-upload text-xs"></i>
+                    )}
                 </button>
             </div>
         </div>
@@ -624,54 +686,527 @@ const SelectInput = ({ label, value, options, onChange }: { label: string, value
     );
 };
 
+// Comprehensive Background Control Component
+const BackgroundControl = ({ 
+  value, 
+  onChange, 
+  onUpload,
+  uploading = false,
+  uploadProgress = 0
+}: { 
+  value: any, 
+  onChange: (val: any) => void,
+  onUpload?: () => void,
+  uploading?: boolean,
+  uploadProgress?: number
+}) => {
+  const background = value || { type: 'color', color: '#000000' };
+  const [localBackground, setLocalBackground] = useState(background);
+
+  // Update local state when prop changes
+  React.useEffect(() => {
+    setLocalBackground(value || { type: 'color', color: '#000000' });
+  }, [value]);
+
+  const updateBackground = (updates: any) => {
+    const newBg = { ...localBackground, ...updates };
+    setLocalBackground(newBg);
+    onChange(newBg);
+  };
+
+  const addGradientStop = () => {
+    const stops = localBackground.gradient?.stops || [{ color: '#000000', position: 0 }, { color: '#ffffff', position: 100 }];
+    const newStop = { color: '#888888', position: 50 };
+    updateBackground({
+      gradient: {
+        ...localBackground.gradient,
+        stops: [...stops, newStop].sort((a, b) => a.position - b.position)
+      }
+    });
+  };
+
+  const removeGradientStop = (index: number) => {
+    const stops = localBackground.gradient?.stops || [];
+    if (stops.length <= 2) return; // Keep at least 2 stops
+    updateBackground({
+      gradient: {
+        ...localBackground.gradient,
+        stops: stops.filter((_, i) => i !== index)
+      }
+    });
+  };
+
+  const updateGradientStop = (index: number, field: 'color' | 'position', val: string | number) => {
+    const stops = [...(localBackground.gradient?.stops || [])];
+    stops[index] = { ...stops[index], [field]: val };
+    updateBackground({
+      gradient: {
+        ...localBackground.gradient,
+        stops: stops.sort((a, b) => a.position - b.position)
+      }
+    });
+  };
+
+  // Extract enableGeometry from value (it's passed separately in the merged value)
+  const enableGeometry = (value as any)?.enableGeometry !== undefined ? (value as any).enableGeometry : true;
+  
+  return (
+    <div className="space-y-4">
+      {/* Enable Geometry Toggle */}
+      <div className="flex items-center justify-between p-3 bg-[#1a1a1a] rounded border border-[#333]">
+        <label className="text-xs font-medium text-white/80">Enable Geometry</label>
+        <button
+          type="button"
+          onClick={() => {
+            const newValue = !enableGeometry;
+            // onChange will be called with the merged value, and the parent will extract enableGeometry
+            onChange({ ...localBackground, enableGeometry: newValue } as any);
+          }}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            enableGeometry ? 'bg-blue-500' : 'bg-gray-600'
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              enableGeometry ? 'translate-x-6' : 'translate-x-1'
+            }`}
+          />
+        </button>
+      </div>
+      
+      {/* Background Type Selector */}
+      <SelectInput
+        label="Background Type"
+        value={localBackground.type || 'color'}
+        options={[
+          { label: 'Color', value: 'color' },
+          { label: 'Gradient', value: 'gradient' },
+          { label: 'Image', value: 'image' }
+        ]}
+        onChange={(v) => {
+          if (v === 'color') {
+            updateBackground({ type: 'color', color: localBackground.color || '#000000' });
+          } else if (v === 'gradient') {
+            updateBackground({
+              type: 'gradient',
+              gradient: localBackground.gradient || {
+                type: 'linear',
+                direction: 90,
+                stops: [{ color: '#000000', position: 0 }, { color: '#ffffff', position: 100 }]
+              }
+            });
+          } else if (v === 'image') {
+            updateBackground({
+              type: 'image',
+              image: localBackground.image || {
+                url: '',
+                position: 'center',
+                size: 'cover',
+                repeat: 'no-repeat',
+                attachment: 'scroll',
+                overlay: { enabled: false, color: '#000000', opacity: 0.5, blendMode: 'normal' }
+              }
+            });
+          }
+        }}
+      />
+
+      {/* Color Background */}
+      {localBackground.type === 'color' && (
+        <ColorInput
+          label="Background Color"
+          value={localBackground.color || '#000000'}
+          onChange={(v) => updateBackground({ color: v })}
+        />
+      )}
+
+      {/* Gradient Background */}
+      {localBackground.type === 'gradient' && (
+        <div className="space-y-3">
+          <SelectInput
+            label="Gradient Type"
+            value={localBackground.gradient?.type || 'linear'}
+            options={[
+              { label: 'Linear', value: 'linear' },
+              { label: 'Radial', value: 'radial' }
+            ]}
+            onChange={(v) => updateBackground({
+              gradient: { ...localBackground.gradient, type: v as 'linear' | 'radial' }
+            })}
+          />
+          
+          {localBackground.gradient?.type === 'linear' && (
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-white/40 capitalize ml-1">Direction</label>
+              <RangeInput
+                label="Angle"
+                value={localBackground.gradient?.direction || 90}
+                min={0}
+                max={360}
+                step={1}
+                unit="°"
+                onChange={(v) => updateBackground({
+                  gradient: { ...localBackground.gradient, direction: v }
+                })}
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold text-white/40 capitalize ml-1">Gradient Stops</label>
+              <button
+                onClick={addGradientStop}
+                className="px-2 py-1 text-[9px] bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded border border-blue-600/30"
+              >
+                <i className="fa-solid fa-plus mr-1"></i>Add Stop
+              </button>
+            </div>
+            {(localBackground.gradient?.stops || []).map((stop: any, index: number) => (
+              <div key={index} className="flex gap-2 items-center bg-[#151515] p-2 rounded border border-[#333]">
+                <div className="relative w-6 h-6 rounded overflow-hidden flex-shrink-0">
+                  <input
+                    type="color"
+                    className="absolute inset-[-4px] w-[150%] h-[150%] p-0 border-none cursor-pointer"
+                    value={stop.color || '#000000'}
+                    onChange={(e) => updateGradientStop(index, 'color', e.target.value)}
+                  />
+                </div>
+                <RangeInput
+                  label=""
+                  value={stop.position || 0}
+                  min={0}
+                  max={100}
+                  step={1}
+                  unit="%"
+                  onChange={(v) => updateGradientStop(index, 'position', v)}
+                />
+                {(localBackground.gradient?.stops || []).length > 2 && (
+                  <button
+                    onClick={() => removeGradientStop(index)}
+                    className="px-2 py-1 text-[9px] bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded border border-red-600/30"
+                  >
+                    <i className="fa-solid fa-trash"></i>
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Image Background */}
+      {localBackground.type === 'image' && (
+        <div className="space-y-3">
+          <ImageControl
+            label="Background Image"
+            value={localBackground.image?.url || ''}
+            onChange={(v) => {
+              const currentImage = localBackground.image || {
+                url: '',
+                position: 'center',
+                size: 'cover',
+                repeat: 'no-repeat',
+                attachment: 'scroll',
+                overlay: { enabled: false, color: '#000000', opacity: 0.5, blendMode: 'normal' }
+              };
+              updateBackground({
+                image: { ...currentImage, url: v }
+              });
+            }}
+            onUpload={onUpload || (() => {})}
+            uploading={uploading}
+            uploadProgress={uploadProgress}
+          />
+
+          <SelectInput
+            label="Position"
+            value={localBackground.image?.position || 'center'}
+            options={[
+              { label: 'Center', value: 'center' },
+              { label: 'Top', value: 'top' },
+              { label: 'Bottom', value: 'bottom' },
+              { label: 'Left', value: 'left' },
+              { label: 'Right', value: 'right' },
+              { label: 'Top Left', value: 'top left' },
+              { label: 'Top Right', value: 'top right' },
+              { label: 'Bottom Left', value: 'bottom left' },
+              { label: 'Bottom Right', value: 'bottom right' }
+            ]}
+            onChange={(v) => updateBackground({
+              image: { ...localBackground.image, position: v }
+            })}
+          />
+
+          <SelectInput
+            label="Size"
+            value={localBackground.image?.size || 'cover'}
+            options={[
+              { label: 'Cover', value: 'cover' },
+              { label: 'Contain', value: 'contain' },
+              { label: 'Auto', value: 'auto' }
+            ]}
+            onChange={(v) => updateBackground({
+              image: { ...localBackground.image, size: v }
+            })}
+          />
+
+          <TextInput
+            label="Custom Size (e.g., 50% 50%)"
+            value={localBackground.image?.size && !['cover', 'contain', 'auto'].includes(localBackground.image.size) ? localBackground.image.size : ''}
+            onChange={(v) => updateBackground({
+              image: { ...localBackground.image, size: v }
+            })}
+            placeholder="Leave empty to use preset"
+          />
+
+          <SelectInput
+            label="Repeat"
+            value={localBackground.image?.repeat || 'no-repeat'}
+            options={[
+              { label: 'No Repeat', value: 'no-repeat' },
+              { label: 'Repeat', value: 'repeat' },
+              { label: 'Repeat X', value: 'repeat-x' },
+              { label: 'Repeat Y', value: 'repeat-y' }
+            ]}
+            onChange={(v) => updateBackground({
+              image: { ...localBackground.image, repeat: v }
+            })}
+          />
+
+          <SelectInput
+            label="Attachment"
+            value={localBackground.image?.attachment || 'scroll'}
+            options={[
+              { label: 'Scroll', value: 'scroll' },
+              { label: 'Fixed', value: 'fixed' },
+              { label: 'Local', value: 'local' }
+            ]}
+            onChange={(v) => updateBackground({
+              image: { ...localBackground.image, attachment: v }
+            })}
+          />
+
+          {/* Image Overlay */}
+          <div className="space-y-2 pt-2 border-t border-white/10">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold text-white/40 capitalize ml-1">Overlay</label>
+              <button
+                onClick={() => updateBackground({
+                  image: {
+                    ...localBackground.image,
+                    overlay: {
+                      ...localBackground.image?.overlay,
+                      enabled: !localBackground.image?.overlay?.enabled
+                    }
+                  }
+                })}
+                className={`px-2 py-1 text-[9px] rounded border transition-colors ${
+                  localBackground.image?.overlay?.enabled
+                    ? 'bg-blue-600/20 border-blue-600/30 text-blue-400'
+                    : 'bg-[#222] border-[#333] text-white/40'
+                }`}
+              >
+                {localBackground.image?.overlay?.enabled ? 'Enabled' : 'Disabled'}
+              </button>
+            </div>
+
+            {localBackground.image?.overlay?.enabled && (
+              <div className="space-y-2 pl-2 border-l-2 border-white/10">
+                <ColorInput
+                  label="Overlay Color"
+                  value={localBackground.image?.overlay?.color || '#000000'}
+                  onChange={(v) => updateBackground({
+                    image: {
+                      ...localBackground.image,
+                      overlay: { ...localBackground.image?.overlay, color: v }
+                    }
+                  })}
+                />
+                <RangeInput
+                  label="Overlay Opacity"
+                  value={Math.round((localBackground.image?.overlay?.opacity || 0.5) * 100)}
+                  min={0}
+                  max={100}
+                  step={1}
+                  unit="%"
+                  onChange={(v) => updateBackground({
+                    image: {
+                      ...localBackground.image,
+                      overlay: { ...localBackground.image?.overlay, opacity: v / 100 }
+                    }
+                  })}
+                />
+                <SelectInput
+                  label="Blend Mode"
+                  value={localBackground.image?.overlay?.blendMode || 'normal'}
+                  options={[
+                    { label: 'Normal', value: 'normal' },
+                    { label: 'Multiply', value: 'multiply' },
+                    { label: 'Screen', value: 'screen' },
+                    { label: 'Overlay', value: 'overlay' },
+                    { label: 'Darken', value: 'darken' },
+                    { label: 'Lighten', value: 'lighten' },
+                    { label: 'Color Dodge', value: 'color-dodge' },
+                    { label: 'Color Burn', value: 'color-burn' },
+                    { label: 'Hard Light', value: 'hard-light' },
+                    { label: 'Soft Light', value: 'soft-light' },
+                    { label: 'Difference', value: 'difference' },
+                    { label: 'Exclusion', value: 'exclusion' }
+                  ]}
+                  onChange={(v) => updateBackground({
+                    image: {
+                      ...localBackground.image,
+                      overlay: { ...localBackground.image?.overlay, blendMode: v }
+                    }
+                  })}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Font mapping utilities - normalize CSS font-family strings to keys
+const normalizeFontKey = (fontName: string): string => {
+    // Convert "Inter" -> "inter", "Open Sans" -> "open-sans", etc.
+    return fontName.toLowerCase().replace(/\s+/g, '-').replace(/['"]/g, '');
+};
+
+const extractFontName = (cssFontFamily: string): string => {
+    // Extract font name from CSS string like '"Inter", sans-serif' -> "Inter"
+    // Handle both quoted and unquoted formats
+    const match = cssFontFamily.match(/['"]([^'"]+)['"]/);
+    if (match) return match[1];
+    
+    // Fallback: get first part before comma
+    const firstPart = cssFontFamily.split(',')[0].trim();
+    return firstPart.replace(/['"]/g, '');
+};
+
+// Normalize CSS font value for comparison (remove extra spaces, normalize quotes)
+const normalizeCSSValue = (cssValue: string): string => {
+    return cssValue.replace(/\s+/g, ' ').trim();
+};
+
+// Create font key to CSS value mapping
+const createFontMap = () => {
+    const map: Record<string, string> = {};
+    PRESET_FONTS.forEach(font => {
+        const key = normalizeFontKey(font.name);
+        map[key] = font.value;
+    });
+    return map;
+};
+
+const FONT_MAP = createFontMap();
+
+// Get font key from CSS font-family string (reverse lookup with fuzzy matching)
+const getFontKeyFromCSS = (cssValue: string | undefined): string | null => {
+    if (!cssValue || cssValue === '') return null;
+    
+    const normalizedCSS = normalizeCSSValue(cssValue);
+    
+    // Try exact match first (normalized)
+    const exactMatch = PRESET_FONTS.find(f => normalizeCSSValue(f.value) === normalizedCSS);
+    if (exactMatch) {
+        return normalizeFontKey(exactMatch.name);
+    }
+    
+    // Try to extract font name and find matching preset
+    const fontName = extractFontName(cssValue);
+    const normalizedFontName = fontName.toLowerCase().trim();
+    
+    // Find preset font by name (case-insensitive, flexible matching)
+    const presetMatch = PRESET_FONTS.find(f => 
+        f.name.toLowerCase() === normalizedFontName ||
+        normalizeFontKey(f.name) === normalizeFontKey(fontName)
+    );
+    
+    if (presetMatch) {
+        return normalizeFontKey(presetMatch.name);
+    }
+    
+    // Last resort: try to create a key from the font name
+    const key = normalizeFontKey(fontName);
+    if (FONT_MAP[key]) {
+        return key;
+    }
+    
+    return null;
+};
+
+// Get CSS font-family string from key
+const getCSSFromFontKey = (key: string): string | null => {
+    return FONT_MAP[key] || null;
+};
+
 const FontSelectInput = ({ label, value, options, onChange, defaultFont }: { label: string, value: string | undefined, options: {label: string, value: string}[], onChange: (val: string) => void, defaultFont?: string }) => {
-    // Only show default option if defaultFont is provided
-    const showDefaultOption = !!defaultFont;
+    // Get default font name for display in label
+    const defaultFontKey = defaultFont ? getFontKeyFromCSS(defaultFont) : null;
+    const defaultFontName = defaultFontKey 
+        ? PRESET_FONTS.find(f => normalizeFontKey(f.name) === defaultFontKey)?.name || 'Default'
+        : 'Default';
     
-    // If value is empty/null/undefined or matches defaultFont, show default option
-    const isUsingDefault = showDefaultOption && (!value || value === '' || value === defaultFont);
-    const currentValue = isUsingDefault ? '__default__' : (value || options[0]?.value || '');
+    // Build simple options list with normalized keys
+    const allOptions = options.map(opt => ({
+        key: getFontKeyFromCSS(opt.value) || normalizeFontKey(extractFontName(opt.value)),
+        label: opt.label,
+        cssValue: opt.value
+    }));
     
-    // Find the default font option from PRESET_FONTS to get its display name
-    const defaultFontOption = defaultFont ? PRESET_FONTS.find(f => f.value === defaultFont) : null;
-    const defaultFontName = defaultFontOption?.name || 'Default Theme Font';
+    // Determine the current selected key
+    let selectedKey: string = '';
+    if (value && value !== '') {
+        const valueKey = getFontKeyFromCSS(value);
+        if (valueKey) {
+            selectedKey = valueKey;
+        }
+    }
     
-    // Get current option for display
-    const currentOption = isUsingDefault 
-        ? { value: '__default__', label: `${defaultFontName} (Default Theme Font)` }
-        : options.find(opt => opt.value === currentValue);
+    // Ensure selectedKey exists in allOptions
+    const validSelectedKey = allOptions.find(opt => opt.key === selectedKey)?.key || '';
     
-    // Build options list with default as first option (only if defaultFont is provided)
-    const allOptions = showDefaultOption
-        ? [
-            { value: '__default__', label: `${defaultFontName} (Default Theme Font)` },
-            ...options
-          ]
-        : options;
+    // Get display font for preview
+    const selectedOption = allOptions.find(opt => opt.key === validSelectedKey);
+    const displayFont = selectedOption?.cssValue || (value || 'inherit');
     
     return (
         <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-white/40 capitalize ml-1">{label}</label>
+            <label className="text-[10px] font-bold text-white/40 capitalize ml-1">
+                {label}
+                {defaultFont && (
+                    <span className="text-[9px] text-white/30 ml-2">({defaultFontName})</span>
+                )}
+            </label>
             <div className="relative">
                 <select 
                     className="w-full bg-[#151515] border border-[#333] rounded p-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-colors appearance-none cursor-pointer"
-                    value={currentValue}
+                    value={validSelectedKey}
                     onChange={(e) => {
-                        e.preventDefault();
-                        // If default is selected, pass empty string to clear fontFamily
-                        if (e.target.value === '__default__') {
-                            onChange('');
+                        const newSelectedKey = e.target.value;
+                        // Convert key back to CSS font-family string
+                        const cssValue = getCSSFromFontKey(newSelectedKey);
+                        if (cssValue) {
+                            onChange(cssValue);
                         } else {
-                            onChange(e.target.value);
+                            // Fallback: find from options
+                            const option = allOptions.find(opt => opt.key === newSelectedKey);
+                            if (option?.cssValue) {
+                                onChange(option.cssValue);
+                            }
                         }
                     }}
-                    style={{ fontFamily: isUsingDefault ? (defaultFont || 'inherit') : (currentOption?.value || 'inherit') }}
+                    style={{ fontFamily: displayFont }}
                 >
                     {allOptions.map(opt => (
                         <option 
-                            key={opt.value} 
-                            value={opt.value}
-                            style={{ fontFamily: opt.value === '__default__' ? (defaultFont || 'inherit') : opt.value }}
+                            key={opt.key} 
+                            value={opt.key}
+                            style={{ fontFamily: opt.cssValue }}
                         >
                             {opt.label}
                         </option>
@@ -713,9 +1248,21 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop'); 
+  const [zoomLevel, setZoomLevel] = useState<number>(100); // Zoom level in percentage (25-200%)
+  const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  
+  // Device viewport widths (fixed, independent of builder UI)
+  const deviceWidths = {
+    desktop: 1440,
+    tablet: 1024,
+    mobile: 375
+  };
+  
+  const currentDeviceWidth = deviceWidths[viewMode]; 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<{sectionId: string, elementId?: string, field: string} | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [loadingPageData, setLoadingPageData] = useState(false);
   const [savingPageData, setSavingPageData] = useState(false);
   
@@ -798,9 +1345,23 @@ const App: React.FC = () => {
             borderColor: data.data.colorAccent || '#D1D5DB'
           };
 
+          // Migrate sections to include variantStyles if not present
+          const migratedSections = genieBuildSections.map((section: Section) => {
+            if (!section.variantStyles) {
+              const currentVariant = section.styles?.variant || getDefaultVariant(section.type);
+              return {
+                ...section,
+                variantStyles: {
+                  [currentVariant]: { ...section.styles }
+                }
+              };
+            }
+            return section;
+          });
+
           setSiteData({
             ...INITIAL_TEMPLATE,
-            sections: genieBuildSections,
+            sections: migratedSections,
             globalStyles: {
               ...INITIAL_TEMPLATE.globalStyles,
               colors: globalColors,
@@ -988,6 +1549,43 @@ const App: React.FC = () => {
             fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
             textAlign: (styleAny.titleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
             fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined, // Include fontFamily for Hero title
+          }
+        };
+      } else if (elementType === 'icon') {
+        // Get icon element from section.elements if it exists, otherwise create virtual element
+        const iconElement = selectedSection.elements?.find(e => e.id === selectedElementId);
+        if (iconElement) {
+          return iconElement;
+        }
+        // Create virtual element with default styles
+        virtualElement = {
+          id: selectedElementId,
+          type: 'icon',
+          content: {
+            icon: content.icon || 'fa-wand-magic-sparkles'
+          },
+          style: {
+            color: 'rgba(255, 255, 255, 0.2)',
+            fontSize: '128px' // Default size in pixels
+          }
+        };
+      } else if (elementType === 'badge') {
+        virtualElement = {
+          id: selectedElementId,
+          type: 'badge',
+          content: {
+            text: content.badgeText || 'New Generation Builder'
+          },
+          style: {
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            color: '#60a5fa',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.2em',
+            padding: '4px 12px',
+            borderRadius: '9999px'
           }
         };
       } else if (elementType === 'subtitle') {
@@ -1301,6 +1899,36 @@ const App: React.FC = () => {
       #canvas-root p.text-sm { font-size: ${defaultSizes.textSmall}; }
       #canvas-root p.text-lg { font-size: ${defaultSizes.textLarge}; }
       #canvas-root p.text-xl { font-size: ${defaultSizes.textXl}; }
+      
+      /* Zoom Slider Styles */
+      .zoom-slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #3b82f6;
+        cursor: pointer;
+        border: 2px solid #1e293b;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+      
+      .zoom-slider::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #3b82f6;
+        cursor: pointer;
+        border: 2px solid #1e293b;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+      
+      .zoom-slider:focus {
+        outline: none;
+      }
+      
+      .zoom-slider:focus::-webkit-slider-thumb {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      }
     `;
     
     const styleString = `
@@ -1359,6 +1987,88 @@ const App: React.FC = () => {
                           }
                       } else if (elementType === 'subtitle' && updates.content.text !== undefined) {
                           sectionUpdates.content = { ...s.content, subtitle: updates.content.text };
+                      } else if (elementType === 'icon') {
+                          // Check if icon element exists in section.elements
+                          const iconElement = s.elements?.find(e => e.id === elementId);
+                          if (iconElement) {
+                              // Update existing element
+                              const newElements = s.elements?.map(el => 
+                                  el.id === elementId ? { ...el, ...updates } : el
+                              );
+                              sectionUpdates.elements = newElements;
+                          } else {
+                              // For virtual icon, create element in elements array
+                              if (updates.content?.icon !== undefined) {
+                                  sectionUpdates.content = { ...s.content, icon: updates.content.icon };
+                              }
+                              // Create or update icon element in elements array
+                              const existingIconElement = s.elements?.find(e => e.id === elementId);
+                              if (existingIconElement) {
+                                  const newElements = s.elements?.map(el => 
+                                      el.id === elementId ? { ...el, ...updates } : el
+                                  );
+                                  sectionUpdates.elements = newElements;
+                              } else {
+                                  // Create new icon element
+                                  const newIconElement = {
+                                      id: elementId,
+                                      type: 'icon' as const,
+                                      content: {
+                                          icon: updates.content?.icon || s.content.icon || 'fa-wand-magic-sparkles'
+                                      },
+                                      style: {
+                                          ...(updates.style || {}),
+                                          fontSize: updates.style?.fontSize || '128px',
+                                          color: updates.style?.color || 'rgba(255, 255, 255, 0.2)'
+                                      }
+                                  };
+                                  sectionUpdates.elements = [...(s.elements || []), newIconElement];
+                              }
+                          }
+                      } else if (elementType === 'badge') {
+                          // Check if badge element exists in section.elements
+                          const badgeElement = s.elements?.find(e => e.id === elementId);
+                          if (badgeElement) {
+                              // Update existing element
+                              const newElements = s.elements?.map(el => 
+                                  el.id === elementId ? { ...el, ...updates } : el
+                              );
+                              sectionUpdates.elements = newElements;
+                          } else {
+                              // For virtual badge, create element in elements array
+                              if (updates.content?.text !== undefined) {
+                                  sectionUpdates.content = { ...s.content, badgeText: updates.content.text };
+                              }
+                              // Create or update badge element in elements array
+                              const existingBadgeElement = s.elements?.find(e => e.id === elementId);
+                              if (existingBadgeElement) {
+                                  const newElements = s.elements?.map(el => 
+                                      el.id === elementId ? { ...el, ...updates } : el
+                                  );
+                                  sectionUpdates.elements = newElements;
+                              } else {
+                                  // Create new badge element
+                                  const newBadgeElement = {
+                                      id: elementId,
+                                      type: 'badge' as const,
+                                      content: {
+                                          text: updates.content?.text || s.content.badgeText || 'New Generation Builder'
+                                      },
+                                      style: updates.style || {
+                                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                          color: '#60a5fa',
+                                          borderColor: 'rgba(255, 255, 255, 0.1)',
+                                          fontSize: '10px',
+                                          fontWeight: 'bold',
+                                          textTransform: 'uppercase' as const,
+                                          letterSpacing: '0.2em',
+                                          padding: '4px 12px',
+                                          borderRadius: '9999px'
+                                      }
+                                  };
+                                  sectionUpdates.elements = [...(s.elements || []), newBadgeElement];
+                              }
+                          }
                       } else if (elementType === 'button') {
                           if (updates.content.text !== undefined) {
                               sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
@@ -1488,6 +2198,10 @@ const App: React.FC = () => {
           updateElement(selectedSection.id, selectedElementId, { content: { text: originalData.ctaText } });
         } else if (elementType === 'image' && originalData.imageUrl) {
           updateElement(selectedSection.id, selectedElementId, { content: { imageUrl: originalData.imageUrl } });
+        } else if (elementType === 'icon' && originalData.icon) {
+          updateElement(selectedSection.id, selectedElementId, { content: { icon: originalData.icon } });
+        } else if (elementType === 'badge' && originalData.badgeText) {
+          updateElement(selectedSection.id, selectedElementId, { content: { text: originalData.badgeText } });
         }
       } else {
         // Handle regular elements - find the element in the original data
@@ -1515,17 +2229,90 @@ const App: React.FC = () => {
       ...prev,
       sections: prev.sections.map(s => {
         if (s.id === id) {
+          const currentVariant = s.styles?.variant || getDefaultVariant(s.type);
+          
+          // Update current styles
+          const updatedStyles = {
+            ...s.styles,
+            [key]: value
+          };
+          
+          // Save to variant-specific storage
+          const variantStyles = s.variantStyles || {};
+          variantStyles[currentVariant] = {
+            ...variantStyles[currentVariant],
+            [key]: value
+          };
+          
           return {
             ...s,
-            styles: {
-              ...s.styles,
-              [key]: value
-            }
+            styles: updatedStyles,
+            variantStyles: variantStyles
           } as Section;
         }
         return s;
       })
     }));
+  };
+
+  // Helper to update section background (handles nested object)
+  const updateSectionBackground = (id: string, background: any) => {
+    updateSectionStyle(id, 'background', background);
+  };
+
+  // Handle variant refresh - cycles through available variants
+  const handleRefreshVariant = () => {
+    if (!selectedSectionId || !selectedSection) return;
+    
+    const sectionType = selectedSection.type;
+    const availableVariants = getVariantsForSection(sectionType);
+    
+    // Only show button if there are multiple variants
+    if (availableVariants.length <= 1) return;
+    
+    const currentVariant = selectedSection.styles?.variant || getDefaultVariant(sectionType);
+    const currentIndex = availableVariants.indexOf(currentVariant);
+    
+    // Get next variant (cycle to first if at end)
+    const nextIndex = (currentIndex + 1) % availableVariants.length;
+    const nextVariant = availableVariants[nextIndex];
+    
+    // Save current styles to variant-specific storage before switching
+    setSiteData(prev => ({
+      ...prev,
+      sections: prev.sections.map(s => {
+        if (s.id === selectedSectionId) {
+          const variantStyles = s.variantStyles || {};
+          
+          // Save current styles to current variant
+          variantStyles[currentVariant] = {
+            ...variantStyles[currentVariant],
+            ...s.styles
+          };
+          
+          // Load styles for next variant (or use defaults if not saved)
+          const nextVariantStyles = variantStyles[nextVariant] || {};
+          const template = SECTION_TEMPLATES[sectionType] || SECTION_TEMPLATES.hero;
+          const defaultStyles = template?.styles || {};
+          
+          // Merge: defaults -> saved variant styles -> keep variant field
+          const mergedStyles = {
+            ...defaultStyles,
+            ...nextVariantStyles,
+            variant: nextVariant // Always set the variant
+          };
+          
+          return {
+            ...s,
+            styles: mergedStyles,
+            variantStyles: variantStyles
+          } as Section;
+        }
+        return s;
+      })
+    }));
+    
+    toast.success(`Variant changed to ${formatVariantName(nextVariant, sectionType) || nextVariant}`);
   };
   
   const updateGlobalColor = (key: keyof typeof siteData.globalStyles.colors, value: string) => {
@@ -1757,6 +2544,9 @@ const App: React.FC = () => {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && uploadTarget) {
+      setUploading(true);
+      setUploadProgress(0);
+      
       try {
         // Use uploadFile API instead of base64
         const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:1111/admin/v1';
@@ -1769,11 +2559,25 @@ const App: React.FC = () => {
           'Authorization': token ? `Bearer ${token}` : '',
         };
         
+        // Simulate progress for better UX (since we can't track actual progress without backend support)
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            if (prev >= 90) {
+              clearInterval(progressInterval);
+              return 90;
+            }
+            return prev + 10;
+          });
+        }, 200);
+        
         const response = await fetch(`${apiUrl}/uploadFile`, {
           method: 'POST',
           headers,
           body: formData,
         });
+        
+        clearInterval(progressInterval);
+        setUploadProgress(100);
         
         if (!response.ok) {
           throw new Error('Upload failed');
@@ -1803,7 +2607,23 @@ const App: React.FC = () => {
           }
         } else {
           if (uploadTarget.field === 'backgroundImage') {
-            updateSectionStyle(uploadTarget.sectionId, uploadTarget.field, fullImageUrl);
+            // Update the new background.image.url structure
+            const section = siteData.sections.find(s => s.id === uploadTarget.sectionId);
+            if (section) {
+              const currentBackground = section.styles?.background || { type: 'image', image: { url: '', position: 'center', size: 'cover', repeat: 'no-repeat', attachment: 'scroll', overlay: { enabled: false, color: '#000000', opacity: 0.5, blendMode: 'normal' } } };
+              
+              // Ensure background type is 'image' and update the URL
+              const updatedBackground = {
+                ...currentBackground,
+                type: 'image',
+                image: {
+                  ...(currentBackground.image || { position: 'center', size: 'cover', repeat: 'no-repeat', attachment: 'scroll', overlay: { enabled: false, color: '#000000', opacity: 0.5, blendMode: 'normal' } }),
+                  url: fullImageUrl
+                }
+              };
+              
+              updateSectionStyle(uploadTarget.sectionId, 'background', updatedBackground);
+            }
           } else {
             const section = siteData.sections.find(s => s.id === uploadTarget.sectionId);
             if (section) {
@@ -1862,7 +2682,7 @@ const App: React.FC = () => {
     setIsAddMenuOpen(false);
   };
 
-  const renderStyleEditor = (styles: any, onUpdate: (key: string, val: any) => void, context: 'section' | 'element', elementType?: string) => {
+  const renderStyleEditor = (styles: any, onUpdate: (key: string, val: any) => void, context: 'section' | 'element', elementType?: string, sectionId?: string) => {
       const getSpacingValues = (type: 'margin' | 'padding') => {
         if (context === 'element') {
             const val = styles[type];
@@ -1904,50 +2724,69 @@ const App: React.FC = () => {
                       <SpacingInputGroup label="Margin" values={getSpacingValues('margin')} onChange={(v) => handleSpacingUpdate('margin', v)} />
                   </div>
               </AccordionGroup>
-              <AccordionGroup title="Typography" defaultOpen={true}>
-                   <ColorInput label="Text Color" value={styles.textColor || styles.color} onChange={(v) => context === 'section' ? onUpdate('textColor', v) : onUpdate('color', v)} />
-                   {context === 'element' && (elementType === 'heading' || elementType === 'text') && (
-                       <FontSelectInput 
-                           label="Font Family" 
-                           value={styles.fontFamily || ''} 
-                           options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))} 
-                           onChange={(v) => {
-                               // If empty string, remove fontFamily to use theme default
-                               if (v === '') {
-                                   onUpdate('fontFamily', undefined);
-                               } else {
-                                   onUpdate('fontFamily', v);
-                               }
-                           }} 
-                           defaultFont={defaultTypography.fontFamily}
-                       />
-                   )}
-                   <SelectInput label="Font Weight" value={styles.fontWeight || '400'} options={[{label: 'Normal', value: '400'}, {label: 'Bold', value: '700'}, {label: 'Black', value: '900'}, {label: 'Light', value: '300'}]} onChange={(v) => onUpdate('fontWeight', v)} />
-                   <div className="mt-2 text-[10px] text-white/40 italic">
-                     Font sizes are controlled by Theme Settings
-                   </div>
-                   <div className="mt-2">
-                        <label className="text-[10px] font-bold text-white/40 capitalize ml-1 mb-1 block">Alignment</label>
-                        <ButtonGroup value={styles.textAlign || 'left'} onChange={(v) => onUpdate('textAlign', v)} options={[{ icon: 'fa-align-left', value: 'left', label: 'Left' }, { icon: 'fa-align-center', value: 'center', label: 'Center' }, { icon: 'fa-align-right', value: 'right', label: 'Right' }, { icon: 'fa-align-justify', value: 'justify', label: 'Justify' }]} />
-                   </div>
-              </AccordionGroup>
-              {context === 'section' && (
-                  <>
-                      <AccordionGroup title="Heading Styles">
-                          <ColorInput label="Heading Color" value={styles.titleColor || styles.textColor} onChange={(v) => onUpdate('titleColor', v)} />
-                          <div className="grid grid-cols-2 gap-4"><TextInput label="Size" value={styles.titleSize} onChange={(v) => onUpdate('titleSize', v)} placeholder="text-5xl" /></div>
-                      </AccordionGroup>
-                      <AccordionGroup title="Action Button">
-                           <ColorInput label="Button Bg" value={styles.buttonBackgroundColor} onChange={(v) => onUpdate('buttonBackgroundColor', v)} />
-                           <ColorInput label="Button Text" value={styles.buttonTextColor} onChange={(v) => onUpdate('buttonTextColor', v)} />
-                           <SelectInput label="Shape" value={styles.buttonStyle || 'rounded'} options={[{label: 'Rounded', value: 'rounded'}, {label: 'Pill', value: 'pill'}, {label: 'Square', value: 'square'}]} onChange={(v) => onUpdate('buttonStyle', v)} />
-                      </AccordionGroup>
-                  </>
+              {context === 'element' && (
+                  <AccordionGroup title="Typography" defaultOpen={true}>
+                       <ColorInput label="Text Color" value={styles.color || styles.textColor} onChange={(v) => onUpdate('color', v)} />
+                       {(elementType === 'heading' || elementType === 'text') && (
+                           <FontSelectInput 
+                               label="Font Family" 
+                               value={styles.fontFamily || ''} 
+                               options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))} 
+                               onChange={(v) => {
+                                   // If empty string, remove fontFamily to use theme default
+                                   if (v === '') {
+                                       onUpdate('fontFamily', undefined);
+                                   } else {
+                                       onUpdate('fontFamily', v);
+                                   }
+                               }} 
+                               defaultFont={defaultTypography.fontFamily}
+                           />
+                       )}
+                       {elementType === 'icon' && (
+                           <TextInput 
+                               label="Icon Size (px)" 
+                               value={styles.fontSize || '24px'} 
+                               onChange={(v) => onUpdate('fontSize', v)} 
+                               placeholder="e.g., 24px, 48px, 128px"
+                           />
+                       )}
+                       <SelectInput label="Font Weight" value={styles.fontWeight || '400'} options={[{label: 'Normal', value: '400'}, {label: 'Bold', value: '700'}, {label: 'Black', value: '900'}, {label: 'Light', value: '300'}]} onChange={(v) => onUpdate('fontWeight', v)} />
+                       <div className="mt-2">
+                            <label className="text-[10px] font-bold text-white/40 capitalize ml-1 mb-1 block">Alignment</label>
+                            <ButtonGroup value={styles.textAlign || 'left'} onChange={(v) => onUpdate('textAlign', v)} options={[{ icon: 'fa-align-left', value: 'left', label: 'Left' }, { icon: 'fa-align-center', value: 'center', label: 'Center' }, { icon: 'fa-align-right', value: 'right', label: 'Right' }, { icon: 'fa-align-justify', value: 'justify', label: 'Justify' }]} />
+                       </div>
+                  </AccordionGroup>
               )}
-              <AccordionGroup title="Background">
-                   <ColorInput label="Background Color" value={styles.backgroundColor} onChange={(v) => onUpdate('backgroundColor', v)} />
-                   <div className="mt-4"><ImageControl label="Background Image" value={styles.backgroundImage} onChange={(v) => onUpdate('backgroundImage', v)} onUpload={() => triggerUpload(selectedSectionId!, 'backgroundImage')} /></div>
-              </AccordionGroup>
+              {context === 'element' && elementType === 'button' && (
+                  <AccordionGroup title="Button Styles" defaultOpen={true}>
+                      <ColorInput label="Background Color" value={styles.backgroundColor || ''} onChange={(v) => onUpdate('backgroundColor', v)} />
+                      <ColorInput label="Text Color" value={styles.color || ''} onChange={(v) => onUpdate('color', v)} />
+                      <TextInput label="Border Radius" value={styles.borderRadius || ''} onChange={(v) => onUpdate('borderRadius', v)} placeholder="e.g., 8px, 50%, 1rem" />
+                      <TextInput label="Padding" value={typeof styles.padding === 'string' ? styles.padding : ''} onChange={(v) => onUpdate('padding', v)} placeholder="e.g., 12px 24px" />
+                  </AccordionGroup>
+              )}
+              {context === 'section' && (
+                  <AccordionGroup title="Background" defaultOpen={true}>
+                       <BackgroundControl 
+                         value={{ ...styles.background, enableGeometry: styles.enableGeometry }} 
+                         onChange={(v) => {
+                           const { enableGeometry, ...background } = v;
+                           onUpdate('background', background);
+                           if (enableGeometry !== undefined) {
+                             onUpdate('enableGeometry', enableGeometry);
+                           }
+                         }}
+                         onUpload={() => {
+                           if (sectionId) {
+                             triggerUpload(sectionId, 'backgroundImage');
+                           }
+                         }}
+                         uploading={uploading && uploadTarget?.field === 'backgroundImage' && uploadTarget?.sectionId === sectionId}
+                         uploadProgress={uploading && uploadTarget?.field === 'backgroundImage' && uploadTarget?.sectionId === sectionId ? uploadProgress : 0}
+                       />
+                  </AccordionGroup>
+              )}
               {context === 'element' && elementType === 'image' && (
                   <>
                       <AccordionGroup title="Image Effects" defaultOpen={true}>
@@ -2108,9 +2947,58 @@ const App: React.FC = () => {
                 <button onClick={() => addNewSection('allelementsTest')} className="px-3 py-1.5 rounded text-xs transition-colors flex items-center gap-2 text-slate-400 hover:text-white hover:bg-white/5" title="Add All Elements Test Section"><i className="fa-solid fa-vial"></i>Test All Elements</button>
             </div>
              <div className="flex items-center gap-2">
+                 {/* Device View Buttons */}
                  <div className="flex bg-[#151515] rounded p-1 border border-[#333] mr-2">
-                     <button onClick={() => setViewMode('desktop')} className={`px-2 py-1 rounded text-xs transition-colors ${viewMode === 'desktop' ? 'bg-[#333] text-white' : 'text-slate-500 hover:text-white'}`}><i className="fa-solid fa-desktop"></i></button>
-                     <button onClick={() => setViewMode('mobile')} className={`px-2 py-1 rounded text-xs transition-colors ${viewMode === 'mobile' ? 'bg-[#333] text-white' : 'text-slate-500 hover:text-white'}`}><i className="fa-solid fa-mobile-screen"></i></button>
+                     <button 
+                         onClick={() => setViewMode('desktop')} 
+                         className={`px-3 py-1 rounded text-xs transition-colors flex items-center gap-1.5 ${viewMode === 'desktop' ? 'bg-[#333] text-white' : 'text-slate-500 hover:text-white'}`}
+                         title="Desktop (1440px)"
+                     >
+                         <i className="fa-solid fa-desktop"></i>
+                         <span className="text-[10px]">1440px</span>
+                     </button>
+                     <button 
+                         onClick={() => setViewMode('tablet')} 
+                         className={`px-3 py-1 rounded text-xs transition-colors flex items-center gap-1.5 ${viewMode === 'tablet' ? 'bg-[#333] text-white' : 'text-slate-500 hover:text-white'}`}
+                         title="Tablet (1024px)"
+                     >
+                         <i className="fa-solid fa-tablet-screen-button"></i>
+                         <span className="text-[10px]">1024px</span>
+                     </button>
+                     <button 
+                         onClick={() => setViewMode('mobile')} 
+                         className={`px-3 py-1 rounded text-xs transition-colors flex items-center gap-1.5 ${viewMode === 'mobile' ? 'bg-[#333] text-white' : 'text-slate-500 hover:text-white'}`}
+                         title="Mobile (375px)"
+                     >
+                         <i className="fa-solid fa-mobile-screen"></i>
+                         <span className="text-[10px]">375px</span>
+                     </button>
+                 </div>
+                 
+                 {/* Zoom Slider */}
+                 <div className="flex items-center gap-3 bg-[#151515] rounded px-3 py-1.5 border border-[#333] mr-2">
+                     <i className="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+                     <input 
+                         type="range" 
+                         min="25" 
+                         max="200" 
+                         step="5"
+                         value={zoomLevel} 
+                         onChange={(e) => setZoomLevel(Number(e.target.value))}
+                         className="zoom-slider w-28 h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer"
+                         style={{
+                             background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(zoomLevel - 25) / 175 * 100}%, #333 ${(zoomLevel - 25) / 175 * 100}%, #333 100%)`
+                         }}
+                         title={`Zoom: ${zoomLevel}%`}
+                     />
+                     <span className="text-xs text-white font-medium min-w-[3.5rem] text-right">{zoomLevel}%</span>
+                     <button 
+                         onClick={() => setZoomLevel(100)} 
+                         className="px-2 py-1 rounded text-xs text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                         title="Reset to 100%"
+                     >
+                         <i className="fa-solid fa-rotate-left"></i>
+                     </button>
                  </div>
                  <button onClick={() => setIsPreviewMode(!isPreviewMode)} className={`px-3 py-1.5 rounded text-xs font-bold border transition-all ${isPreviewMode ? 'bg-blue-600 border-blue-600 text-white' : 'border-white/20 hover:bg-white/10'}`}>{isPreviewMode ? <><i className="fa-solid fa-eye-slash mr-2"></i>Edit</> : <><i className="fa-solid fa-eye mr-2"></i>Preview</>}</button>
                  <button 
@@ -2137,7 +3025,7 @@ const App: React.FC = () => {
             </div>
         </header>
 
-        <div className="flex-1 flex overflow-hidden relative">
+        <div className="flex-1 flex overflow-hidden relative h-full">
             <aside className={`w-80 bg-[#080808] border-r border-white/10 flex flex-col shrink-0 transition-all duration-300 absolute z-40 h-full md:relative ${isSidebarOpen && !isPreviewMode ? 'translate-x-0' : '-translate-x-full md:hidden'} ${!isPreviewMode ? 'md:translate-x-0' : 'md:-translate-x-full md:w-0 md:border-none'}`}>
                 {!selectedSectionId ? (
                      <div className="flex flex-col h-full">
@@ -2233,10 +3121,50 @@ const App: React.FC = () => {
                 ) : (
                     <div className="flex flex-col h-full">
                         <div className="p-4 border-b border-white/10">
-                             <div className="flex items-center gap-2 mb-3"><button onClick={() => { if(selectedElementId) setSelectedElementId(null); else setSelectedSectionId(null); }} className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/10 text-slate-400"><i className="fa-solid fa-arrow-left text-[10px]"></i></button><div className="flex items-center text-xs font-bold capitalize truncate"><span className={selectedElementId ? 'text-slate-500' : 'text-white'}>{selectedSection?.type}</span>{selectedElementId && <><i className="fa-solid fa-chevron-right text-[8px] mx-1.5 text-slate-600"></i><span className="text-white">{selectedElement?.type}</span></>}</div></div>
-                            <div className="flex gap-1 bg-[#151515] rounded p-1">
-                                <button onClick={() => setEditTab('content')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'content' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>CONTENT</button><button onClick={() => setEditTab('design')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'design' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>DESIGN</button>
-                            </div>
+                             {(() => {
+                                const variant = selectedSection?.styles?.variant || (selectedSection?.type ? getDefaultVariant(selectedSection.type) : null);
+                                const formattedVariant = formatVariantName(variant || undefined, selectedSection?.type);
+                                const availableVariants = selectedSection?.type ? getVariantsForSection(selectedSection.type) : [];
+                                const hasMultipleVariants = availableVariants.length > 1;
+                                
+                                return (
+                                    <>
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <button onClick={() => { if(selectedElementId) setSelectedElementId(null); else setSelectedSectionId(null); }} className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/10 text-slate-400">
+                                                <i className="fa-solid fa-arrow-left text-[10px]"></i>
+                                            </button>
+                                            <div className="flex items-center text-xs font-bold capitalize truncate flex-1">
+                                                <span className={selectedElementId ? 'text-slate-500' : 'text-white'}>{selectedSection?.type}</span>
+                                                {formattedVariant && !selectedElementId && (
+                                                    <>
+                                                        <i className="fa-solid fa-chevron-right text-[8px] mx-1.5 text-slate-600"></i>
+                                                        <span className="text-slate-400 text-[10px] font-normal">{formattedVariant}</span>
+                                                    </>
+                                                )}
+                                                {selectedElementId && (
+                                                    <>
+                                                        <i className="fa-solid fa-chevron-right text-[8px] mx-1.5 text-slate-600"></i>
+                                                        <span className="text-white">{selectedElement?.type}</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                            {hasMultipleVariants && !selectedElementId && (
+                                                <button
+                                                    onClick={handleRefreshVariant}
+                                                    className="px-2 py-1 text-[10px] font-medium rounded bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 border border-blue-600/30 hover:border-blue-600/50 transition-all flex items-center gap-1.5"
+                                                    title="Refresh Variant - Change to next available variant"
+                                                >
+                                                    <i className="fa-solid fa-rotate text-[9px]"></i>
+                                                    <span>Refresh</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-1 bg-[#151515] rounded p-1">
+                                            <button onClick={() => setEditTab('content')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'content' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>CONTENT</button><button onClick={() => setEditTab('design')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'design' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>DESIGN</button>
+                                        </div>
+                                    </>
+                                );
+                             })()}
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pb-20">
                              {selectedElementId && selectedElement && selectedSection ? (
@@ -2315,10 +3243,28 @@ const App: React.FC = () => {
                                                      }} 
                                                  />
                                                  <TextInput 
-                                                     label="Icon Size" 
-                                                     value={selectedElement.content.iconSize || '2rem'} 
-                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, iconSize: v} })} 
-                                                     placeholder="e.g., 2rem, 24px, 1.5em"
+                                                     label="Icon Size (px)" 
+                                                     value={selectedElement.style?.fontSize || '128px'} 
+                                                     onChange={(v) => {
+                                                         // Preserve existing style properties and update fontSize
+                                                         const currentStyle = selectedElement.style || {};
+                                                         updateElement(selectedSection.id, selectedElement.id, { 
+                                                             style: {
+                                                                 ...currentStyle,
+                                                                 fontSize: v
+                                                             } 
+                                                         });
+                                                     }} 
+                                                     placeholder="e.g., 128px, 64px, 200px"
+                                                 />
+                                             </div>
+                                         ) : selectedElement.type === 'badge' ? (
+                                             <div className="space-y-4">
+                                                 <TextInput 
+                                                     label="Badge Text" 
+                                                     value={selectedElement.content.text || ''} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, text: v} })} 
+                                                     placeholder="Enter badge text"
                                                  />
                                              </div>
                                          ) : (
@@ -2441,25 +3387,38 @@ const App: React.FC = () => {
                                  )
                              ) : (
                                  selectedSection && (
-                                     editTab === 'design' ? (renderStyleEditor(selectedSection.styles, (k,v) => updateSectionStyle(selectedSection.id, k, v), 'section')) : (
+                                     editTab === 'design' ? (renderStyleEditor(selectedSection.styles, (k,v) => updateSectionStyle(selectedSection.id, k, v), 'section', undefined, selectedSection.id)) : (
                                          <div className="space-y-6">
-                                             <TextAreaInput label="Heading" value={selectedSection.content.title} onChange={(v) => updateSection(selectedSection.id, { content: {...selectedSection.content, title: v} })} />
-                                             <SelectInput 
-                                                 key={`section-heading-tag-${selectedSection.id}-${selectedSection.styles.titleHeadingTag || 'h2'}`}
-                                                 label="Heading Level" 
-                                                 value={selectedSection.styles.titleHeadingTag || 'h2'} 
-                                                 options={[
-                                                     {label: 'H1 (Largest)', value: 'h1'},
-                                                     {label: 'H2', value: 'h2'},
-                                                     {label: 'H3', value: 'h3'},
-                                                     {label: 'H4', value: 'h4'},
-                                                     {label: 'H5', value: 'h5'},
-                                                     {label: 'H6 (Smallest)', value: 'h6'}
-                                                 ]} 
-                                                 onChange={(v) => {
-                                                     updateSectionStyle(selectedSection.id, 'titleHeadingTag', v as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6');
-                                                 }} 
-                                             />
+                                             {/* Variant Info and Refresh Button */}
+                                             {(() => {
+                                                const variant = selectedSection.styles?.variant || getDefaultVariant(selectedSection.type);
+                                                const formattedVariant = formatVariantName(variant || undefined, selectedSection.type);
+                                                const availableVariants = getVariantsForSection(selectedSection.type);
+                                                const hasMultipleVariants = availableVariants.length > 1;
+                                                
+                                                return (
+                                                    <div className="space-y-4 pb-4 border-b border-white/10">
+                                                        <div className="flex items-center justify-between">
+                                                            <div>
+                                                                <label className="text-[10px] font-bold text-white/40 capitalize mb-1 block">Current Variant</label>
+                                                                <div className="text-sm font-bold text-white">
+                                                                    {formattedVariant || variant || 'Default'}
+                                                                </div>
+                                                            </div>
+                                                            {hasMultipleVariants && (
+                                                                <button
+                                                                    onClick={handleRefreshVariant}
+                                                                    className="px-3 py-1.5 text-[10px] font-medium rounded bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 border border-blue-600/30 hover:border-blue-600/50 transition-all flex items-center gap-1.5"
+                                                                    title="Refresh Variant - Change to next available variant"
+                                                                >
+                                                                    <i className="fa-solid fa-rotate text-[9px]"></i>
+                                                                    <span>Refresh</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                             })()}
                                          </div>
                                      )
                                  )
@@ -2468,35 +3427,91 @@ const App: React.FC = () => {
                     </div>
                 )}
             </aside>
-            <main className="flex-1 bg-[#111] overflow-hidden relative flex flex-col items-center justify-center p-4 md:p-8" onClick={() => { setSelectedSectionId(null); setSelectedElementId(null); }}>
-                <PreviewFrame className={`transition-all duration-500 ease-in-out shadow-2xl ring-1 ring-white/10 ${viewMode === 'desktop' ? 'w-full h-full rounded-xl' : 'w-[375px] h-[667px] rounded-2xl border-[8px] border-[#222]'}`} style={{ backgroundColor: 'var(--bg-color)' }}>
-                    <div id="canvas-root" className="min-h-full">
-                         {siteData.sections.map((section) => (
-                            <SectionRenderer 
-                              key={`${section.id}-${section.styles.titleHeadingTag || 'h2'}-${JSON.stringify(defaultSizes)}`} 
-                              section={section} 
-                              onUpdate={updateSection} 
-                              isSelected={selectedSectionId === section.id} 
-                              readOnly={isPreviewMode} 
-                              onClick={() => { 
-                                // When clicking section background, select section and clear element selection
-                                setSelectedSectionId(section.id); 
-                                setSelectedElementId(null); 
-                              }} 
-                              onDelete={deleteSection} 
-                              onMoveUp={(id) => moveSection(id, 'up')} 
-                              onMoveDown={(id) => moveSection(id, 'down')} 
-                              onUpload={triggerUpload} 
-                              selectedElementId={selectedElementId} 
-                              onElementSelect={(elId) => { 
-                                // When clicking element, select both section and element
-                                setSelectedSectionId(section.id); 
-                                setSelectedElementId(elId); 
-                              }} 
-                            />
-                        ))}
+            {/* Canvas Wrapper - Full width/height with browser-like content zoom */}
+            <main 
+                className="flex-1 bg-[#111] relative" 
+                style={{ 
+                    height: '100%', 
+                    width: '100%',
+                    overflow: 'hidden',
+                    position: 'relative'
+                }} 
+                onClick={() => { setSelectedSectionId(null); setSelectedElementId(null); }}
+            >
+                {/* Page container - fixed at full width/height, connected to all edges (top, bottom, left, right) */}
+                <div 
+                    className="absolute inset-0 shadow-2xl ring-1 ring-white/10 bg-white"
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        position: 'absolute',
+                        overflow: 'hidden'
+                    }}
+                >
+                    {/* Content wrapper - only this scales, page container stays fixed */}
+                    <div
+                        style={{
+                            width: `${100 / (zoomLevel / 100)}%`,
+                            height: `${100 / (zoomLevel / 100)}%`,
+                            transform: `scale(${zoomLevel / 100})`,
+                            transformOrigin: 'top left',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0
+                        }}
+                    >
+                        <PreviewFrame 
+                            className="w-full h-full" 
+                            style={{ 
+                                backgroundColor: 'var(--bg-color)',
+                                width: '100%',
+                                height: '100%',
+                                minHeight: '100%',
+                                display: 'block',
+                                border: 'none'
+                            }}
+                        >
+                            <div 
+                                id="canvas-root" 
+                                className="w-full h-full" 
+                                style={{ 
+                                    width: '100%',
+                                    height: '100%',
+                                    minHeight: '100%'
+                                }}
+                            >
+                                 {siteData.sections.map((section) => (
+                                    <SectionRenderer 
+                                      key={`${section.id}-${section.styles.titleHeadingTag || 'h2'}-${JSON.stringify(defaultSizes)}`} 
+                                      section={section} 
+                                      onUpdate={updateSection} 
+                                      isSelected={selectedSectionId === section.id} 
+                                      readOnly={isPreviewMode} 
+                                      onClick={() => { 
+                                        // When clicking section background, select section and clear element selection
+                                        setSelectedSectionId(section.id); 
+                                        setSelectedElementId(null); 
+                                      }} 
+                                      onDelete={deleteSection} 
+                                      onMoveUp={(id) => moveSection(id, 'up')} 
+                                      onMoveDown={(id) => moveSection(id, 'down')} 
+                                      onUpload={triggerUpload} 
+                                      selectedElementId={selectedElementId} 
+                                      onElementSelect={(elId) => { 
+                                        // When clicking element, select both section and element
+                                        setSelectedSectionId(section.id); 
+                                        setSelectedElementId(elId); 
+                                      }} 
+                                    />
+                                ))}
+                            </div>
+                        </PreviewFrame>
                     </div>
-                </PreviewFrame>
+                </div>
             </main>
         </div>
         <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileUpload} />

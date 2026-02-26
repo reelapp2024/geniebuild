@@ -22,8 +22,9 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({ children, className,
         if (!doc) return;
 
         // Prevent flash of unstyled content or white background
+        // Use device-width for proper responsive behavior (not fixed pixel width)
         doc.open();
-        doc.write('<!DOCTYPE html><html><head></head><body><div id="frame-root"></div></body></html>');
+        doc.write('<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"></head><body><div id="frame-root"></div></body></html>');
         doc.close();
         
         // Inject Tailwind
@@ -41,12 +42,33 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({ children, className,
         // Base Styles
         const styleEl = doc.createElement('style');
         styleEl.textContent = `
-            body { 
+            html, body { 
                 background-color: transparent; 
                 margin: 0; 
+                padding: 0;
                 overflow-x: hidden;
-                /* Ensure full height for layout */
+                /* Ensure full height and width for layout */
+                height: 100%;
                 min-height: 100vh;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            /* Ensure sections can use full width */
+            #frame-root {
+                width: 100%;
+                max-width: 100%;
+                min-height: 100vh;
+                margin: 0;
+                padding: 0;
+            }
+            /* Ensure all sections take full width */
+            #frame-root > * {
+                width: 100%;
+                max-width: 100%;
             }
             ::-webkit-scrollbar { width: 8px; height: 8px; }
             ::-webkit-scrollbar-track { background: #111; }
@@ -101,12 +123,21 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({ children, className,
       return () => observer.disconnect();
   }, [mountNode]); // Re-setup if mountNode changes (iframe reloads)
 
+  // Viewport is set to device-width for proper responsive behavior
+  // The iframe width itself controls the viewport size, not the meta tag
+
   return (
     <>
         <iframe 
             ref={frameRef} 
             className={className} 
-            style={{...style, border: 'none'}}
+            style={{
+                ...style, 
+                border: 'none',
+                display: 'block',
+                width: style?.width || '100%',
+                height: style?.height || '100%'
+            }}
             title="Site Preview"
         />
         {mountNode && createPortal(children, mountNode)}
