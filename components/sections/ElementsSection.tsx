@@ -11,6 +11,7 @@ interface ElementsSectionProps {
   selectedElementId?: string | null;
   buttonClass: string;
   readOnly?: boolean;
+  isWrapped?: boolean; // If false, renders elements without wrapper div (for use in custom layouts)
   themeColors?: {
     titleColor?: string;
     textColor?: string;
@@ -124,7 +125,7 @@ const getSafeStyle = (style: any): React.CSSProperties => {
   return css as React.CSSProperties;
 };
 
-export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onElementUpdate, onElementSelect, selectedElementId, buttonClass, readOnly = false, themeColors }) => {
+export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onElementUpdate, onElementSelect, selectedElementId, buttonClass, readOnly = false, isWrapped = true, themeColors }) => {
   const elements = section.elements || [];
   const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
   
@@ -251,7 +252,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 ...safeStyle,
                 backgroundColor: safeStyle.backgroundColor || theme?.buttonBackgroundColor || '#E11D48',
                 color: safeStyle.color || theme?.buttonTextColor || '#FFFFFF',
-                textAlign: 'center' as const
+                textAlign: 'center' as const // Button text is always centered internally
             };
             const buttonElement = (
                 <button 
@@ -266,26 +267,47 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 </button>
             );
             
+            // Use flexbox with justify-content for proper button alignment
+            // Convert textAlign to flexbox justify-content
+            const getJustifyContent = (textAlign?: string): string => {
+                if (!textAlign) return 'center';
+                switch (textAlign) {
+                    case 'left': return 'flex-start';
+                    case 'right': return 'flex-end';
+                    case 'center': return 'center';
+                    case 'justify': return 'center'; // justify doesn't make sense for buttons, default to center
+                    default: return 'center';
+                }
+            };
+            
+            const wrapperStyle: React.CSSProperties = {
+                display: 'flex',
+                justifyContent: getJustifyContent(safeStyle.textAlign as string) as any,
+                width: '100%'
+            };
+            
             return (
-                <div key={id} style={{ textAlign: safeStyle.textAlign }}>
-                    {content.link ? (
-                        <a 
-                            href={content.link}
-                            target={content.link.startsWith('http') ? '_blank' : '_self'}
-                            rel={content.link.startsWith('http') ? 'noopener noreferrer' : undefined}
-                            onClick={!readOnly ? (e) => {
-                                handleClick(e, id);
-                            } : undefined}
-                            className="inline-block"
-                        >
-                            {buttonElement}
-                        </a>
-                    ) : (
-                        buttonElement
-                    )}
-                    {type === 'call-to-action' && content.subText && (
-                        <p className="mt-2 text-sm opacity-70" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'subText', e.currentTarget.textContent) : undefined}>{content.subText}</p>
-                    )}
+                <div key={id} style={wrapperStyle}>
+                    <div>
+                        {content.link ? (
+                            <a 
+                                href={content.link}
+                                target={content.link.startsWith('http') ? '_blank' : '_self'}
+                                rel={content.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                                onClick={!readOnly ? (e) => {
+                                    handleClick(e, id);
+                                } : undefined}
+                                className="inline-block"
+                            >
+                                {buttonElement}
+                            </a>
+                        ) : (
+                            buttonElement
+                        )}
+                        {type === 'call-to-action' && content.subText && (
+                            <p className="mt-2 text-sm opacity-70" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'subText', e.currentTarget.textContent) : undefined}>{content.subText}</p>
+                        )}
+                    </div>
                 </div>
             );
 
@@ -866,11 +888,28 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
     }
   };
 
+  // Render elements
+  // When isWrapped is false, render elements directly without grid wrapper (for custom layouts)
+  // When isWrapped is true, wrap in grid for standard sections
+  const elementsContent = isWrapped ? (
+    <div className="grid gap-8">
+      {elements.map(renderElement)}
+    </div>
+  ) : (
+    <>
+      {elements.map(renderElement)}
+    </>
+  );
+
+  // If isWrapped is false, render elements directly without wrapper (for use in custom layouts)
+  if (!isWrapped) {
+    return elementsContent;
+  }
+
+  // Default: render with wrapper div for standard sections
   return (
     <div className="max-w-6xl mx-auto px-6 py-4 relative z-10 text-left">
-      <div className="grid gap-8">
-          {elements.map(renderElement)}
-      </div>
+      {elementsContent}
     </div>
   );
 };
