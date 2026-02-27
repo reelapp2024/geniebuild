@@ -7,14 +7,84 @@ interface HeroProps {
   onTextEdit: (key: any, value: string) => void;
   buttonClass: string;
   onElementSelect?: (elementId: string) => void;
+  onElementUpdate?: (elementId: string, updates: any) => void;
   selectedElementId?: string | null;
   readOnly?: boolean;
 }
 
-export const HeroGradient: React.FC<HeroProps> = ({ section, onTextEdit, buttonClass, onElementSelect, selectedElementId, readOnly = false }) => {
+export const HeroGradient: React.FC<HeroProps> = ({ section, onTextEdit, buttonClass, onElementSelect, onElementUpdate, selectedElementId, readOnly = false }) => {
   const { content, styles } = section;
   
   const isCustomColor = (value?: string) => value && (value.startsWith('#') || value.startsWith('rgb') || value.startsWith('hsl'));
+  
+  // Element IDs - unique per section instance
+  const titleId = `${section.id}-hero-title`;
+  const subtitleId = `${section.id}-hero-subtitle`;
+  const buttonId = `${section.id}-hero-button`;
+  
+  // Get button element from section.elements
+  const buttonElement = section.elements?.find(e => e.id === buttonId);
+  
+  // Use same button rendering approach as ElementsSection
+  // Process button element style the same way ElementsSection does
+  const getButtonStyle = (): React.CSSProperties => {
+    if (!buttonElement?.style) {
+      return {};
+    }
+    
+    // Get safe style (same as ElementsSection's getSafeStyle)
+    const safeStyle: any = { ...buttonElement.style };
+    
+    // Handle margin object
+    if (typeof safeStyle.margin === 'object' && safeStyle.margin !== null) {
+      if (safeStyle.margin.top) safeStyle.marginTop = safeStyle.margin.top;
+      if (safeStyle.margin.right) safeStyle.marginRight = safeStyle.margin.right;
+      if (safeStyle.margin.bottom) safeStyle.marginBottom = safeStyle.margin.bottom;
+      if (safeStyle.margin.left) safeStyle.marginLeft = safeStyle.margin.left;
+      delete safeStyle.margin;
+    }
+    
+    // Handle padding object
+    if (typeof safeStyle.padding === 'object' && safeStyle.padding !== null) {
+      if (safeStyle.padding.top) safeStyle.paddingTop = safeStyle.padding.top;
+      if (safeStyle.padding.right) safeStyle.paddingRight = safeStyle.padding.right;
+      if (safeStyle.padding.bottom) safeStyle.paddingBottom = safeStyle.padding.bottom;
+      if (safeStyle.padding.left) safeStyle.paddingLeft = safeStyle.padding.left;
+      delete safeStyle.padding;
+    }
+    
+    // Handle borderRadius object
+    if (typeof safeStyle.borderRadius === 'object' && safeStyle.borderRadius !== null) {
+      if (safeStyle.borderRadius.tl) safeStyle.borderTopLeftRadius = safeStyle.borderRadius.tl;
+      if (safeStyle.borderRadius.tr) safeStyle.borderTopRightRadius = safeStyle.borderRadius.tr;
+      if (safeStyle.borderRadius.bl) safeStyle.borderBottomLeftRadius = safeStyle.borderRadius.bl;
+      if (safeStyle.borderRadius.br) safeStyle.borderBottomRightRadius = safeStyle.borderRadius.br;
+      delete safeStyle.borderRadius;
+    }
+    
+    // Build button style exactly like ElementsSection
+    return {
+      ...safeStyle,
+      backgroundColor: (typeof safeStyle.backgroundColor === 'string' && safeStyle.backgroundColor.trim() !== '') 
+        ? safeStyle.backgroundColor 
+        : (styles.buttonBackgroundColor || '#E11D48'),
+      color: (typeof safeStyle.color === 'string' && safeStyle.color.trim() !== '') 
+        ? safeStyle.color 
+        : (styles.buttonTextColor || '#FFFFFF'),
+      textAlign: 'center' as const // Button text is centered, alignment is on wrapper
+    };
+  };
+  
+  const buttonStyle = getButtonStyle();
+  
+  // Get button alignment for wrapper div - use textAlign from processed style (same as ElementsSection)
+  const buttonTextAlign = buttonElement?.style?.textAlign as 'left' | 'center' | 'right' | 'justify' | undefined;
+  const buttonWrapperStyle: React.CSSProperties = { 
+    textAlign: buttonTextAlign || 'center' 
+  };
+  
+  // Use buttonClass only if no element styles are set
+  const effectiveButtonClass = buttonElement?.style ? '' : buttonClass;
 
   // Get heading tag from styles, default to h1 for hero
   const headingTag = (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
@@ -65,10 +135,6 @@ export const HeroGradient: React.FC<HeroProps> = ({ section, onTextEdit, buttonC
     subtitleStyle.fontFamily = subtitleFontFamily;
   }
 
-  // Element IDs - unique per section instance
-  const titleId = `${section.id}-hero-title`;
-  const subtitleId = `${section.id}-hero-subtitle`;
-  const buttonId = `${section.id}-hero-button`;
 
   // Handle element click
   const handleElementClick = (e: React.MouseEvent, elementId: string) => {
@@ -152,12 +218,12 @@ export const HeroGradient: React.FC<HeroProps> = ({ section, onTextEdit, buttonC
         >
           {content.subtitle}
         </p>
-        <div className={`flex flex-wrap justify-center gap-4 mb-10`}>
-          {content.ctaHref ? (
+        <div style={buttonWrapperStyle}>
+          {(buttonElement?.content?.link || content.ctaHref) ? (
             <a
-              href={content.ctaHref}
-              target={content.ctaHref.startsWith('http') ? '_blank' : '_self'}
-              rel={content.ctaHref.startsWith('http') ? 'noopener noreferrer' : undefined}
+              href={buttonElement?.content?.link || content.ctaHref}
+              target={(buttonElement?.content?.link || content.ctaHref)?.startsWith('http') ? '_blank' : '_self'}
+              rel={(buttonElement?.content?.link || content.ctaHref)?.startsWith('http') ? 'noopener noreferrer' : undefined}
               onClick={!readOnly ? (e) => {
                 e.preventDefault();
                 handleElementClick(e, buttonId);
@@ -165,27 +231,37 @@ export const HeroGradient: React.FC<HeroProps> = ({ section, onTextEdit, buttonC
               className="inline-block"
             >
               <button 
-                className={`${buttonClass} text-lg px-8 py-3 font-bold ${!readOnly && isButtonSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''}`} 
+                className={`${effectiveButtonClass} text-lg px-8 py-3 font-bold ${!readOnly && isButtonSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''} ${!readOnly ? 'outline-none relative transition-all cursor-pointer' : ''}`}
+                style={buttonStyle}
                 contentEditable={!readOnly}
                 suppressContentEditableWarning={!readOnly}
-                onBlur={!readOnly ? (e) => onTextEdit('ctaText', e.currentTarget.textContent || '') : undefined}
+                onBlur={!readOnly ? (e: any) => {
+                  if (onElementUpdate) {
+                    onElementUpdate(buttonId, { content: { text: e.currentTarget.textContent || '' } });
+                  } else {
+                    onTextEdit('ctaText', e.currentTarget.textContent || '');
+                  }
+                } : undefined}
               >
-                {content.ctaText}
+                {buttonElement?.content?.text || content.ctaText}
               </button>
             </a>
           ) : (
             <button 
-              className={`${buttonClass} text-lg px-8 py-3 font-bold ${!readOnly && isButtonSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''}`} 
+              className={`${effectiveButtonClass} text-lg px-8 py-3 font-bold ${!readOnly && isButtonSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''} ${!readOnly ? 'outline-none relative transition-all cursor-pointer' : ''}`}
+              style={buttonStyle}
               contentEditable={!readOnly}
               suppressContentEditableWarning={!readOnly}
-              onBlur={!readOnly ? (e) => onTextEdit('ctaText', e.currentTarget.textContent || '') : undefined}
-              onClick={!readOnly ? (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleElementClick(e, buttonId);
+              onClick={!readOnly ? (e) => handleElementClick(e, buttonId) : undefined}
+              onBlur={!readOnly ? (e: any) => {
+                if (onElementUpdate) {
+                  onElementUpdate(buttonId, { content: { text: e.currentTarget.textContent || '' } });
+                } else {
+                  onTextEdit('ctaText', e.currentTarget.textContent || '');
+                }
               } : undefined}
             >
-              {content.ctaText}
+              {buttonElement?.content?.text || content.ctaText}
             </button>
           )}
         </div>

@@ -232,18 +232,18 @@ const ImageControl = ({ label, value, onChange, onUpload, uploading = false, upl
                         }}
                     />
                     {!uploading && (
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                             <button 
-                                 onClick={(e) => {
-                                     e.preventDefault();
-                                     e.stopPropagation();
-                                     onUpload();
-                                 }} 
-                                 className="px-3 py-1 bg-white text-black text-xs font-bold rounded hover:scale-105 transition-transform shadow-lg"
-                             >
-                                 Change Image
-                             </button>
-                        </div>
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                         <button 
+                             onClick={(e) => {
+                                 e.preventDefault();
+                                 e.stopPropagation();
+                                 onUpload();
+                             }} 
+                             className="px-3 py-1 bg-white text-black text-xs font-bold rounded hover:scale-105 transition-transform shadow-lg"
+                         >
+                             Change Image
+                         </button>
+                    </div>
                     )}
                 </div>
             ) : (
@@ -262,10 +262,10 @@ const ImageControl = ({ label, value, onChange, onUpload, uploading = false, upl
                             )}
                         </div>
                     ) : (
-                        <div className="text-center text-white/40 text-xs">
-                            <i className="fa-solid fa-image text-2xl mb-2 block"></i>
-                            <span>No image preview</span>
-                        </div>
+                    <div className="text-center text-white/40 text-xs">
+                        <i className="fa-solid fa-image text-2xl mb-2 block"></i>
+                        <span>No image preview</span>
+                    </div>
                     )}
                 </div>
             )}
@@ -294,7 +294,7 @@ const ImageControl = ({ label, value, onChange, onUpload, uploading = false, upl
                             <span className="text-[10px]">Uploading...</span>
                         </>
                     ) : (
-                        <i className="fa-solid fa-upload text-xs"></i>
+                    <i className="fa-solid fa-upload text-xs"></i>
                     )}
                 </button>
             </div>
@@ -902,6 +902,7 @@ const BackgroundControl = ({
             label="Background Image"
             value={localBackground.image?.url || ''}
             onChange={(v) => {
+              // Ensure background type is 'image' when URL is pasted
               const currentImage = localBackground.image || {
                 url: '',
                 position: 'center',
@@ -910,7 +911,9 @@ const BackgroundControl = ({
                 attachment: 'scroll',
                 overlay: { enabled: false, color: '#000000', opacity: 0.5, blendMode: 'normal' }
               };
+              // Update background with image URL and ensure type is 'image'
               updateBackground({
+                type: 'image',
                 image: { ...currentImage, url: v }
               });
             }}
@@ -1663,6 +1666,12 @@ const App: React.FC = () => {
           }
         };
       } else if (elementType === 'button') {
+        // Check if button element exists in section.elements
+        const buttonElement = selectedSection.elements?.find(e => e.id === selectedElementId);
+        if (buttonElement) {
+          return buttonElement;
+        }
+        // Create virtual element if not found
         virtualElement = {
           id: selectedElementId,
           type: 'button',
@@ -1673,6 +1682,7 @@ const App: React.FC = () => {
           style: {
             backgroundColor: styles.buttonBackgroundColor || '',
             color: styles.buttonTextColor || '',
+            textAlign: 'center',
             fontSize: 'text-lg',
             padding: 'px-8 py-3',
           }
@@ -2070,11 +2080,47 @@ const App: React.FC = () => {
                               }
                           }
                       } else if (elementType === 'button') {
-                          if (updates.content.text !== undefined) {
+                          // Check if button element exists in section.elements
+                          const buttonElement = s.elements?.find(e => e.id === elementId);
+                          if (buttonElement) {
+                              // Update existing element
+                              const newElements = s.elements?.map(el => 
+                                  el.id === elementId ? { ...el, ...updates } : el
+                              );
+                              sectionUpdates.elements = newElements;
+                          } else {
+                              // For virtual button, create element in elements array
+                              if (updates.content?.text !== undefined) {
                               sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
                           }
-                          if (updates.content.link !== undefined) {
+                              if (updates.content?.link !== undefined) {
                               sectionUpdates.content = { ...s.content, ctaHref: updates.content.link };
+                              }
+                              // Create or update button element in elements array
+                              const existingButtonElement = s.elements?.find(e => e.id === elementId);
+                              if (existingButtonElement) {
+                                  const newElements = s.elements?.map(el => 
+                                      el.id === elementId ? { ...el, ...updates } : el
+                                  );
+                                  sectionUpdates.elements = newElements;
+                              } else {
+                                  // Create new button element
+                                  const newButtonElement = {
+                                      id: elementId,
+                                      type: 'button' as const,
+                                      content: {
+                                          text: updates.content?.text || s.content.ctaText || '',
+                                          link: updates.content?.link || s.content.ctaHref || ''
+                                      },
+                                      style: {
+                                          ...(updates.style || {}),
+                                          backgroundColor: updates.style?.backgroundColor || s.styles.buttonBackgroundColor || '#E11D48',
+                                          color: updates.style?.color || s.styles.buttonTextColor || '#FFFFFF',
+                                          textAlign: updates.style?.textAlign || 'center'
+                                      }
+                                  };
+                                  sectionUpdates.elements = [...(s.elements || []), newButtonElement];
+                              }
                           }
                       } else if (elementType === 'image' && updates.content.imageUrl !== undefined) {
                           sectionUpdates.content = { ...s.content, imageUrl: updates.content.imageUrl };
@@ -2233,8 +2279,8 @@ const App: React.FC = () => {
           
           // Update current styles
           const updatedStyles = {
-            ...s.styles,
-            [key]: value
+              ...s.styles,
+              [key]: value
           };
           
           // Save to variant-specific storage
@@ -2682,7 +2728,7 @@ const App: React.FC = () => {
     setIsAddMenuOpen(false);
   };
 
-  const renderStyleEditor = (styles: any, onUpdate: (key: string, val: any) => void, context: 'section' | 'element', elementType?: string, sectionId?: string) => {
+  const renderStyleEditor = (styles: any, onUpdate: (key: string, val: any) => void, context: 'section' | 'element', elementType?: string, sectionId?: string, themeColors?: any, onBatchUpdate?: (updates: Record<string, any>) => void) => {
       const getSpacingValues = (type: 'margin' | 'padding') => {
         if (context === 'element') {
             const val = styles[type];
@@ -2725,46 +2771,78 @@ const App: React.FC = () => {
                   </div>
               </AccordionGroup>
               {context === 'element' && (
-                  <AccordionGroup title="Typography" defaultOpen={true}>
+              <AccordionGroup title="Typography" defaultOpen={true}>
                        <ColorInput label="Text Color" value={styles.color || styles.textColor} onChange={(v) => onUpdate('color', v)} />
                        {(elementType === 'heading' || elementType === 'text') && (
-                           <FontSelectInput 
-                               label="Font Family" 
-                               value={styles.fontFamily || ''} 
-                               options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))} 
-                               onChange={(v) => {
-                                   // If empty string, remove fontFamily to use theme default
-                                   if (v === '') {
-                                       onUpdate('fontFamily', undefined);
-                                   } else {
-                                       onUpdate('fontFamily', v);
-                                   }
-                               }} 
-                               defaultFont={defaultTypography.fontFamily}
-                           />
-                       )}
+                       <FontSelectInput 
+                           label="Font Family" 
+                           value={styles.fontFamily || ''} 
+                           options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))} 
+                           onChange={(v) => {
+                               // If empty string, remove fontFamily to use theme default
+                               if (v === '') {
+                                   onUpdate('fontFamily', undefined);
+                               } else {
+                                   onUpdate('fontFamily', v);
+                               }
+                           }} 
+                           defaultFont={defaultTypography.fontFamily}
+                       />
+                   )}
                        {elementType === 'icon' && (
                            <TextInput 
                                label="Icon Size (px)" 
                                value={styles.fontSize || '24px'} 
                                onChange={(v) => onUpdate('fontSize', v)} 
                                placeholder="e.g., 24px, 48px, 128px"
-                           />
-                       )}
-                       <SelectInput label="Font Weight" value={styles.fontWeight || '400'} options={[{label: 'Normal', value: '400'}, {label: 'Bold', value: '700'}, {label: 'Black', value: '900'}, {label: 'Light', value: '300'}]} onChange={(v) => onUpdate('fontWeight', v)} />
-                       <div className="mt-2">
-                            <label className="text-[10px] font-bold text-white/40 capitalize ml-1 mb-1 block">Alignment</label>
-                            <ButtonGroup value={styles.textAlign || 'left'} onChange={(v) => onUpdate('textAlign', v)} options={[{ icon: 'fa-align-left', value: 'left', label: 'Left' }, { icon: 'fa-align-center', value: 'center', label: 'Center' }, { icon: 'fa-align-right', value: 'right', label: 'Right' }, { icon: 'fa-align-justify', value: 'justify', label: 'Justify' }]} />
-                       </div>
-                  </AccordionGroup>
+                       />
+                   )}
+                   <SelectInput label="Font Weight" value={styles.fontWeight || '400'} options={[{label: 'Normal', value: '400'}, {label: 'Bold', value: '700'}, {label: 'Black', value: '900'}, {label: 'Light', value: '300'}]} onChange={(v) => onUpdate('fontWeight', v)} />
+                   <div className="mt-2">
+                        <label className="text-[10px] font-bold text-white/40 capitalize ml-1 mb-1 block">Alignment</label>
+                        <ButtonGroup value={styles.textAlign || 'left'} onChange={(v) => onUpdate('textAlign', v)} options={[{ icon: 'fa-align-left', value: 'left', label: 'Left' }, { icon: 'fa-align-center', value: 'center', label: 'Center' }, { icon: 'fa-align-right', value: 'right', label: 'Right' }, { icon: 'fa-align-justify', value: 'justify', label: 'Justify' }]} />
+                   </div>
+              </AccordionGroup>
               )}
               {context === 'element' && elementType === 'button' && (
                   <AccordionGroup title="Button Styles" defaultOpen={true}>
+                      <div className="mb-3">
+                          <button
+                              type="button"
+                              onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  // Reset button styles to theme defaults
+                                  const defaultBgColor = themeColors?.buttonBackgroundColor || '#E11D48';
+                                  const defaultTextColor = themeColors?.buttonTextColor || '#FFFFFF';
+                                  // If batch update is available, use it to update all styles at once
+                                  if (onBatchUpdate) {
+                                      onBatchUpdate({
+                                          backgroundColor: defaultBgColor,
+                                          color: defaultTextColor,
+                                          borderRadius: undefined,
+                                          padding: undefined
+                                      });
+                                  } else {
+                                      // Otherwise, update each property individually
+                                      onUpdate('backgroundColor', defaultBgColor);
+                                      onUpdate('color', defaultTextColor);
+                                      onUpdate('borderRadius', undefined);
+                                      onUpdate('padding', undefined);
+                                  }
+                              }}
+                              className="w-full px-3 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/40 text-blue-400 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                              title="Reset to default theme button styles"
+                          >
+                              <i className="fa-solid fa-rotate-left"></i>
+                              Default Theme Button
+                          </button>
+                      </div>
                       <ColorInput label="Background Color" value={styles.backgroundColor || ''} onChange={(v) => onUpdate('backgroundColor', v)} />
                       <ColorInput label="Text Color" value={styles.color || ''} onChange={(v) => onUpdate('color', v)} />
                       <TextInput label="Border Radius" value={styles.borderRadius || ''} onChange={(v) => onUpdate('borderRadius', v)} placeholder="e.g., 8px, 50%, 1rem" />
                       <TextInput label="Padding" value={typeof styles.padding === 'string' ? styles.padding : ''} onChange={(v) => onUpdate('padding', v)} placeholder="e.g., 12px 24px" />
-                  </AccordionGroup>
+                      </AccordionGroup>
               )}
               {context === 'section' && (
                   <AccordionGroup title="Background" defaultOpen={true}>
@@ -2785,7 +2863,7 @@ const App: React.FC = () => {
                          uploading={uploading && uploadTarget?.field === 'backgroundImage' && uploadTarget?.sectionId === sectionId}
                          uploadProgress={uploading && uploadTarget?.field === 'backgroundImage' && uploadTarget?.sectionId === sectionId ? uploadProgress : 0}
                        />
-                  </AccordionGroup>
+              </AccordionGroup>
               )}
               {context === 'element' && elementType === 'image' && (
                   <>
@@ -3159,16 +3237,24 @@ const App: React.FC = () => {
                                                 </button>
                                             )}
                                         </div>
-                                        <div className="flex gap-1 bg-[#151515] rounded p-1">
-                                            <button onClick={() => setEditTab('content')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'content' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>CONTENT</button><button onClick={() => setEditTab('design')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'design' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>DESIGN</button>
-                                        </div>
+                            <div className="flex gap-1 bg-[#151515] rounded p-1">
+                                <button onClick={() => setEditTab('content')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'content' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>CONTENT</button><button onClick={() => setEditTab('design')} className={`flex-1 py-1 text-[10px] font-bold rounded transition-all ${editTab === 'design' ? 'bg-[#222] text-white shadow' : 'text-slate-400 hover:text-white'}`}>DESIGN</button>
+                            </div>
                                     </>
                                 );
                              })()}
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pb-20">
                              {selectedElementId && selectedElement && selectedSection ? (
-                                 editTab === 'design' ? (renderStyleEditor(selectedElement.style, (k,v) => updateElement(selectedSection.id, selectedElement.id, { style: { ...selectedElement.style, [k]: v } }), 'element', selectedElement.type)) : (
+                                 editTab === 'design' ? (renderStyleEditor(
+                                     selectedElement.style, 
+                                     (k,v) => updateElement(selectedSection.id, selectedElement.id, { style: { ...selectedElement.style, [k]: v } }), 
+                                     'element', 
+                                     selectedElement.type, 
+                                     undefined, 
+                                     siteData.globalStyles?.colors,
+                                     (updates) => updateElement(selectedSection.id, selectedElement.id, { style: { ...selectedElement.style, ...updates } })
+                                 )) : (
                                      <div className="space-y-4">
                                          {selectedElement.type === 'image' ? (
                                              <div className="space-y-4">
@@ -3484,32 +3570,32 @@ const App: React.FC = () => {
                                     minHeight: '100%'
                                 }}
                             >
-                                 {siteData.sections.map((section) => (
-                                    <SectionRenderer 
-                                      key={`${section.id}-${section.styles.titleHeadingTag || 'h2'}-${JSON.stringify(defaultSizes)}`} 
-                                      section={section} 
-                                      onUpdate={updateSection} 
-                                      isSelected={selectedSectionId === section.id} 
-                                      readOnly={isPreviewMode} 
-                                      onClick={() => { 
-                                        // When clicking section background, select section and clear element selection
-                                        setSelectedSectionId(section.id); 
-                                        setSelectedElementId(null); 
-                                      }} 
-                                      onDelete={deleteSection} 
-                                      onMoveUp={(id) => moveSection(id, 'up')} 
-                                      onMoveDown={(id) => moveSection(id, 'down')} 
-                                      onUpload={triggerUpload} 
-                                      selectedElementId={selectedElementId} 
-                                      onElementSelect={(elId) => { 
-                                        // When clicking element, select both section and element
-                                        setSelectedSectionId(section.id); 
-                                        setSelectedElementId(elId); 
-                                      }} 
-                                    />
-                                ))}
-                            </div>
-                        </PreviewFrame>
+                         {siteData.sections.map((section) => (
+                            <SectionRenderer 
+                              key={`${section.id}-${section.styles.titleHeadingTag || 'h2'}-${JSON.stringify(defaultSizes)}`} 
+                              section={section} 
+                              onUpdate={updateSection} 
+                              isSelected={selectedSectionId === section.id} 
+                              readOnly={isPreviewMode} 
+                              onClick={() => { 
+                                // When clicking section background, select section and clear element selection
+                                setSelectedSectionId(section.id); 
+                                setSelectedElementId(null); 
+                              }} 
+                              onDelete={deleteSection} 
+                              onMoveUp={(id) => moveSection(id, 'up')} 
+                              onMoveDown={(id) => moveSection(id, 'down')} 
+                              onUpload={triggerUpload} 
+                              selectedElementId={selectedElementId} 
+                              onElementSelect={(elId) => { 
+                                // When clicking element, select both section and element
+                                setSelectedSectionId(section.id); 
+                                setSelectedElementId(elId); 
+                              }} 
+                            />
+                        ))}
+                    </div>
+                </PreviewFrame>
                     </div>
                 </div>
             </main>
