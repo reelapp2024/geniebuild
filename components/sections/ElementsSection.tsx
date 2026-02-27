@@ -19,6 +19,23 @@ interface ElementsSectionProps {
     buttonBackgroundColor?: string;
     buttonTextColor?: string;
     backgroundColor?: string;
+    // Global style properties for unified styling
+    buttonFontWeight?: string;
+    buttonFontSize?: string;
+    buttonAlign?: string;
+    buttonFontFamily?: string;
+    titleFontWeight?: string;
+    titleFontSize?: string;
+    titleAlign?: string;
+    titleFontFamily?: string;
+    subtitleFontWeight?: string;
+    subtitleFontSize?: string;
+    subtitleAlign?: string;
+    subtitleFontFamily?: string;
+    fontWeight?: string;
+    fontSize?: string;
+    textAlign?: string;
+    fontFamily?: string;
   };
 }
 
@@ -130,6 +147,8 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
   const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
   
   // Get theme colors from section styles or passed prop
+  // Include all global style properties for unified styling
+  const styleAny = section.styles as any;
   const theme = themeColors || {
     titleColor: section.styles?.titleColor,
     textColor: section.styles?.textColor,
@@ -137,6 +156,26 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
     buttonBackgroundColor: section.styles?.buttonBackgroundColor,
     buttonTextColor: section.styles?.buttonTextColor,
     backgroundColor: section.styles?.backgroundColor,
+    // Global button styles
+    buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
+    buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
+    buttonAlign: styleAny.buttonAlign || section.styles?.textAlign,
+    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily,
+    // Global heading styles
+    titleFontWeight: styleAny.titleFontWeight || styleAny.fontWeight,
+    titleFontSize: styleAny.titleSize || styleAny.fontSize,
+    titleAlign: styleAny.titleAlign || section.styles?.textAlign,
+    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily,
+    // Global text/subtitle styles
+    subtitleFontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight,
+    subtitleFontSize: styleAny.subtitleSize || styleAny.fontSize,
+    subtitleAlign: styleAny.subtitleAlign || section.styles?.textAlign,
+    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily,
+    // Global fallback styles
+    fontWeight: styleAny.fontWeight,
+    fontSize: styleAny.fontSize,
+    textAlign: section.styles?.textAlign,
+    fontFamily: styleAny.fontFamily,
   };
   
   // Helper to merge element style with theme defaults
@@ -192,16 +231,21 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
     switch (type) {
         case 'heading':
             const headingTag = (content.htmlTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-            // Use theme titleColor if element color is not explicitly set
-            // Only apply fontFamily if explicitly set (not undefined/null/empty)
+            // Style Hierarchy: Local Element Style > Section Style > Global Theme Style
             const headingStyle: React.CSSProperties = {
                 ...safeStyle,
                 color: safeStyle.color || theme?.titleColor || '#F8FAFC',
+                // Fallback to section styles if element style is missing
+                fontWeight: safeStyle.fontWeight || theme?.titleFontWeight || theme?.fontWeight || 'bold',
+                fontSize: safeStyle.fontSize || theme?.titleFontSize || theme?.fontSize || undefined,
+                textAlign: (safeStyle.textAlign as any) || theme?.titleAlign || theme?.textAlign || 'left',
+                fontFamily: (safeStyle.fontFamily && safeStyle.fontFamily.trim() !== '') 
+                    ? safeStyle.fontFamily 
+                    : (theme?.titleFontFamily || theme?.fontFamily || undefined),
             };
-            // Only add fontFamily if it's explicitly set (not undefined, null, or empty string)
-            if (safeStyle.fontFamily && safeStyle.fontFamily.trim() !== '') {
-                headingStyle.fontFamily = safeStyle.fontFamily;
-            }
+            // Remove undefined properties
+            if (!headingStyle.fontFamily) delete headingStyle.fontFamily;
+            if (!headingStyle.fontSize) delete headingStyle.fontSize;
             return React.createElement(
                 headingTag,
                 {
@@ -221,16 +265,21 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             const textSizeClass = content.textSize === 'small' ? 'text-sm' : 
                                   content.textSize === 'large' ? 'text-lg' : 
                                   content.textSize === 'xl' ? 'text-xl' : '';
-            // Use theme textColor if element color is not explicitly set
-            // Only apply fontFamily if explicitly set (not undefined/null/empty)
+            // Style Hierarchy: Local Element Style > Section Style > Global Theme Style
             const textStyle: React.CSSProperties = {
                 ...safeStyle,
                 color: safeStyle.color || theme.textColor || '#D1D5DB',
+                // Fallback to section styles if element style is missing
+                fontWeight: safeStyle.fontWeight || theme?.subtitleFontWeight || theme?.fontWeight || '400',
+                fontSize: safeStyle.fontSize || theme?.subtitleFontSize || theme?.fontSize || undefined,
+                textAlign: (safeStyle.textAlign as any) || theme?.subtitleAlign || theme?.textAlign || 'left',
+                fontFamily: (safeStyle.fontFamily && safeStyle.fontFamily.trim() !== '') 
+                    ? safeStyle.fontFamily 
+                    : (theme?.subtitleFontFamily || theme?.fontFamily || undefined),
             };
-            // Only add fontFamily if it's explicitly set (not undefined, null, or empty string)
-            if (safeStyle.fontFamily && safeStyle.fontFamily.trim() !== '') {
-                textStyle.fontFamily = safeStyle.fontFamily;
-            }
+            // Remove undefined properties
+            if (!textStyle.fontFamily) delete textStyle.fontFamily;
+            if (!textStyle.fontSize) delete textStyle.fontSize;
             return (
                 <p 
                     key={`${id}-${content.textSize || 'base'}`}
@@ -247,13 +296,24 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
 
         case 'button':
         case 'call-to-action':
-            // Use theme button colors if element colors are not explicitly set
-            const buttonStyle = {
-                ...safeStyle,
+            // Style Hierarchy: Local Element Style > Section Style > Global Theme Style
+            // CRITICAL: Apply element.style.fontWeight and element.style.fontSize directly to the button tag
+            // Fallback to section styles if element style is missing
+            const buttonStyle: React.CSSProperties = {
+                ...safeStyle, // This includes all properties from getSafeStyle
                 backgroundColor: safeStyle.backgroundColor || theme?.buttonBackgroundColor || '#E11D48',
                 color: safeStyle.color || theme?.buttonTextColor || '#FFFFFF',
-                textAlign: 'center' as const // Button text is always centered internally
+                textAlign: 'center' as const, // Button text is always centered internally
+                // Fallback to section styles for button-specific properties
+                fontWeight: safeStyle.fontWeight || theme?.buttonFontWeight || theme?.fontWeight || 'bold',
+                fontSize: safeStyle.fontSize || theme?.buttonFontSize || theme?.fontSize || undefined,
+                fontFamily: (safeStyle.fontFamily && safeStyle.fontFamily.trim() !== '') 
+                    ? safeStyle.fontFamily 
+                    : (theme?.buttonFontFamily || theme?.fontFamily || undefined),
             };
+            // Remove undefined properties
+            if (!buttonStyle.fontSize) delete buttonStyle.fontSize;
+            if (!buttonStyle.fontFamily) delete buttonStyle.fontFamily;
             const buttonElement = (
                 <button 
                     className={`${buttonClass} ${!readOnly ? 'outline-none relative transition-all cursor-pointer' : ''} ${selectedClass}`}
@@ -268,8 +328,8 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
             
             // Use flexbox with justify-content for proper button alignment
-            // Convert textAlign to flexbox justify-content
-            const getJustifyContent = (textAlign?: string): string => {
+            // Convert textAlign to flexbox justify-content: left -> flex-start, center -> center, right -> flex-end
+            const getJustifyContent = (textAlign?: string): 'flex-start' | 'center' | 'flex-end' => {
                 if (!textAlign) return 'center';
                 switch (textAlign) {
                     case 'left': return 'flex-start';
@@ -280,9 +340,12 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 }
             };
             
+            // CRITICAL: Use display: flex and map element.style.textAlign to justify-content
+            // Fallback to section styles if element style is missing
+            const buttonTextAlign = safeStyle.textAlign || theme?.buttonAlign || theme?.textAlign || 'center';
             const wrapperStyle: React.CSSProperties = {
                 display: 'flex',
-                justifyContent: getJustifyContent(safeStyle.textAlign as string) as any,
+                justifyContent: getJustifyContent(buttonTextAlign as string),
                 width: '100%'
             };
             

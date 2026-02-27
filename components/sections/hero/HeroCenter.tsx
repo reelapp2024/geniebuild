@@ -37,14 +37,31 @@ export const HeroCenter: React.FC<HeroProps> = ({
   const subtitleElement = section.elements?.find(e => e.id === subtitleId);
   const buttonElement = section.elements?.find(e => e.id === buttonId);
   
-  // Theme colors for ElementsSection
+  // Theme colors for ElementsSection - pass complete section.styles for unified styling
+  // This ensures all global styles are available as fallbacks
+  const styleAny = styles as any;
   const themeColors = {
-    titleColor: styles.titleColor,
-    textColor: styles.textColor,
-    accentColor: styles.accentColor,
-    buttonBackgroundColor: styles.buttonBackgroundColor,
-    buttonTextColor: styles.buttonTextColor,
-    backgroundColor: styles.backgroundColor,
+    ...styles, // Include all section.styles properties
+    // Explicitly map button style properties for clarity
+    buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
+    buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
+    buttonAlign: styleAny.buttonAlign || styles.textAlign,
+    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily,
+    // Map heading style properties
+    titleFontWeight: styleAny.titleFontWeight || styleAny.fontWeight,
+    titleFontSize: styleAny.titleSize || styleAny.fontSize,
+    titleAlign: styleAny.titleAlign || styles.textAlign,
+    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily,
+    // Map text/subtitle style properties
+    subtitleFontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight,
+    subtitleFontSize: styleAny.subtitleSize || styleAny.fontSize,
+    subtitleAlign: styleAny.subtitleAlign || styles.textAlign,
+    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily,
+    // Global fallback properties
+    fontWeight: styleAny.fontWeight,
+    fontSize: styleAny.fontSize,
+    textAlign: styles.textAlign,
+    fontFamily: styleAny.fontFamily,
   };
   
   // Helper to create fallback element if it doesn't exist (matches App.tsx virtual element pattern)
@@ -92,6 +109,7 @@ export const HeroCenter: React.FC<HeroProps> = ({
   const getButtonElement = (): WebsiteElement => {
     if (buttonElement) return buttonElement;
     
+    const styleAny = styles as any;
     return {
       id: buttonId,
       type: 'button',
@@ -103,6 +121,11 @@ export const HeroCenter: React.FC<HeroProps> = ({
         backgroundColor: styles.buttonBackgroundColor || '',
         color: styles.buttonTextColor || '',
         textAlign: 'center' as 'left' | 'center' | 'right' | 'justify',
+        fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
+        fontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
+        padding: styleAny.buttonPadding || styleAny.padding || '',
+        borderRadius: styleAny.buttonBorderRadius || styleAny.borderRadius || '',
+        fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
       }
     };
   };
@@ -157,7 +180,8 @@ export const HeroCenter: React.FC<HeroProps> = ({
       </div>
       
       {/* Render Button using ElementsSection - unwrapped for custom layout */}
-      <div className="mb-10">
+      {/* CRITICAL: Use w-full flex flex-col items-stretch to give button full width for alignment */}
+      <div className="w-full mb-10 flex flex-col items-stretch">
         <ElementsSection
           section={{
             ...section,

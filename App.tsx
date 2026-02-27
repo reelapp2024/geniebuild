@@ -2083,9 +2083,21 @@ const App: React.FC = () => {
                           // Check if button element exists in section.elements
                           const buttonElement = s.elements?.find(e => e.id === elementId);
                           if (buttonElement) {
-                              // Update existing element
+                              // Update existing element - merge updates with existing element properly
+                              const updatedElement = {
+                                  ...buttonElement,
+                                  ...updates,
+                                  content: {
+                                      ...buttonElement.content,
+                                      ...(updates.content || {})
+                                  },
+                                  style: {
+                                      ...buttonElement.style,
+                                      ...(updates.style || {})
+                                  }
+                              };
                               const newElements = s.elements?.map(el => 
-                                  el.id === elementId ? { ...el, ...updates } : el
+                                  el.id === elementId ? updatedElement : el
                               );
                               sectionUpdates.elements = newElements;
                           } else {
@@ -2099,12 +2111,26 @@ const App: React.FC = () => {
                               // Create or update button element in elements array
                               const existingButtonElement = s.elements?.find(e => e.id === elementId);
                               if (existingButtonElement) {
+                                  // Update existing element - merge updates with existing element properly
+                                  const updatedElement = {
+                                      ...existingButtonElement,
+                                      ...updates,
+                                      content: {
+                                          ...existingButtonElement.content,
+                                          ...(updates.content || {})
+                                      },
+                                      style: {
+                                          ...existingButtonElement.style,
+                                          ...(updates.style || {})
+                                      }
+                                  };
                                   const newElements = s.elements?.map(el => 
-                                      el.id === elementId ? { ...el, ...updates } : el
+                                      el.id === elementId ? updatedElement : el
                                   );
                                   sectionUpdates.elements = newElements;
                               } else {
-                                  // Create new button element
+                                  // Create new button element with all style properties from section.styles
+                                  const styleAny = s.styles as any;
                                   const newButtonElement = {
                                       id: elementId,
                                       type: 'button' as const,
@@ -2116,7 +2142,13 @@ const App: React.FC = () => {
                                           ...(updates.style || {}),
                                           backgroundColor: updates.style?.backgroundColor || s.styles.buttonBackgroundColor || '#E11D48',
                                           color: updates.style?.color || s.styles.buttonTextColor || '#FFFFFF',
-                                          textAlign: updates.style?.textAlign || 'center'
+                                          textAlign: updates.style?.textAlign || 'center',
+                                          // Include all button style properties from section.styles
+                                          fontWeight: updates.style?.fontWeight || styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
+                                          fontSize: updates.style?.fontSize || styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
+                                          padding: updates.style?.padding || styleAny.buttonPadding || styleAny.padding || '',
+                                          borderRadius: updates.style?.borderRadius || styleAny.buttonBorderRadius || styleAny.borderRadius || '',
+                                          fontFamily: updates.style?.fontFamily || styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
                                       }
                                   };
                                   sectionUpdates.elements = [...(s.elements || []), newButtonElement];
