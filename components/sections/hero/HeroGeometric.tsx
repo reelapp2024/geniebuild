@@ -24,12 +24,111 @@ export const HeroGeometric: React.FC<HeroProps> = ({
   const { content, styles } = section;
   const styleAny = styles as any;
 
-  // Selection Logic
+  // Element IDs - must match what App.tsx expects
   const titleId = `${section.id}-hero-title`;
   const subtitleId = `${section.id}-hero-subtitle`;
   const buttonId = `${section.id}-hero-button`;
   const badgeId = `${section.id}-hero-badge`;
   const iconId = `${section.id}-hero-icon`;
+
+  // Get elements from section.elements (they exist after first edit)
+  const titleElement = section.elements?.find(e => e.id === titleId);
+  const subtitleElement = section.elements?.find(e => e.id === subtitleId);
+  const buttonElement = section.elements?.find(e => e.id === buttonId);
+  const iconElement = section.elements?.find(e => e.id === iconId);
+  const badgeElement = section.elements?.find(e => e.id === badgeId);
+  
+  // Theme colors for ElementsSection - pass complete section.styles for unified styling
+  // This ensures all global styles are available as fallbacks
+  const themeColors = {
+    ...styles, // Include all section.styles properties
+    // Explicitly map button style properties for clarity
+    buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
+    buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
+    buttonAlign: styleAny.buttonAlign || styles.textAlign,
+    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily,
+    // Map heading style properties
+    titleFontWeight: styleAny.titleFontWeight || styleAny.fontWeight,
+    titleFontSize: styleAny.titleSize || styleAny.fontSize,
+    titleAlign: styleAny.titleAlign || styles.textAlign,
+    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily,
+    // Map text/subtitle style properties
+    subtitleFontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight,
+    subtitleFontSize: styleAny.subtitleSize || styleAny.fontSize,
+    subtitleAlign: styleAny.subtitleAlign || styles.textAlign,
+    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily,
+    // Global fallback properties
+    fontWeight: styleAny.fontWeight,
+    fontSize: styleAny.fontSize,
+    textAlign: styles.textAlign,
+    fontFamily: styleAny.fontFamily,
+  };
+  
+  // Helper to create fallback element if it doesn't exist (matches App.tsx virtual element pattern)
+  const getTitleElement = (): WebsiteElement => {
+    if (titleElement) return titleElement;
+    
+    const styleAny = styles as any;
+    return {
+      id: titleId,
+      type: 'heading',
+      content: {
+        text: content.title || '',
+        htmlTag: (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+      },
+      style: {
+        color: styles.titleColor || '',
+        fontSize: styles.titleSize || '',
+        fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
+        textAlign: (styleAny.titleAlign || styles.textAlign || 'left') as 'left' | 'center' | 'right' | 'justify',
+        fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined,
+      }
+    };
+  };
+  
+  const getSubtitleElement = (): WebsiteElement => {
+    if (subtitleElement) return subtitleElement;
+    
+    const styleAny = styles as any;
+    return {
+      id: subtitleId,
+      type: 'text',
+      content: {
+        text: content.subtitle || '',
+        textSize: 'base' as 'base' | 'small' | 'large' | 'xl'
+      },
+      style: {
+        color: styles.subtitleColor || styles.textColor || '',
+        fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
+        textAlign: (styleAny.subtitleAlign || styles.textAlign || 'left') as 'left' | 'center' | 'right' | 'justify',
+        fontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || undefined,
+      }
+    };
+  };
+  
+  const getButtonElement = (): WebsiteElement => {
+    if (buttonElement) return buttonElement;
+    
+    const styleAny = styles as any;
+    return {
+      id: buttonId,
+      type: 'button',
+      content: {
+        text: content.ctaText || '',
+        link: content.ctaHref || ''
+      },
+      style: {
+        backgroundColor: styles.buttonBackgroundColor || '',
+        color: styles.buttonTextColor || '',
+        textAlign: 'left' as 'left' | 'center' | 'right' | 'justify',
+        fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
+        fontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
+        padding: styleAny.buttonPadding || styleAny.padding || '',
+        borderRadius: styleAny.buttonBorderRadius || styleAny.borderRadius || '',
+        fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
+      }
+    };
+  };
 
   const handleElementClick = (e: React.MouseEvent, elementId: string) => {
     e.stopPropagation();
@@ -38,11 +137,6 @@ export const HeroGeometric: React.FC<HeroProps> = ({
   
   // Check if geometry is enabled (default to true)
   const enableGeometry = styles.enableGeometry !== undefined ? styles.enableGeometry : true;
-  
-  // Get icon, badge, and button elements from section.elements
-  const iconElement = section.elements?.find(e => e.id === iconId);
-  const badgeElement = section.elements?.find(e => e.id === badgeId);
-  const buttonElement = section.elements?.find(e => e.id === buttonId);
   
   // Get icon content and style from element or fallback to section content
   // Format icon class properly (handle both 'fa-icon' and 'icon' formats) - same as regular icon elements
@@ -54,30 +148,6 @@ export const HeroGeometric: React.FC<HeroProps> = ({
   
   // Get badge text from element or fallback to section content
   const badgeText = badgeElement?.content.text || content.badgeText || 'New Generation Builder';
-  
-  // Theme colors for ElementsSection - pass complete section.styles for unified styling
-  const themeColors = {
-    ...styles, // Include all section.styles properties
-    // Explicitly map button style properties for clarity
-    buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
-    buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
-    buttonAlign: styleAny.buttonAlign || styles.textAlign,
-    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily,
-  };
-
-  // Style Helpers
-  const isCustomColor = (val?: string) => val && (val.startsWith('#') || val.startsWith('rgb') || val.startsWith('hsl'));
-  
-  const titleStyle: React.CSSProperties = {
-    color: isCustomColor(styles.titleColor) ? styles.titleColor : undefined,
-    fontSize: styles.titleSize && (styles.titleSize.includes('px') || styles.titleSize.includes('rem')) ? styles.titleSize : undefined,
-    fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined,
-  };
-
-  const subtitleStyle: React.CSSProperties = {
-    color: styles.subtitleColor || styles.textColor,
-    fontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || undefined,
-  };
 
   return (
     <div className="relative min-h-[80vh] flex items-center overflow-hidden py-20">
@@ -127,27 +197,41 @@ export const HeroGeometric: React.FC<HeroProps> = ({
             {badgeText}
           </div>
 
-          <h1 
-            className={`text-5xl md:text-7xl font-black leading-[0.9] tracking-tighter mb-8 transition-all ${!readOnly ? 'outline-none cursor-text rounded-lg px-2' : ''} ${selectedElementId === titleId ? 'ring-2 ring-blue-500 bg-blue-500/5' : 'hover:bg-white/5'}`}
-            style={titleStyle}
-            contentEditable={!readOnly}
-            suppressContentEditableWarning={!readOnly}
-            onClick={(e) => handleElementClick(e, titleId)}
-            onBlur={(e) => onTextEdit('title', e.currentTarget.textContent || '')}
-          >
-            {content.title}
-          </h1>
+          {/* Render Title using ElementsSection - unwrapped for custom layout */}
+          <div className="mb-8">
+            <ElementsSection
+              section={{
+                ...section,
+                elements: [getTitleElement()]
+              }}
+              onTextEdit={onTextEdit}
+              onElementUpdate={onElementUpdate || (() => {})}
+              onElementSelect={onElementSelect}
+              selectedElementId={selectedElementId}
+              buttonClass={buttonClass}
+              readOnly={readOnly}
+              isWrapped={false}
+              themeColors={themeColors}
+            />
+          </div>
 
-          <p 
-            className={`text-lg md:text-xl opacity-60 leading-relaxed max-w-xl mb-10 transition-all ${!readOnly ? 'outline-none cursor-text rounded-lg px-2' : ''} ${selectedElementId === subtitleId ? 'ring-2 ring-blue-500 bg-blue-500/5' : 'hover:bg-white/5'}`}
-            style={subtitleStyle}
-            contentEditable={!readOnly}
-            suppressContentEditableWarning={!readOnly}
-            onClick={(e) => handleElementClick(e, subtitleId)}
-            onBlur={(e) => onTextEdit('subtitle', e.currentTarget.textContent || '')}
-          >
-            {content.subtitle}
-          </p>
+          {/* Render Subtitle using ElementsSection - unwrapped for custom layout */}
+          <div className="mb-10 opacity-60">
+            <ElementsSection
+              section={{
+                ...section,
+                elements: [getSubtitleElement()]
+              }}
+              onTextEdit={onTextEdit}
+              onElementUpdate={onElementUpdate || (() => {})}
+              onElementSelect={onElementSelect}
+              selectedElementId={selectedElementId}
+              buttonClass={buttonClass}
+              readOnly={readOnly}
+              isWrapped={false}
+              themeColors={themeColors}
+            />
+          </div>
 
           {/* Render Button using headless ElementsSection */}
           <div className="w-full mb-10">
@@ -155,18 +239,7 @@ export const HeroGeometric: React.FC<HeroProps> = ({
               isWrapped={false}
               section={{
                 ...section,
-                elements: [buttonElement || {
-                  id: buttonId,
-                  type: 'button',
-                  content: { text: content.ctaText || 'Click Here', link: content.ctaHref || '' },
-                  style: {
-                    backgroundColor: styles.buttonBackgroundColor,
-                    color: styles.buttonTextColor,
-                    textAlign: (styles as any).buttonAlign || styles.textAlign || 'center',
-                    fontWeight: (styles as any).buttonFontWeight || (styles as any).fontWeight || 'bold',
-                    fontSize: (styles as any).buttonFontSize || '1.125rem'
-                  }
-                }]
+                elements: [getButtonElement()]
               }}
               onElementSelect={onElementSelect}
               selectedElementId={selectedElementId}

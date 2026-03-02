@@ -80,21 +80,14 @@ export interface ElementStyle {
     padding?: string | { top?: string; right?: string; bottom?: string; left?: string };
     margin?: string | { top?: string; right?: string; bottom?: string; left?: string };
     
-    // 5. Border & Outline
-    border?: string; // Shorthand
-    borderStyle?: 'none' | 'solid' | 'dashed' | 'dotted' | 'double' | 'groove' | 'ridge' | 'inset' | 'outset';
-    borderWidth?: string | { top?: string; right?: string; bottom?: string; left?: string };
-    borderColor?: string;
-    borderRadius?: string | { tl?: string; tr?: string; bl?: string; br?: string }; // top-left, top-right, etc.
-    
+    // 5. Outline
     outline?: string;
     outlineOffset?: string;
     outlineColor?: string;
     outlineStyle?: string;
     outlineWidth?: string;
 
-    // 6. Box Model & Shadows
-    boxShadow?: string; // Includes inset support via string value
+    // 6. Box Model
     textShadow?: string;
     boxSizing?: 'content-box' | 'border-box';
 

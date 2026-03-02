@@ -17,18 +17,20 @@ interface HeroProps {
 export const HeroSplitLeft: React.FC<HeroProps> = ({ section, onTextEdit, onImageClick, buttonClass, onElementSelect, onElementUpdate, selectedElementId, readOnly = false }) => {
   const { content, styles } = section;
   
-  const isCustomColor = (value?: string) => value && (value.startsWith('#') || value.startsWith('rgb') || value.startsWith('hsl'));
-  
-  // Element IDs - unique per section instance
+  // Element IDs - must match what App.tsx expects
   const titleId = `${section.id}-hero-title`;
   const subtitleId = `${section.id}-hero-subtitle`;
   const buttonId = `${section.id}-hero-button`;
   const imageId = `${section.id}-hero-image`;
-  
-  // Get button element from section.elements
+
+  // Get elements from section.elements (they exist after first edit)
+  const titleElement = section.elements?.find(e => e.id === titleId);
+  const subtitleElement = section.elements?.find(e => e.id === subtitleId);
   const buttonElement = section.elements?.find(e => e.id === buttonId);
+  const imageElement = section.elements?.find(e => e.id === imageId);
   
   // Theme colors for ElementsSection - pass complete section.styles for unified styling
+  // This ensures all global styles are available as fallbacks
   const styleAny = styles as any;
   const themeColors = {
     ...styles, // Include all section.styles properties
@@ -37,132 +39,175 @@ export const HeroSplitLeft: React.FC<HeroProps> = ({ section, onTextEdit, onImag
     buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
     buttonAlign: styleAny.buttonAlign || styles.textAlign,
     buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily,
+    // Map heading style properties
+    titleFontWeight: styleAny.titleFontWeight || styleAny.fontWeight,
+    titleFontSize: styleAny.titleSize || styleAny.fontSize,
+    titleAlign: styleAny.titleAlign || styles.textAlign,
+    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily,
+    // Map text/subtitle style properties
+    subtitleFontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight,
+    subtitleFontSize: styleAny.subtitleSize || styleAny.fontSize,
+    subtitleAlign: styleAny.subtitleAlign || styles.textAlign,
+    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily,
+    // Global fallback properties
+    fontWeight: styleAny.fontWeight,
+    fontSize: styleAny.fontSize,
+    textAlign: styles.textAlign,
+    fontFamily: styleAny.fontFamily,
   };
   
-  // Get heading tag from styles, default to h1 for hero
-  const headingTag = (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-  
-  // Get alignment and font weight from styles
-  const titleAlign = styleAny.titleAlign || styles.textAlign || 'left';
-  const titleFontWeight = styleAny.titleFontWeight || styleAny.fontWeight || 'bold';
-  const titleAlignClass = titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : titleAlign === 'justify' ? 'text-justify' : 'text-center';
-  const titleFontWeightClass = titleFontWeight === '300' ? 'font-light' : titleFontWeight === '400' ? 'font-normal' : titleFontWeight === '700' ? 'font-bold' : titleFontWeight === '900' ? 'font-black' : 'font-bold';
-  
-  // Only apply custom fontSize if titleSize is set and doesn't match default (custom override)
-  const hasCustomTitleSize = styles.titleSize && (styles.titleSize.includes('px') || styles.titleSize.includes('rem') || styles.titleSize.includes('em'));
-  
-  // Get fontFamily from titleFontFamily or fontFamily, only if explicitly set
-  const titleFontFamily = (styleAny.titleFontFamily || styleAny.fontFamily);
-  const titleStyle: React.CSSProperties = {
-    ...(isCustomColor(styles.titleColor) ? { color: styles.titleColor } : {}),
-    // Only apply fontSize if it's a custom override, otherwise CSS defaults apply
-    ...(hasCustomTitleSize ? { fontSize: styles.titleSize } : {}),
-    ...(titleAlign && !titleAlignClass.includes(titleAlign) ? { textAlign: titleAlign as any } : {})
+  // Helper to create fallback element if it doesn't exist (matches App.tsx virtual element pattern)
+  const getTitleElement = (): WebsiteElement => {
+    if (titleElement) return titleElement;
+    
+    const styleAny = styles as any;
+    return {
+      id: titleId,
+      type: 'heading',
+      content: {
+        text: content.title || '',
+        htmlTag: (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+      },
+      style: {
+        color: styles.titleColor || '',
+        fontSize: styles.titleSize || '',
+        fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
+        textAlign: (styleAny.titleAlign || styles.textAlign || 'left') as 'left' | 'center' | 'right' | 'justify',
+        fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined,
+      }
+    };
   };
-  // Only add fontFamily if it's explicitly set (not undefined, null, or empty string)
-  if (titleFontFamily && titleFontFamily.trim() !== '') {
-    titleStyle.fontFamily = titleFontFamily;
-  }
-  const titleClass = `${titleFontWeightClass} mb-6 leading-tight ${titleAlignClass}`;
-
-  // Handle element click
-  const handleElementClick = (e: React.MouseEvent, elementId: string) => {
-    e.stopPropagation();
-    if (onElementSelect) {
-      onElementSelect(elementId);
-    }
+  
+  const getSubtitleElement = (): WebsiteElement => {
+    if (subtitleElement) return subtitleElement;
+    
+    const styleAny = styles as any;
+    return {
+      id: subtitleId,
+      type: 'text',
+      content: {
+        text: content.subtitle || '',
+        textSize: 'base' as 'base' | 'small' | 'large' | 'xl'
+      },
+      style: {
+        color: styles.subtitleColor || styles.textColor || '',
+        fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
+        textAlign: (styleAny.subtitleAlign || styles.textAlign || 'left') as 'left' | 'center' | 'right' | 'justify',
+        fontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || undefined,
+      }
+    };
   };
-
-  // Check if elements are selected
-  const isTitleSelected = selectedElementId === titleId;
-  const isSubtitleSelected = selectedElementId === subtitleId;
-  const isButtonSelected = selectedElementId === buttonId;
-  const isImageSelected = selectedElementId === imageId;
+  
+  const getButtonElement = (): WebsiteElement => {
+    if (buttonElement) return buttonElement;
+    
+    const styleAny = styles as any;
+    return {
+      id: buttonId,
+      type: 'button',
+      content: {
+        text: content.ctaText || '',
+        link: content.ctaHref || ''
+      },
+      style: {
+        backgroundColor: styles.buttonBackgroundColor || '',
+        color: styles.buttonTextColor || '',
+        textAlign: 'left' as 'left' | 'center' | 'right' | 'justify',
+        fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
+        fontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
+        padding: styleAny.buttonPadding || styleAny.padding || '',
+        borderRadius: styleAny.buttonBorderRadius || styleAny.borderRadius || '',
+        fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
+      }
+    };
+  };
+  
+  const getImageElement = (): WebsiteElement => {
+    // If real element exists, use it (all styles come from element.style)
+    if (imageElement) return imageElement;
+    
+    // Bare minimum fallback - only default structure, no section.styles mapping
+    return {
+      id: imageId,
+      type: 'image',
+      content: {
+        imageUrl: content.imageUrl || '',
+        imageAlt: 'Hero'
+      },
+      style: {
+        width: '100%',
+        objectFit: 'cover',
+      }
+    };
+  };
 
   return (
     <div className={`${styles.maxWidth || 'max-w-7xl'} mx-auto px-6 relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center text-center md:text-left`}>
       <div className="order-2 md:order-1">
+        {/* Render Image using headless ElementsSection */}
         {content.imageUrl && (
-            <div 
-              className={`relative group/img cursor-pointer w-full ${isImageSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20'}`} 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleElementClick(e, imageId);
-                onImageClick();
+          <div className="w-full">
+            <ElementsSection 
+              isWrapped={false}
+              section={{
+                ...section,
+                elements: [getImageElement()]
               }}
-            >
-            <img src={content.imageUrl} alt="Hero" className="rounded-2xl shadow-2xl w-full object-cover" />
-            </div>
+              onElementSelect={onElementSelect}
+              selectedElementId={selectedElementId}
+              onElementUpdate={onElementUpdate || (() => {})}
+              onTextEdit={onTextEdit}
+              buttonClass={buttonClass}
+              readOnly={readOnly}
+              themeColors={themeColors}
+            />
+          </div>
         )}
       </div>
       <div className="order-1 md:order-2">
-        {(() => {
-          return React.createElement(
-            headingTag,
-            {
-              key: `hero-title-${headingTag}-${section.id}`, // Force re-render when tag changes
-              className: `${titleClass} ${!readOnly ? 'outline-none focus:ring-2 ring-white rounded px-2' : ''} ${!readOnly && isTitleSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''}`,
-              style: titleStyle,
-              contentEditable: !readOnly,
-              suppressContentEditableWarning: !readOnly,
-              onBlur: !readOnly ? (e: any) => onTextEdit('title', e.currentTarget.textContent || '') : undefined,
-              onClick: !readOnly ? (e: React.MouseEvent) => handleElementClick(e, titleId) : undefined
-            },
-            content.title
-          );
-        })()}
-        {(() => {
-          const subtitleAlign = styleAny.subtitleAlign || styles.textAlign || 'left';
-          const subtitleFontWeight = styleAny.subtitleFontWeight || styleAny.fontWeight || '400';
-          const subtitleAlignClass = subtitleAlign === 'left' ? 'text-left' : subtitleAlign === 'right' ? 'text-right' : subtitleAlign === 'justify' ? 'text-justify' : 'text-center';
-          const subtitleFontWeightClass = subtitleFontWeight === '300' ? 'font-light' : subtitleFontWeight === '400' ? 'font-normal' : subtitleFontWeight === '700' ? 'font-bold' : subtitleFontWeight === '900' ? 'font-black' : 'font-normal';
-          
-          // Check if custom fontSize is provided for subtitle (px/rem/em) - if not, CSS defaults apply
-          const hasCustomSubtitleSize = styles.subtitleSize && (styles.subtitleSize.includes('px') || styles.subtitleSize.includes('rem') || styles.subtitleSize.includes('em'));
-          
-          // Get fontFamily from subtitleFontFamily or fontFamily, only if explicitly set
-          const subtitleFontFamily = (styleAny.subtitleFontFamily || styleAny.fontFamily);
-          const subtitleStyle: React.CSSProperties = {
-            color: styles.subtitleColor || styles.textColor,
-            ...(hasCustomSubtitleSize ? { fontSize: styles.subtitleSize } : {}),
-            ...(subtitleAlign && !subtitleAlignClass.includes(subtitleAlign) ? { textAlign: subtitleAlign as any } : {})
-          };
-          // Only add fontFamily if it's explicitly set (not undefined, null, or empty string)
-          if (subtitleFontFamily && subtitleFontFamily.trim() !== '') {
-            subtitleStyle.fontFamily = subtitleFontFamily;
-          }
-          
-          return (
-            <p 
-              className={`${subtitleFontWeightClass} ${subtitleAlignClass} opacity-80 mb-8 ${!readOnly ? 'outline-none focus:ring-2 ring-white rounded px-2' : ''} ${!readOnly && isSubtitleSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''}`} 
-              style={subtitleStyle}
-              contentEditable={!readOnly}
-              suppressContentEditableWarning={!readOnly}
-              onBlur={!readOnly ? (e) => onTextEdit('subtitle', e.currentTarget.textContent || '') : undefined}
-              onClick={!readOnly ? (e) => handleElementClick(e, subtitleId) : undefined}
-            >
-                {content.subtitle}
-            </p>
-          );
-        })()}
+        {/* Render Title using ElementsSection - unwrapped for custom layout */}
+        <div className="mb-6">
+          <ElementsSection
+            section={{
+              ...section,
+              elements: [getTitleElement()]
+            }}
+            onTextEdit={onTextEdit}
+            onElementUpdate={onElementUpdate || (() => {})}
+            onElementSelect={onElementSelect}
+            selectedElementId={selectedElementId}
+            buttonClass={buttonClass}
+            readOnly={readOnly}
+            isWrapped={false}
+            themeColors={themeColors}
+          />
+        </div>
+        
+        {/* Render Subtitle using ElementsSection - unwrapped for custom layout */}
+        <div className="mb-8 opacity-80">
+          <ElementsSection
+            section={{
+              ...section,
+              elements: [getSubtitleElement()]
+            }}
+            onTextEdit={onTextEdit}
+            onElementUpdate={onElementUpdate || (() => {})}
+            onElementSelect={onElementSelect}
+            selectedElementId={selectedElementId}
+            buttonClass={buttonClass}
+            readOnly={readOnly}
+            isWrapped={false}
+            themeColors={themeColors}
+          />
+        </div>
+        
         {/* Render Button using headless ElementsSection */}
         <div className="w-full mb-8">
           <ElementsSection 
             isWrapped={false}
             section={{
               ...section,
-              elements: [buttonElement || {
-                id: buttonId,
-                type: 'button',
-                content: { text: content.ctaText || 'Click Here', link: content.ctaHref || '' },
-                style: {
-                  backgroundColor: styles.buttonBackgroundColor,
-                  color: styles.buttonTextColor,
-                  textAlign: (styles as any).buttonAlign || styles.textAlign || 'left',
-                  fontWeight: (styles as any).buttonFontWeight || (styles as any).fontWeight || 'bold',
-                  fontSize: (styles as any).buttonFontSize || '1.125rem'
-                }
-              }]
+              elements: [getButtonElement()]
             }}
             onElementSelect={onElementSelect}
             selectedElementId={selectedElementId}

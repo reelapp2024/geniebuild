@@ -109,23 +109,6 @@ const getSafeStyle = (style: any): React.CSSProperties => {
       delete css.padding;
   }
   
-  // Clean up 'borderRadius'
-  if (typeof style.borderRadius === 'object' && style.borderRadius !== null) {
-      if(style.borderRadius.tl) css.borderTopLeftRadius = style.borderRadius.tl;
-      if(style.borderRadius.tr) css.borderTopRightRadius = style.borderRadius.tr;
-      if(style.borderRadius.bl) css.borderBottomLeftRadius = style.borderRadius.bl;
-      if(style.borderRadius.br) css.borderBottomRightRadius = style.borderRadius.br;
-      delete css.borderRadius;
-  }
-
-  if (typeof style.borderWidth === 'object' && style.borderWidth !== null) {
-      if(style.borderWidth.top) css.borderTopWidth = style.borderWidth.top;
-      if(style.borderWidth.right) css.borderRightWidth = style.borderWidth.right;
-      if(style.borderWidth.bottom) css.borderBottomWidth = style.borderWidth.bottom;
-      if(style.borderWidth.left) css.borderLeftWidth = style.borderWidth.left;
-      delete css.borderWidth;
-  }
-  
   // Remove non-standard CSS properties
   delete css.backgroundGradient;
   delete css.backgroundOverlay;
@@ -395,17 +378,12 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             
             // Build image style
             const imageStyle: React.CSSProperties = {
-                borderRadius: safeStyle.borderRadius,
                 width: '100%',
                 height: '100%',
                 opacity: imageOpacity,
                 objectFit: objectFit as any,
                 objectPosition: objectPosition,
                 filter: imageFilter || undefined,
-                borderWidth: safeStyle.borderWidth,
-                borderColor: safeStyle.borderColor,
-                borderStyle: safeStyle.borderWidth ? 'solid' : undefined,
-                boxShadow: safeStyle.boxShadow,
             };
             
             return (
