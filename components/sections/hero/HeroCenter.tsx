@@ -31,11 +31,12 @@ export const HeroCenter: React.FC<HeroProps> = ({
   const subtitleId = `${section.id}-hero-subtitle`;
   const buttonId = `${section.id}-hero-button`;
   const imageId = `${section.id}-hero-image`;
-  
+
   // Get elements from section.elements (they exist after first edit)
   const titleElement = section.elements?.find(e => e.id === titleId);
   const subtitleElement = section.elements?.find(e => e.id === subtitleId);
   const buttonElement = section.elements?.find(e => e.id === buttonId);
+  const imageElement = section.elements?.find(e => e.id === imageId);
   
   // Theme colors for ElementsSection - pass complete section.styles for unified styling
   // This ensures all global styles are available as fallbacks
@@ -130,16 +131,25 @@ export const HeroCenter: React.FC<HeroProps> = ({
     };
   };
   
-  // Handle element click for image
-  const handleImageClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onElementSelect) {
-      onElementSelect(imageId);
-    }
-    onImageClick();
+  const getImageElement = (): WebsiteElement => {
+    // If real element exists, use it (all styles come from element.style)
+    if (imageElement) return imageElement;
+    
+    // Bare minimum fallback - only default structure, no section.styles mapping
+    return {
+      id: imageId,
+      type: 'image',
+      content: {
+        imageUrl: content.imageUrl || '',
+        imageAlt: 'Hero'
+      },
+      style: {
+        width: '100%',
+        objectFit: 'cover',
+      }
+    };
   };
   
-  const isImageSelected = selectedElementId === imageId;
 
   return (
     <div className={`${styles.maxWidth || 'max-w-5xl'} mx-auto px-6 text-center relative z-10`}>
@@ -208,16 +218,23 @@ export const HeroCenter: React.FC<HeroProps> = ({
         />
       </div>
       
-      {/* Image - keep as is since it's not a standard element type */}
+      {/* Render Image using headless ElementsSection */}
       {content.imageUrl && (
-        <div 
-          className={`relative group/img cursor-pointer w-full mt-8 max-w-4xl mx-auto ${isImageSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20'}`} 
-          onClick={handleImageClick}
-        >
-          <img src={content.imageUrl} alt="Hero" className="rounded-2xl shadow-2xl w-full object-cover" />
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity rounded-2xl">
-              <span className="bg-white text-black px-4 py-2 rounded-full text-sm font-bold shadow-lg">Change Image</span>
-          </div>
+        <div className="w-full mt-8 max-w-4xl mx-auto">
+          <ElementsSection 
+            isWrapped={false}
+            section={{
+              ...section,
+              elements: [getImageElement()]
+            }}
+            onElementSelect={onElementSelect}
+            selectedElementId={selectedElementId}
+            onElementUpdate={onElementUpdate || (() => {})}
+            onTextEdit={onTextEdit}
+            buttonClass={buttonClass}
+            readOnly={readOnly}
+            themeColors={themeColors}
+          />
         </div>
       )}
     </div>

@@ -1691,6 +1691,12 @@ const App: React.FC = () => {
           }
         };
       } else if (elementType === 'image') {
+        // Get image element from section.elements if it exists, otherwise create minimal virtual fallback
+        const imageElement = selectedSection.elements?.find(e => e.id === selectedElementId);
+        if (imageElement) {
+          return imageElement;
+        }
+        // Create minimal virtual element fallback - bare minimum defaults only
         virtualElement = {
           id: selectedElementId,
           type: 'image',
@@ -2104,61 +2110,79 @@ const App: React.FC = () => {
                               );
                               sectionUpdates.elements = newElements;
                           } else {
-                              // For virtual button, create element in elements array
+                              // CRITICAL: Force creation of real button element immediately
+                              // Don't map to section.styles - let styles live exclusively in the element
                               if (updates.content?.text !== undefined) {
                               sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
                           }
                               if (updates.content?.link !== undefined) {
                               sectionUpdates.content = { ...s.content, ctaHref: updates.content.link };
-                              }
-                              // Create or update button element in elements array
-                              const existingButtonElement = s.elements?.find(e => e.id === elementId);
-                              if (existingButtonElement) {
-                                  // Update existing element - merge updates with existing element properly
-                                  const updatedElement = {
-                                      ...existingButtonElement,
-                                      ...updates,
-                                      content: {
-                                          ...existingButtonElement.content,
-                                          ...(updates.content || {})
-                                      },
-                                      style: {
-                                          ...existingButtonElement.style,
-                                          ...(updates.style || {})
-                                      }
-                                  };
-                                  const newElements = s.elements?.map(el => 
-                                      el.id === elementId ? updatedElement : el
-                                  );
-                                  sectionUpdates.elements = newElements;
-                              } else {
-                                  // Create new button element with all style properties from section.styles
-                                  const styleAny = s.styles as any;
-                                  const newButtonElement = {
-                                      id: elementId,
-                                      type: 'button' as const,
-                                      content: {
-                                          text: updates.content?.text || s.content.ctaText || '',
-                                          link: updates.content?.link || s.content.ctaHref || ''
-                                      },
-                                      style: {
-                                          ...(updates.style || {}),
-                                          backgroundColor: updates.style?.backgroundColor || s.styles.buttonBackgroundColor || '#E11D48',
-                                          color: updates.style?.color || s.styles.buttonTextColor || '#FFFFFF',
-                                          textAlign: updates.style?.textAlign || 'center',
-                                          // Include all button style properties from section.styles
-                                          fontWeight: updates.style?.fontWeight || styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
-                                          fontSize: updates.style?.fontSize || styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
-                                          padding: updates.style?.padding || styleAny.buttonPadding || styleAny.padding || '',
-                                          borderRadius: updates.style?.borderRadius || styleAny.buttonBorderRadius || styleAny.borderRadius || '',
-                                          fontFamily: updates.style?.fontFamily || styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
-                                      }
-                                  };
-                                  sectionUpdates.elements = [...(s.elements || []), newButtonElement];
-                              }
                           }
-                      } else if (elementType === 'image' && updates.content.imageUrl !== undefined) {
+                              
+                              // Create new button element with updates.style directly (no section.styles mapping)
+                              const newButtonElement = {
+                                  id: elementId,
+                                  type: 'button' as const,
+                                  content: {
+                                      text: updates.content?.text || s.content.ctaText || '',
+                                      link: updates.content?.link || s.content.ctaHref || ''
+                                  },
+                                  style: {
+                                      ...(updates.style || {}),
+                                      backgroundColor: updates.style?.backgroundColor || s.styles.buttonBackgroundColor || '#E11D48',
+                                      color: updates.style?.color || s.styles.buttonTextColor || '#FFFFFF',
+                                      textAlign: updates.style?.textAlign || 'center',
+                                      fontWeight: updates.style?.fontWeight || 'bold',
+                                      fontSize: updates.style?.fontSize || '1rem',
+                                  }
+                              };
+                              sectionUpdates.elements = [...(s.elements || []), newButtonElement];
+                          }
+                      } else if (elementType === 'image') {
+                          // CRITICAL: Force creation of real element in section.elements immediately
+                          // Don't map to section.styles - let styles live exclusively in the element
+                          const imageElement = s.elements?.find(e => e.id === elementId);
+                          
+                          if (imageElement) {
+                              // Update existing element - merge updates properly
+                              const updatedElement = {
+                                  ...imageElement,
+                                  ...updates,
+                                  content: {
+                                      ...imageElement.content,
+                                      ...(updates.content || {})
+                                  },
+                                  style: {
+                                      ...imageElement.style,
+                                      ...(updates.style || {})
+                                  }
+                              };
+                              const newElements = s.elements?.map(el => 
+                                  el.id === elementId ? updatedElement : el
+                              );
+                              sectionUpdates.elements = newElements;
+                          } else {
+                              // Create real element immediately - styles live in element.style, not section.styles
+                              if (updates.content?.imageUrl !== undefined) {
                           sectionUpdates.content = { ...s.content, imageUrl: updates.content.imageUrl };
+                              }
+                              
+                              // Create new image element with updates.style directly (no section.styles mapping)
+                              const newImageElement = {
+                                  id: elementId,
+                                  type: 'image' as const,
+                                  content: {
+                                      imageUrl: updates.content?.imageUrl || s.content.imageUrl || '',
+                                      imageAlt: updates.content?.imageAlt || 'Hero'
+                                  },
+                                  style: {
+                                      ...(updates.style || {}),
+                                      width: updates.style?.width || '100%',
+                                      objectFit: updates.style?.objectFit || 'cover',
+                                  }
+                              };
+                              sectionUpdates.elements = [...(s.elements || []), newImageElement];
+                          }
                       }
                       
                       // Handle textSize for subtitle (Hero subtitle virtual elements)
