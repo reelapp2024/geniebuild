@@ -341,16 +341,20 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             };
             
             // CRITICAL: Use display: flex and map element.style.textAlign to justify-content
-            // Fallback to section styles if element style is missing
-            const buttonTextAlign = safeStyle.textAlign || theme?.buttonAlign || theme?.textAlign || 'center';
-            const wrapperStyle: React.CSSProperties = {
-                display: 'flex',
-                justifyContent: getJustifyContent(buttonTextAlign as string),
-                width: '100%'
-            };
+            // Read textAlign directly from element.style (before getSafeStyle processes it)
+            // Then fallback to theme styles
+            const elementTextAlign = (style?.textAlign as string) || undefined;
+            const buttonTextAlign = elementTextAlign || theme?.buttonAlign || theme?.textAlign || 'center';
             
             return (
-                <div key={id} style={wrapperStyle}>
+                <div 
+                    key={id} 
+                    style={{ 
+                        display: 'flex', 
+                        width: '100%', 
+                        justifyContent: buttonTextAlign === 'left' ? 'flex-start' : buttonTextAlign === 'right' ? 'flex-end' : 'center' 
+                    }}
+                >
                     <div>
                         {content.link ? (
                             <a 

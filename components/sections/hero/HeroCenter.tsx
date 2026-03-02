@@ -179,22 +179,32 @@ export const HeroCenter: React.FC<HeroProps> = ({
         />
       </div>
       
-      {/* Render Button using ElementsSection - unwrapped for custom layout */}
-      {/* CRITICAL: Use w-full flex flex-col items-stretch to give button full width for alignment */}
-      <div className="w-full mb-10 flex flex-col items-stretch">
-        <ElementsSection
+      {/* Render Button using headless ElementsSection */}
+      <div className="w-full mb-20">
+        <ElementsSection 
+          isWrapped={false}
           section={{
             ...section,
-            elements: [getButtonElement()]
+            elements: [buttonElement || {
+              id: buttonId,
+              type: 'button',
+              content: { text: content.ctaText || 'Click Here', link: content.ctaHref || '' },
+              style: {
+                backgroundColor: styles.buttonBackgroundColor,
+                color: styles.buttonTextColor,
+                textAlign: (styles as any).buttonAlign || styles.textAlign || 'center',
+                fontWeight: (styles as any).buttonFontWeight || (styles as any).fontWeight || 'bold',
+                fontSize: (styles as any).buttonFontSize || '1.125rem'
+              }
+            }]
           }}
-          onTextEdit={onTextEdit}
-          onElementUpdate={onElementUpdate || (() => {})}
           onElementSelect={onElementSelect}
           selectedElementId={selectedElementId}
+          onElementUpdate={onElementUpdate || (() => {})}
+          onTextEdit={onTextEdit}
           buttonClass={buttonClass}
           readOnly={readOnly}
-          isWrapped={false}
-          themeColors={themeColors}
+          themeColors={styles as any}
         />
       </div>
       

@@ -1671,7 +1671,7 @@ const App: React.FC = () => {
         if (buttonElement) {
           return buttonElement;
         }
-        // Create virtual element if not found
+        // Create virtual element if not found - include all style properties from section.styles
         virtualElement = {
           id: selectedElementId,
           type: 'button',
@@ -1682,9 +1682,12 @@ const App: React.FC = () => {
           style: {
             backgroundColor: styles.buttonBackgroundColor || '',
             color: styles.buttonTextColor || '',
-            textAlign: 'center',
-            fontSize: 'text-lg',
-            padding: 'px-8 py-3',
+            textAlign: (styleAny.buttonAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
+            fontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
+            fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
+            padding: styleAny.buttonPadding || styleAny.padding || '',
+            borderRadius: styleAny.buttonBorderRadius || styleAny.borderRadius || '',
+            fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
           }
         };
       } else if (elementType === 'image') {
@@ -2201,6 +2204,7 @@ const App: React.FC = () => {
                           if (updates.style.color !== undefined) styleUpdates.buttonTextColor = updates.style.color;
                           if (updates.style.fontSize !== undefined) styleUpdates.buttonFontSize = updates.style.fontSize;
                           if (updates.style.fontWeight !== undefined) styleUpdates.buttonFontWeight = updates.style.fontWeight;
+                          if (updates.style.textAlign !== undefined) styleUpdates.buttonAlign = updates.style.textAlign;
                       }
                       
                       if (Object.keys(styleUpdates).length > 0) {
@@ -3279,7 +3283,15 @@ const App: React.FC = () => {
                         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pb-20">
                              {selectedElementId && selectedElement && selectedSection ? (
                                  editTab === 'design' ? (renderStyleEditor(
-                                     selectedElement.style, 
+                                     // For buttons, merge element.style with section.styles.buttonFontWeight, etc. for proper dropdown display
+                                     selectedElement.type === 'button' ? {
+                                         ...selectedElement.style,
+                                         // Fallback to section.styles for button-specific properties if not in element.style
+                                         fontWeight: selectedElement.style?.fontWeight || (selectedSection.styles as any)?.buttonFontWeight || (selectedSection.styles as any)?.fontWeight || 'bold',
+                                         fontSize: selectedElement.style?.fontSize || (selectedSection.styles as any)?.buttonSize || (selectedSection.styles as any)?.buttonFontSize || (selectedSection.styles as any)?.fontSize || '1rem',
+                                         textAlign: selectedElement.style?.textAlign || (selectedSection.styles as any)?.buttonAlign || selectedSection.styles?.textAlign || 'center',
+                                         fontFamily: selectedElement.style?.fontFamily || (selectedSection.styles as any)?.buttonFontFamily || (selectedSection.styles as any)?.fontFamily || undefined,
+                                     } : selectedElement.style, 
                                      (k,v) => updateElement(selectedSection.id, selectedElement.id, { style: { ...selectedElement.style, [k]: v } }), 
                                      'element', 
                                      selectedElement.type, 
