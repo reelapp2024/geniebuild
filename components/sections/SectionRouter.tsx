@@ -171,7 +171,7 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
         case 'HeroSplitLeft':
           return <HeroSplitLeft {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
         case 'HeroSplitRight':
-          return <HeroSplitRight {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
+          return <HeroSplitRight {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
           case 'HeroGradient':
             return <HeroGradient {...baseProps} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
           case 'HeroGeometric':

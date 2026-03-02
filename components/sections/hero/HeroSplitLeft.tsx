@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Section } from '../../../types';
+import { Section, WebsiteElement } from '../../../types';
+import { ElementsSection } from '../ElementsSection';
 
 interface HeroProps {
   section: Section;
@@ -27,72 +28,21 @@ export const HeroSplitLeft: React.FC<HeroProps> = ({ section, onTextEdit, onImag
   // Get button element from section.elements
   const buttonElement = section.elements?.find(e => e.id === buttonId);
   
-  // Use same button rendering approach as ElementsSection
-  // Process button element style the same way ElementsSection does
-  const getButtonStyle = (): React.CSSProperties => {
-    if (!buttonElement?.style) {
-      return {};
-    }
-    
-    // Get safe style (same as ElementsSection's getSafeStyle)
-    const safeStyle: any = { ...buttonElement.style };
-    
-    // Handle margin object
-    if (typeof safeStyle.margin === 'object' && safeStyle.margin !== null) {
-      if (safeStyle.margin.top) safeStyle.marginTop = safeStyle.margin.top;
-      if (safeStyle.margin.right) safeStyle.marginRight = safeStyle.margin.right;
-      if (safeStyle.margin.bottom) safeStyle.marginBottom = safeStyle.margin.bottom;
-      if (safeStyle.margin.left) safeStyle.marginLeft = safeStyle.margin.left;
-      delete safeStyle.margin;
-    }
-    
-    // Handle padding object
-    if (typeof safeStyle.padding === 'object' && safeStyle.padding !== null) {
-      if (safeStyle.padding.top) safeStyle.paddingTop = safeStyle.padding.top;
-      if (safeStyle.padding.right) safeStyle.paddingRight = safeStyle.padding.right;
-      if (safeStyle.padding.bottom) safeStyle.paddingBottom = safeStyle.padding.bottom;
-      if (safeStyle.padding.left) safeStyle.paddingLeft = safeStyle.padding.left;
-      delete safeStyle.padding;
-    }
-    
-    // Handle borderRadius object
-    if (typeof safeStyle.borderRadius === 'object' && safeStyle.borderRadius !== null) {
-      if (safeStyle.borderRadius.tl) safeStyle.borderTopLeftRadius = safeStyle.borderRadius.tl;
-      if (safeStyle.borderRadius.tr) safeStyle.borderTopRightRadius = safeStyle.borderRadius.tr;
-      if (safeStyle.borderRadius.bl) safeStyle.borderBottomLeftRadius = safeStyle.borderRadius.bl;
-      if (safeStyle.borderRadius.br) safeStyle.borderBottomRightRadius = safeStyle.borderRadius.br;
-      delete safeStyle.borderRadius;
-    }
-    
-    // Build button style exactly like ElementsSection
-    return {
-      ...safeStyle,
-      backgroundColor: (typeof safeStyle.backgroundColor === 'string' && safeStyle.backgroundColor.trim() !== '') 
-        ? safeStyle.backgroundColor 
-        : (styles.buttonBackgroundColor || '#E11D48'),
-      color: (typeof safeStyle.color === 'string' && safeStyle.color.trim() !== '') 
-        ? safeStyle.color 
-        : (styles.buttonTextColor || '#FFFFFF'),
-      textAlign: 'center' as const // Button text is centered, alignment is on wrapper
-    };
+  // Theme colors for ElementsSection - pass complete section.styles for unified styling
+  const styleAny = styles as any;
+  const themeColors = {
+    ...styles, // Include all section.styles properties
+    // Explicitly map button style properties for clarity
+    buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
+    buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
+    buttonAlign: styleAny.buttonAlign || styles.textAlign,
+    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily,
   };
-  
-  const buttonStyle = getButtonStyle();
-  
-  // Get button alignment for wrapper div - use textAlign from processed style (same as ElementsSection)
-  const buttonTextAlign = buttonElement?.style?.textAlign as 'left' | 'center' | 'right' | 'justify' | undefined;
-  const buttonWrapperStyle: React.CSSProperties = { 
-    textAlign: buttonTextAlign || 'left' 
-  };
-  
-  // Use buttonClass only if no element styles are set
-  const effectiveButtonClass = buttonElement?.style ? '' : buttonClass;
   
   // Get heading tag from styles, default to h1 for hero
   const headingTag = (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   
   // Get alignment and font weight from styles
-  const styleAny = styles as any;
   const titleAlign = styleAny.titleAlign || styles.textAlign || 'left';
   const titleFontWeight = styleAny.titleFontWeight || styleAny.fontWeight || 'bold';
   const titleAlignClass = titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : titleAlign === 'justify' ? 'text-justify' : 'text-center';
@@ -195,52 +145,33 @@ export const HeroSplitLeft: React.FC<HeroProps> = ({ section, onTextEdit, onImag
             </p>
           );
         })()}
-        <div style={buttonWrapperStyle}>
-          {(buttonElement?.content?.link || content.ctaHref) ? (
-            <a
-              href={buttonElement?.content?.link || content.ctaHref}
-              target={(buttonElement?.content?.link || content.ctaHref)?.startsWith('http') ? '_blank' : '_self'}
-              rel={(buttonElement?.content?.link || content.ctaHref)?.startsWith('http') ? 'noopener noreferrer' : undefined}
-              onClick={!readOnly ? (e) => {
-                e.preventDefault();
-                handleElementClick(e, buttonId);
-              } : undefined}
-              className="inline-block"
-            >
-              <button 
-                className={`${effectiveButtonClass} text-lg px-8 py-3 font-bold ${!readOnly && isButtonSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''} ${!readOnly ? 'outline-none relative transition-all cursor-pointer' : ''}`}
-                style={buttonStyle}
-                contentEditable={!readOnly}
-                suppressContentEditableWarning={!readOnly}
-                onBlur={!readOnly ? (e: any) => {
-                  if (onElementUpdate) {
-                    onElementUpdate(buttonId, { content: { text: e.currentTarget.textContent || '' } });
-                  } else {
-                    onTextEdit('ctaText', e.currentTarget.textContent || '');
-                  }
-                } : undefined}
-              >
-                {buttonElement?.content?.text || content.ctaText}
-              </button>
-            </a>
-          ) : (
-            <button 
-              className={`${effectiveButtonClass} text-lg px-8 py-3 font-bold ${!readOnly && isButtonSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''} ${!readOnly ? 'outline-none relative transition-all cursor-pointer' : ''}`}
-              style={buttonStyle}
-              contentEditable={!readOnly}
-              suppressContentEditableWarning={!readOnly}
-              onClick={!readOnly ? (e) => handleElementClick(e, buttonId) : undefined}
-              onBlur={!readOnly ? (e: any) => {
-                if (onElementUpdate) {
-                  onElementUpdate(buttonId, { content: { text: e.currentTarget.textContent || '' } });
-                } else {
-                  onTextEdit('ctaText', e.currentTarget.textContent || '');
+        {/* Render Button using headless ElementsSection */}
+        <div className="w-full mb-8">
+          <ElementsSection 
+            isWrapped={false}
+            section={{
+              ...section,
+              elements: [buttonElement || {
+                id: buttonId,
+                type: 'button',
+                content: { text: content.ctaText || 'Click Here', link: content.ctaHref || '' },
+                style: {
+                  backgroundColor: styles.buttonBackgroundColor,
+                  color: styles.buttonTextColor,
+                  textAlign: (styles as any).buttonAlign || styles.textAlign || 'left',
+                  fontWeight: (styles as any).buttonFontWeight || (styles as any).fontWeight || 'bold',
+                  fontSize: (styles as any).buttonFontSize || '1.125rem'
                 }
-              } : undefined}
-            >
-              {buttonElement?.content?.text || content.ctaText}
-            </button>
-          )}
+              }]
+            }}
+            onElementSelect={onElementSelect}
+            selectedElementId={selectedElementId}
+            onElementUpdate={onElementUpdate || (() => {})}
+            onTextEdit={onTextEdit}
+            buttonClass={buttonClass}
+            readOnly={readOnly}
+            themeColors={themeColors}
+          />
         </div>
       </div>
     </div>

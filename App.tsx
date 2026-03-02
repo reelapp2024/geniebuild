@@ -2337,6 +2337,84 @@ const App: React.FC = () => {
     }));
   };
 
+  // Restore missing elements from template
+  const restoreSectionElements = (sectionId: string) => {
+    setSiteData(prev => {
+      const sections = prev.sections.map(s => {
+        if (s.id !== sectionId) return s;
+        
+        // Get the base template for this section type
+        const template = SECTION_TEMPLATES[s.type] || SECTION_TEMPLATES.hero;
+        const currentElements = s.elements || [];
+        const templateElements = template.elements || [];
+        
+        let hasChanges = false;
+        let updatedElements = [...currentElements];
+        let updatedContent = { ...s.content };
+        
+        // For sections with elements arrays (like allelementsTest), restore missing element types
+        if (templateElements && templateElements.length > 0) {
+          // Track which element types already exist
+          const existingElementTypes = new Set(currentElements.map(el => el.type));
+          
+          // Find missing elements by type (not by ID, since IDs are section-specific)
+          const missingElements: WebsiteElement[] = [];
+          templateElements.forEach(templateEl => {
+            if (!existingElementTypes.has(templateEl.type)) {
+              // Create a new element with a unique ID based on section ID and element type
+              const newElementId = `${sectionId}-${templateEl.type}-${Date.now()}`;
+              missingElements.push({
+                ...templateEl,
+                id: newElementId
+              });
+              hasChanges = true;
+            }
+          });
+          
+          if (missingElements.length > 0) {
+            updatedElements = [...currentElements, ...missingElements];
+          }
+        }
+        
+        // For hero sections, restore core content properties if empty
+        if (s.type === 'hero') {
+          const templateContent = template.content || {};
+          if (!updatedContent.imageUrl && templateContent.imageUrl) {
+            updatedContent.imageUrl = templateContent.imageUrl;
+            hasChanges = true;
+          }
+          if (!updatedContent.title && templateContent.title) {
+            updatedContent.title = templateContent.title;
+            hasChanges = true;
+          }
+          if (!updatedContent.subtitle && templateContent.subtitle) {
+            updatedContent.subtitle = templateContent.subtitle;
+            hasChanges = true;
+          }
+          if (!updatedContent.ctaText && templateContent.ctaText) {
+            updatedContent.ctaText = templateContent.ctaText;
+            hasChanges = true;
+          }
+        }
+        
+        // Only update if there are changes
+        if (hasChanges) {
+          return {
+            ...s,
+            elements: updatedElements,
+            content: updatedContent
+          } as Section;
+        }
+        
+        return s;
+      });
+      
+      return { ...prev, sections };
+    });
+    
+    toast.success('Missing elements restored successfully!');
+  };
+
   // Helper to update section background (handles nested object)
   const updateSectionBackground = (id: string, background: any) => {
     updateSectionStyle(id, 'background', background);
@@ -3549,6 +3627,18 @@ const App: React.FC = () => {
                                                     </div>
                                                 );
                                              })()}
+                                             
+                                             {/* Advanced Actions */}
+                                             <AccordionGroup title="Advanced Actions" defaultOpen={false}>
+                                                 <button
+                                                     onClick={() => restoreSectionElements(selectedSection.id)}
+                                                     className="w-full px-3 py-2 bg-orange-600/20 hover:bg-orange-600/30 border border-orange-600/40 text-orange-400 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                                     title="Restore missing elements from template"
+                                                 >
+                                                     <i className="fa-solid fa-window-restore"></i>
+                                                     Restore Missing Elements
+                                                 </button>
+                                             </AccordionGroup>
                                          </div>
                                      )
                                  )

@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Section } from '../../../types';
+import { Section, WebsiteElement } from '../../../types';
+import { ElementsSection } from '../ElementsSection';
 
 interface HeroProps {
   section: Section;
@@ -8,23 +9,41 @@ interface HeroProps {
   onImageClick: () => void;
   buttonClass: string;
   onElementSelect?: (elementId: string) => void;
+  onElementUpdate?: (elementId: string, updates: any) => void;
   selectedElementId?: string | null;
   readOnly?: boolean;
 }
 
-export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onImageClick, buttonClass, onElementSelect, selectedElementId, readOnly = false }) => {
+export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onImageClick, buttonClass, onElementSelect, onElementUpdate, selectedElementId, readOnly = false }) => {
   const { content, styles } = section;
   
   const isCustomColor = (value?: string) => value && (value.startsWith('#') || value.startsWith('rgb'));
+
+  // Element IDs - unique per section instance
+  const titleId = `${section.id}-hero-title`;
+  const subtitleId = `${section.id}-hero-subtitle`;
+  const buttonId = `${section.id}-hero-button`;
+  const imageId = `${section.id}-hero-image`;
+  
+  // Get button element from section.elements
+  const buttonElement = section.elements?.find(e => e.id === buttonId);
+  
+  // Theme colors for ElementsSection - pass complete section.styles for unified styling
+  const styleAny = styles as any;
+  const themeColors = {
+    ...styles, // Include all section.styles properties
+    // Explicitly map button style properties for clarity
+    buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
+    buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
+    buttonAlign: styleAny.buttonAlign || styles.textAlign,
+    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily,
+  };
 
   // Get heading tag from styles, default to h1 for hero
   const headingTag = (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   
   // Check if custom fontSize is provided (px/rem/em) - if so, use it; otherwise CSS defaults apply
   const hasCustomFontSize = styles.titleSize && (styles.titleSize.includes('px') || styles.titleSize.includes('rem') || styles.titleSize.includes('em'));
-  
-  // Get alignment and font weight from styles
-  const styleAny = styles as any;
   const titleAlign = styleAny.titleAlign || styles.textAlign || 'left';
   const titleFontWeight = styleAny.titleFontWeight || styleAny.fontWeight || 'bold';
   const titleAlignClass = titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : titleAlign === 'justify' ? 'text-justify' : 'text-center';
@@ -42,12 +61,6 @@ export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onIma
   if (titleFontFamily && titleFontFamily.trim() !== '') {
     titleStyle.fontFamily = titleFontFamily;
   }
-
-  // Element IDs - unique per section instance
-  const titleId = `${section.id}-hero-title`;
-  const subtitleId = `${section.id}-hero-subtitle`;
-  const buttonId = `${section.id}-hero-button`;
-  const imageId = `${section.id}-hero-image`;
 
   // Handle element click
   const handleElementClick = (e: React.MouseEvent, elementId: string) => {
@@ -115,36 +128,34 @@ export const HeroSplitRight: React.FC<HeroProps> = ({ section, onTextEdit, onIma
             </p>
           );
         })()}
-        {content.ctaHref ? (
-          <a
-            href={content.ctaHref}
-            target={content.ctaHref.startsWith('http') ? '_blank' : '_self'}
-            rel={content.ctaHref.startsWith('http') ? 'noopener noreferrer' : undefined}
-            onClick={!readOnly ? (e) => {
-              handleElementClick(e, buttonId);
-            } : undefined}
-            className="inline-block"
-          >
-            <button 
-              className={`${buttonClass} text-lg px-8 py-3 font-bold ${!readOnly && isButtonSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''}`} 
-              contentEditable={!readOnly}
-              suppressContentEditableWarning={!readOnly}
-              onBlur={!readOnly ? (e) => onTextEdit('ctaText', e.currentTarget.textContent || '') : undefined}
-            >
-              {content.ctaText}
-            </button>
-          </a>
-        ) : (
-          <button 
-            className={`${buttonClass} text-lg px-8 py-3 font-bold ${!readOnly && isButtonSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : !readOnly ? 'hover:ring-1 hover:ring-white/20' : ''}`} 
-            contentEditable={!readOnly}
-            suppressContentEditableWarning={!readOnly}
-            onBlur={!readOnly ? (e) => onTextEdit('ctaText', e.currentTarget.textContent || '') : undefined}
-            onClick={!readOnly ? (e) => handleElementClick(e, buttonId) : undefined}
-          >
-            {content.ctaText}
-          </button>
-        )}
+        {/* Render Button using headless ElementsSection */}
+        <div className="w-full mb-8">
+          <ElementsSection 
+            isWrapped={false}
+            section={{
+              ...section,
+              elements: [buttonElement || {
+                id: buttonId,
+                type: 'button',
+                content: { text: content.ctaText || 'Click Here', link: content.ctaHref || '' },
+                style: {
+                  backgroundColor: styles.buttonBackgroundColor,
+                  color: styles.buttonTextColor,
+                  textAlign: (styles as any).buttonAlign || styles.textAlign || 'left',
+                  fontWeight: (styles as any).buttonFontWeight || (styles as any).fontWeight || 'bold',
+                  fontSize: (styles as any).buttonFontSize || '1.125rem'
+                }
+              }]
+            }}
+            onElementSelect={onElementSelect}
+            selectedElementId={selectedElementId}
+            onElementUpdate={onElementUpdate || (() => {})}
+            onTextEdit={onTextEdit}
+            buttonClass={buttonClass}
+            readOnly={readOnly}
+            themeColors={themeColors}
+          />
+        </div>
       </div>
       {content.imageUrl && (
         <div 
