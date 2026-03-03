@@ -56,13 +56,8 @@ export const SECTIONS_REGISTRY: SectionConfig[] = [
   },
   {
     sectionType: 'testimonials',
-    variants: ['TestimonialsSection'],
-    defaultVariant: 'TestimonialsSection'
-  },
-  {
-    sectionType: 'reviews',
-    variants: ['ReviewsGrid'],
-    defaultVariant: 'ReviewsGrid'
+    variants: ['TestimonialsGrid', 'TestimonialsCentered', 'TestimonialsColumns'],
+    defaultVariant: 'TestimonialsGrid'
   },
   {
     sectionType: 'faq',

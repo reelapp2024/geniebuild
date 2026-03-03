@@ -411,7 +411,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
       { id: 'test-icon', type: 'icon', content: { icon: 'fa-star', iconSize: '24px' }, style: { color: '#F59E0B' } },
       { id: 'test-icon-box', type: 'icon-box', content: { icon: 'fa-check-circle', title: 'Icon Box', description: 'Sample icon box element' }, style: { backgroundColor: 'transparent' } },
       { id: 'test-image-box', type: 'image-box', content: { imageUrl: 'http://localhost:1111/files/placeholder.jpg', title: 'Image Box', description: 'Sample image box element' }, style: {} },
-      { id: 'test-list', type: 'list', content: { items: ['Item 1', 'Item 2', 'Item 3'], listType: 'ul' }, style: { color: '#D1D5DB' } },
+      { id: 'test-list', type: 'list', content: { items: [{ title: 'Item 1' }, { title: 'Item 2' }, { title: 'Item 3' }], listType: 'ul' }, style: { color: '#D1D5DB' } },
       { id: 'test-star-rating', type: 'star-rating', content: { rating: 4.5, maxRating: 5 }, style: { color: '#F59E0B' } },
       { id: 'test-badge', type: 'badge', content: { text: 'New', variant: 'primary' }, style: { backgroundColor: '#F59E0B', color: '#FFFFFF' } },
       { id: 'test-highlight-text', type: 'highlight-text', content: { text: 'This is highlighted text', highlightColor: '#F59E0B' }, style: { color: '#D1D5DB' } },
@@ -538,25 +538,27 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
   testimonials: {
     type: 'testimonials',
     content: {
-        title: 'What they say',
+        title: 'What Our Clients Say',
+        subtitle: 'Real feedback from people who use our product.',
         items: [
-            { id: 't1', title: 'Life Changing', author: 'Alice Smith', role: 'CEO', description: 'This product changed my life entirely.', avatar: 'https://i.pravatar.cc/150?u=a' },
-            { id: 't2', title: 'Incredible Detail', author: 'Bob Jones', role: 'Designer', description: 'Incredible attention to detail and performance.', avatar: 'https://i.pravatar.cc/150?u=b' }
+            { id: '1', title: '', author: 'John Doe', role: 'CEO', description: 'Great product!', avatar: 'https://i.pravatar.cc/150?img=1' },
+            { id: '2', title: '', author: 'Jane Smith', role: 'Designer', description: 'Amazing service!', avatar: 'https://i.pravatar.cc/150?img=2' },
+            { id: '3', title: '', author: 'Bob Johnson', role: 'Developer', description: 'Highly recommended!', avatar: 'https://i.pravatar.cc/150?img=3' }
         ]
     },
     styles: {
         backgroundColor: '#0E1214',
-        textColor: '#C7CDD6',
+        textColor: '#D1D5DB',
+        titleColor: '#F8FAFC',
         accentColor: '#F59E0B',
         buttonBackgroundColor: '#E11D48',
         buttonTextColor: '#FFFFFF',
-        paddingTop: 'pt-12 md:pt-24',
-        paddingBottom: 'pb-12 md:pb-24',
-        paddingX: 'px-6',
+        paddingTop: 'py-20',
+        paddingBottom: 'py-20',
         textAlign: 'center',
-        titleSize: 'text-3xl md:text-5xl',
-        variant: 'grid'
-    }
+        variant: 'TestimonialsGrid'
+    },
+    elements: []
   },
   cta: {
       type: 'cta',
@@ -645,22 +647,4 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
       }
   },
   // Inside export const SECTION_TEMPLATES: Record<SectionType, Partial<Section>> = {
-    reviews: {
-      type: 'reviews',
-      content: {
-        title: 'What Our Clients Say',
-        subtitle: 'Real feedback from people who use our product.',
-      },
-      styles: {
-        backgroundColor: '#0E1214',
-        textColor: '#D1D5DB',
-        titleColor: '#F8FAFC',
-        accentColor: '#F59E0B',
-        variant: 'ReviewsGrid',
-        paddingTop: 'py-20',
-        paddingBottom: 'py-20',
-        textAlign: 'center'
-      },
-      elements: []
-    },
 };

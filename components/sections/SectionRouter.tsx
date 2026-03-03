@@ -54,10 +54,11 @@ import { BannerSplit } from './image-banner/BannerSplit';
 import { BannerBottomLeft } from './image-banner/BannerBottomLeft';
 
 // Single-component sections
-import { TestimonialsSection } from './TestimonialsSection';
+import { TestimonialsGrid } from './TestimonialsGrid';
+import { TestimonialsCentered } from './TestimonialsCentered';
+import { TestimonialsColumns } from './TestimonialsColumns';
 import { ElementsSection } from './ElementsSection';
 import { AllElementsTest } from './allelementsTest/AllElementsTest';
-
 interface SectionRouterProps {
   section: Section;
   onTextEdit: (key: any, value: string) => void;
@@ -271,14 +272,45 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
       }
 
     case 'testimonials':
-      return (
-        <TestimonialsSection
-          {...baseProps}
-          onItemEdit={props.onItemEdit}
-          onRemoveItem={props.onRemoveItem}
-          onAddItem={props.onAddItem}
-        />
-      );
+      switch (variant) {
+        case 'TestimonialsCentered':
+          return (
+            <TestimonialsCentered
+              {...baseProps}
+              onItemEdit={props.onItemEdit}
+              onRemoveItem={props.onRemoveItem}
+              onAddItem={props.onAddItem}
+              onElementUpdate={props.onElementUpdate}
+              onElementSelect={props.onElementSelect}
+              selectedElementId={props.selectedElementId}
+            />
+          );
+        case 'TestimonialsColumns':
+          return (
+            <TestimonialsColumns
+              {...baseProps}
+              onItemEdit={props.onItemEdit}
+              onRemoveItem={props.onRemoveItem}
+              onAddItem={props.onAddItem}
+              onElementUpdate={props.onElementUpdate}
+              onElementSelect={props.onElementSelect}
+              selectedElementId={props.selectedElementId}
+            />
+          );
+        case 'TestimonialsGrid':
+        default:
+          return (
+            <TestimonialsGrid
+              {...baseProps}
+              onItemEdit={props.onItemEdit}
+              onRemoveItem={props.onRemoveItem}
+              onAddItem={props.onAddItem}
+              onElementUpdate={props.onElementUpdate}
+              onElementSelect={props.onElementSelect}
+              selectedElementId={props.selectedElementId}
+            />
+          );
+      }
 
     case 'elements':
       return (
@@ -320,7 +352,6 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           onTextEdit={props.onTextEdit}
         />
       );
-
     default:
       return <div className="p-10 text-center">Unsupported Section Type: {sectionType}</div>;
   }

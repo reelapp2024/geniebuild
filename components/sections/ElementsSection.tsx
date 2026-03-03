@@ -612,10 +612,20 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
 
         case 'star-rating':
+            const rating = content.rating || 5;
+            const maxRating = content.maxRating || 5;
+            const starColor = safeStyle.color || '#F59E0B';
+            const inactiveColor = safeStyle.opacity ? `rgba(${starColor}, 0.3)` : '#6B7280';
             return (
-                <div key={id} className={`flex gap-1 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
-                    {[1,2,3,4,5].map(star => (
-                        <i key={star} className={`fa-solid fa-star ${star <= (content.rating || 5) ? 'text-yellow-500' : 'text-slate-600'}`}></i>
+                <div key={id} className={`flex gap-1 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={{ ...safeStyle, color: undefined }}>
+                    {Array.from({ length: maxRating }, (_, i) => i + 1).map(star => (
+                        <i 
+                            key={star} 
+                            className="fa-solid fa-star"
+                            style={{ 
+                                color: star <= rating ? starColor : inactiveColor 
+                            }}
+                        ></i>
                     ))}
                 </div>
             );
