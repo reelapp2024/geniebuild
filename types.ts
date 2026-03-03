@@ -1,5 +1,5 @@
 
-export type SectionType = 'navbar' | 'hero' | 'features' | 'cta' | 'footer' | 'testimonials' | 'pricing' | 'image-banner' | 'elements' | 'allelementsTest';
+export type SectionType = 'navbar' | 'hero' | 'features' | 'cta' | 'footer' | 'testimonials' | 'pricing' | 'image-banner' | 'elements' | 'allelementsTest'| 'reviews';
 
 export type ElementType = 
   // Basic

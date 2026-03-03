@@ -228,10 +228,10 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
     case 'cta':
       switch (variant) {
         case 'CTASplit':
-          return <CTASplit {...baseProps} />;
+          return <CTASplit {...baseProps} onElementUpdate={props.onElementUpdate} />;
         case 'CTACenter':
         default:
-          return <CTACenter {...baseProps} />;
+          return <CTACenter {...baseProps} onElementUpdate={props.onElementUpdate} />;
       }
 
     case 'footer':

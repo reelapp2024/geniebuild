@@ -1,14 +1,11 @@
 /**
  * SectionsAndVariantRegistry.tsx
- * 
- * Single source of truth for all GenieBuild sections and their variants
- * 
- * SIMPLE FORMAT:
+ * * Single source of truth for all GenieBuild sections and their variants
+ * * SIMPLE FORMAT:
  * - Array of section objects
  * - Each section has: sectionType and variants array
  * - Variant filename = Component name = uniqueId (all same)
- * 
- * To add a new variant:
+ * * To add a new variant:
  * 1. Create the component file (e.g., HeroFullWidth.tsx)
  * 2. Add variant name to the variants array below
  * 3. Update the section router to import and add case
@@ -61,6 +58,11 @@ export const SECTIONS_REGISTRY: SectionConfig[] = [
     sectionType: 'testimonials',
     variants: ['TestimonialsSection'],
     defaultVariant: 'TestimonialsSection'
+  },
+  {
+    sectionType: 'reviews',
+    variants: ['ReviewsGrid'],
+    defaultVariant: 'ReviewsGrid'
   },
   {
     sectionType: 'faq',

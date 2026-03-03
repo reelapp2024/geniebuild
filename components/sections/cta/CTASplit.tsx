@@ -1,45 +1,189 @@
 
 import React from 'react';
-import { Section } from '../../../types';
-import { getHeadingSizeClass } from '../../../utils/headingSizeUtils';
+import { Section, WebsiteElement } from '../../../types';
+import { ElementsSection } from '../ElementsSection';
 
 interface CTAProps {
   section: Section;
   onTextEdit: (key: any, value: string) => void;
-  titleClass: string;
-  titleStyle?: React.CSSProperties;
   buttonClass: string;
+  onElementSelect?: (elementId: string) => void;
+  onElementUpdate?: (elementId: string, updates: any) => void;
+  selectedElementId?: string | null;
+  readOnly?: boolean;
 }
 
-export const CTASplit: React.FC<CTAProps> = ({ section, onTextEdit, titleClass, titleStyle, buttonClass }) => {
+export const CTASplit: React.FC<CTAProps> = ({ 
+  section, 
+  onTextEdit, 
+  buttonClass, 
+  onElementSelect,
+  onElementUpdate,
+  selectedElementId,
+  readOnly = false 
+}) => {
   const { content, styles } = section;
-  const headingTag = (styles.titleHeadingTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   
-  // Extract size from titleClass and adjust based on heading tag
-  const baseSize = styles.titleSize || 'text-3xl md:text-5xl';
-  const adjustedSizeClass = getHeadingSizeClass(headingTag, baseSize);
-  const adjustedTitleClass = titleClass.replace(/text-\w+(\s+md:text-\w+)?/g, adjustedSizeClass);
+  // Element IDs - must match what App.tsx expects
+  const titleId = `${section.id}-cta-title`;
+  const subtitleId = `${section.id}-cta-subtitle`;
+  const buttonId = `${section.id}-cta-button`;
+
+  // Get elements from section.elements (they exist after first edit)
+  const titleElement = section.elements?.find(e => e.id === titleId);
+  const subtitleElement = section.elements?.find(e => e.id === subtitleId);
+  const buttonElement = section.elements?.find(e => e.id === buttonId);
   
+  // Theme colors for ElementsSection - pass complete section.styles for unified styling
+  // This ensures all global styles are available as fallbacks
+  const styleAny = styles as any;
+  const themeColors = {
+    ...styles, // Include all section.styles properties
+    // Explicitly map button style properties for clarity
+    buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
+    buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
+    buttonAlign: styleAny.buttonAlign || styles.textAlign,
+    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily,
+    // Map heading style properties
+    titleFontWeight: styleAny.titleFontWeight || styleAny.fontWeight,
+    titleFontSize: styleAny.titleSize || styleAny.fontSize,
+    titleAlign: styleAny.titleAlign || styles.textAlign,
+    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily,
+    // Map text/subtitle style properties
+    subtitleFontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight,
+    subtitleFontSize: styleAny.subtitleSize || styleAny.fontSize,
+    subtitleAlign: styleAny.subtitleAlign || styles.textAlign,
+    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily,
+    // Global fallback properties
+    fontWeight: styleAny.fontWeight,
+    fontSize: styleAny.fontSize,
+    textAlign: styles.textAlign,
+    fontFamily: styleAny.fontFamily,
+  };
+  
+  // Helper to create fallback element if it doesn't exist (matches App.tsx virtual element pattern)
+  const getTitleElement = (): WebsiteElement => {
+    if (titleElement) return titleElement;
+    
+    const styleAny = styles as any;
+    return {
+      id: titleId,
+      type: 'heading',
+      content: {
+        text: content.title || '',
+        htmlTag: (styles.titleHeadingTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+      },
+      style: {
+        color: styles.titleColor || '',
+        fontSize: styles.titleSize || '',
+        fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
+        textAlign: (styleAny.titleAlign || styles.textAlign || 'left') as 'left' | 'center' | 'right' | 'justify',
+        fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined,
+      }
+    };
+  };
+  
+  const getSubtitleElement = (): WebsiteElement => {
+    if (subtitleElement) return subtitleElement;
+    
+    const styleAny = styles as any;
+    return {
+      id: subtitleId,
+      type: 'text',
+      content: {
+        text: content.subtitle || '',
+        textSize: 'base' as 'base' | 'small' | 'large' | 'xl'
+      },
+      style: {
+        color: styles.subtitleColor || styles.textColor || '',
+        fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
+        textAlign: (styleAny.subtitleAlign || styles.textAlign || 'left') as 'left' | 'center' | 'right' | 'justify',
+        fontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || undefined,
+      }
+    };
+  };
+  
+  const getButtonElement = (): WebsiteElement => {
+    if (buttonElement) return buttonElement;
+    
+    const styleAny = styles as any;
+    return {
+      id: buttonId,
+      type: 'button',
+      content: {
+        text: content.ctaText || '',
+        link: content.ctaHref || ''
+      },
+      style: {
+        backgroundColor: styles.buttonBackgroundColor || '',
+        color: styles.buttonTextColor || '',
+        textAlign: 'left' as 'left' | 'center' | 'right' | 'justify',
+        fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
+        fontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
+        padding: styleAny.buttonPadding || styleAny.padding || '',
+        borderRadius: styleAny.buttonBorderRadius || styleAny.borderRadius || '',
+        fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
+      }
+    };
+  };
+
   return (
     <div className="mx-auto px-6 relative z-10 max-w-7xl flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
-       <div className="max-w-2xl">
-            {React.createElement(
-              headingTag,
-              {
-                key: `cta-title-${headingTag}-${section.id}`,
-                className: `${adjustedTitleClass} outline-none focus:ring-2 ring-white rounded px-2`,
-                style: titleStyle,
-                contentEditable: true,
-                suppressContentEditableWarning: true,
-                onBlur: (e: any) => onTextEdit('title', e.currentTarget.textContent || '')
-              },
-              content.title
-            )}
-            <p className="text-lg md:text-xl opacity-90 outline-none focus:ring-2 ring-white rounded px-2" contentEditable suppressContentEditableWarning onBlur={(e) => onTextEdit('subtitle', e.currentTarget.textContent || '')}>{content.subtitle}</p>
-       </div>
-       <div className="shrink-0">
-            <button className={`${buttonClass} px-12 py-4 text-xl font-bold shadow-2xl`} contentEditable suppressContentEditableWarning onBlur={(e) => onTextEdit('ctaText', e.currentTarget.textContent || '')}>{content.ctaText}</button>
-       </div>
+      <div className="max-w-2xl">
+        {/* Render Title using ElementsSection - unwrapped for custom layout */}
+        <div className="mb-6">
+          <ElementsSection
+            section={{
+              ...section,
+              elements: [getTitleElement()]
+            }}
+            onTextEdit={onTextEdit}
+            onElementUpdate={onElementUpdate || (() => {})}
+            onElementSelect={onElementSelect}
+            selectedElementId={selectedElementId}
+            buttonClass={buttonClass}
+            readOnly={readOnly}
+            isWrapped={false}
+            themeColors={themeColors}
+          />
+        </div>
+        
+        {/* Render Subtitle using ElementsSection - unwrapped for custom layout */}
+        <div className="opacity-90">
+          <ElementsSection
+            section={{
+              ...section,
+              elements: [getSubtitleElement()]
+            }}
+            onTextEdit={onTextEdit}
+            onElementUpdate={onElementUpdate || (() => {})}
+            onElementSelect={onElementSelect}
+            selectedElementId={selectedElementId}
+            buttonClass={buttonClass}
+            readOnly={readOnly}
+            isWrapped={false}
+            themeColors={themeColors}
+          />
+        </div>
+      </div>
+      
+      {/* Render Button using headless ElementsSection */}
+      <div className="shrink-0">
+        <ElementsSection 
+          isWrapped={false}
+          section={{
+            ...section,
+            elements: [getButtonElement()]
+          }}
+          onElementSelect={onElementSelect}
+          selectedElementId={selectedElementId}
+          onElementUpdate={onElementUpdate || (() => {})}
+          onTextEdit={onTextEdit}
+          buttonClass={buttonClass}
+          readOnly={readOnly}
+          themeColors={themeColors}
+        />
+      </div>
     </div>
   );
 };

@@ -643,5 +643,24 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
           overlayOpacity: 'bg-black/60',
           variant: 'center'
       }
-  }
+  },
+  // Inside export const SECTION_TEMPLATES: Record<SectionType, Partial<Section>> = {
+    reviews: {
+      type: 'reviews',
+      content: {
+        title: 'What Our Clients Say',
+        subtitle: 'Real feedback from people who use our product.',
+      },
+      styles: {
+        backgroundColor: '#0E1214',
+        textColor: '#D1D5DB',
+        titleColor: '#F8FAFC',
+        accentColor: '#F59E0B',
+        variant: 'ReviewsGrid',
+        paddingTop: 'py-20',
+        paddingBottom: 'py-20',
+        textAlign: 'center'
+      },
+      elements: []
+    },
 };

@@ -1529,9 +1529,12 @@ const App: React.FC = () => {
     const regularElement = selectedSection.elements?.find(e => e.id === selectedElementId);
     if (regularElement) return regularElement;
     
-    // Handle Hero section virtual elements
-    if (selectedSection.type === 'hero' && selectedElementId.startsWith(`${selectedSection.id}-hero-`)) {
-      const elementType = selectedElementId.replace(`${selectedSection.id}-hero-`, '');
+    // Handle Hero and CTA section virtual elements
+    if ((selectedSection.type === 'hero' && selectedElementId.startsWith(`${selectedSection.id}-hero-`)) ||
+        (selectedSection.type === 'cta' && selectedElementId.startsWith(`${selectedSection.id}-cta-`))) {
+      // Extract elementType based on section type
+      const prefix = selectedSection.type === 'hero' ? `${selectedSection.id}-hero-` : `${selectedSection.id}-cta-`;
+      const elementType = selectedElementId.replace(prefix, '');
       const { content, styles } = selectedSection;
       const styleAny = styles as any;
       
@@ -1539,6 +1542,24 @@ const App: React.FC = () => {
       let virtualElement: WebsiteElement | null = null;
       
       if (elementType === 'title') {
+        // For CTA, default heading tag is h2, for Hero it's h1
+        const defaultHeadingTag = selectedSection.type === 'cta' ? 'h2' : 'h1';
+        virtualElement = {
+          id: selectedElementId,
+          type: 'heading',
+          content: { 
+            text: content.title || '',
+            htmlTag: styleAny.titleHeadingTag || defaultHeadingTag
+          },
+          style: {
+            color: styles.titleColor || '',
+            fontSize: styles.titleSize || (selectedSection.type === 'cta' ? 'text-3xl md:text-5xl' : 'text-4xl md:text-6xl'),
+            fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
+            textAlign: (styleAny.titleAlign || styles.textAlign || (selectedSection.type === 'cta' ? 'center' : 'center')) as 'left' | 'center' | 'right' | 'justify',
+            fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined,
+          }
+        };
+      } else if (elementType === 'icon') {
         virtualElement = {
           id: selectedElementId,
           type: 'heading',
@@ -1724,8 +1745,9 @@ const App: React.FC = () => {
       setIsSidebarOpen(true);
       // If an element is selected but doesn't exist in the current section, clear it
       if (selectedElementId && selectedSection && !selectedSection.elements?.find(e => e.id === selectedElementId)) {
-        // Check if it's a virtual element (Hero section elements)
-        const isVirtualElement = selectedElementId.startsWith(`${selectedSection.id}-hero-`);
+        // Check if it's a virtual element (Hero or CTA section elements)
+        const isVirtualElement = selectedElementId.startsWith(`${selectedSection.id}-hero-`) || 
+                                 selectedElementId.startsWith(`${selectedSection.id}-cta-`);
         if (!isVirtualElement) {
           setSelectedElementId(null);
         }
@@ -2007,7 +2029,7 @@ const App: React.FC = () => {
                       settings: updates.settings ? { ...newElements[existingElementIndex].settings, ...updates.settings } : newElements[existingElementIndex].settings
                   };
                   
-                  // For Hero sections, also update section.content for backward compatibility
+                  // For Hero and CTA sections, also update section.content for backward compatibility
                   const sectionUpdates: Partial<Section> = { elements: newElements };
                   if (s.type === 'hero' && elementId.startsWith(`${sectionId}-hero-`)) {
                       const elementType = elementId.replace(`${sectionId}-hero-`, '');
@@ -2039,6 +2061,19 @@ const App: React.FC = () => {
                           sectionUpdates.content = { ...s.content, icon: updates.content.icon };
                       } else if (elementType === 'badge' && updates.content?.text !== undefined) {
                           sectionUpdates.content = { ...s.content, badgeText: updates.content.text };
+                      }
+                  } else if (s.type === 'cta' && elementId.startsWith(`${sectionId}-cta-`)) {
+                      const elementType = elementId.replace(`${sectionId}-cta-`, '');
+                      if (elementType === 'title' && updates.content?.text !== undefined) {
+                          sectionUpdates.content = { ...s.content, title: updates.content.text };
+                          if (updates.content.htmlTag !== undefined) {
+                              sectionUpdates.styles = { ...s.styles, titleHeadingTag: updates.content.htmlTag as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' };
+                          }
+                      } else if (elementType === 'subtitle' && updates.content?.text !== undefined) {
+                          sectionUpdates.content = { ...s.content, subtitle: updates.content.text };
+                      } else if (elementType === 'button') {
+                          if (updates.content?.text !== undefined) sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
+                          if (updates.content?.link !== undefined) sectionUpdates.content = { ...s.content, ctaHref: updates.content.link };
                       }
                   }
                   
@@ -2218,6 +2253,96 @@ const App: React.FC = () => {
                           sectionUpdates.content = { ...s.content, icon: updates.content.icon };
                       } else if (elementType === 'badge' && updates.content?.text !== undefined) {
                           sectionUpdates.content = { ...s.content, badgeText: updates.content.text };
+                      }
+                      
+                      return { ...s, ...sectionUpdates };
+                  }
+              } else if (s.type === 'cta' && elementId.startsWith(`${sectionId}-cta-`)) {
+                  // Upsert: First time editing a legacy CTA element
+                  // Hydrate it using section.styles and section.content, apply updates, and save as a REAL element
+                  const elementType = elementId.replace(`${sectionId}-cta-`, '');
+                  const content = s.content;
+                  const styles = s.styles;
+                  const styleAny = styles as any;
+                  
+                  let hydratedElement: WebsiteElement | null = null;
+                  
+                  if (elementType === 'title') {
+                      hydratedElement = {
+                          id: elementId,
+                          type: 'heading',
+                          content: {
+                              text: content.title || '',
+                              htmlTag: (styles.titleHeadingTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+                          },
+                          style: {
+                              color: styles.titleColor || styles.textColor || '',
+                              fontSize: styleAny.titleSize || styleAny.titleFontSize || styleAny.fontSize || '2.5rem',
+                              fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
+                              textAlign: (styleAny.titleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
+                              fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined,
+                          }
+                      };
+                  } else if (elementType === 'subtitle') {
+                      hydratedElement = {
+                          id: elementId,
+                          type: 'text',
+                          content: {
+                              text: content.subtitle || '',
+                              textSize: 'base' as 'base' | 'small' | 'large' | 'xl'
+                          },
+                          style: {
+                              color: styles.subtitleColor || styles.textColor || '',
+                              fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
+                              textAlign: (styleAny.subtitleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
+                              fontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || undefined,
+                          }
+                      };
+                  } else if (elementType === 'button') {
+                      hydratedElement = {
+                          id: elementId,
+                          type: 'button',
+                          content: {
+                              text: content.ctaText || '',
+                              link: content.ctaHref || ''
+                          },
+                          style: {
+                              backgroundColor: styles.buttonBackgroundColor || '#E11D48',
+                              color: styles.buttonTextColor || '#FFFFFF',
+                              textAlign: (styleAny.buttonAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
+                              fontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
+                              fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
+                              padding: styleAny.buttonPadding || styleAny.padding || '',
+                              borderRadius: styleAny.buttonBorderRadius || styleAny.borderRadius || '',
+                              fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
+                          }
+                      };
+                  }
+                  
+                  if (hydratedElement) {
+                      // Apply updates to hydrated element
+                      const finalElement = {
+                          ...hydratedElement,
+                          ...updates,
+                          content: { ...hydratedElement.content, ...(updates.content || {}) },
+                          style: { ...hydratedElement.style, ...(updates.style || {}) }
+                      };
+                      
+                      // Update section.content for backward compatibility
+                      const sectionUpdates: Partial<Section> = {
+                          elements: [...(s.elements || []), finalElement]
+                      };
+                      
+                      if (elementType === 'title' && updates.content?.text !== undefined) {
+                          sectionUpdates.content = { ...s.content, title: updates.content.text };
+                          if (updates.content.htmlTag !== undefined) {
+                              sectionUpdates.styles = { ...s.styles, titleHeadingTag: updates.content.htmlTag as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' };
+                          }
+                      } else if (elementType === 'subtitle' && updates.content?.text !== undefined) {
+                          sectionUpdates.content = { ...s.content, subtitle: updates.content.text };
+                      } else if (elementType === 'button') {
+                          if (updates.content?.text !== undefined) sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
+                          if (updates.content?.link !== undefined) sectionUpdates.content = { ...s.content, ctaHref: updates.content.link };
                       }
                       
                       return { ...s, ...sectionUpdates };
