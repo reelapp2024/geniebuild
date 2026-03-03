@@ -54,9 +54,9 @@ import { BannerSplit } from './image-banner/BannerSplit';
 import { BannerBottomLeft } from './image-banner/BannerBottomLeft';
 
 // Single-component sections
-import { TestimonialsGrid } from './TestimonialsGrid';
-import { TestimonialsCentered } from './TestimonialsCentered';
-import { TestimonialsColumns } from './TestimonialsColumns';
+import { TestimonialsGrid } from './testimonials/TestimonialsGrid';
+import { TestimonialsCentered } from './testimonials/TestimonialsCentered';
+import { TestimonialsColumns } from './testimonials/TestimonialsColumns';
 import { ElementsSection } from './ElementsSection';
 import { AllElementsTest } from './allelementsTest/AllElementsTest';
 interface SectionRouterProps {
@@ -70,7 +70,7 @@ interface SectionRouterProps {
   onRemoveItem?: (id: string) => void;
   onUpload?: (sectionId: string, field: string) => void;
   onElementUpdate?: (elementId: string, updates: any) => void;
-  onElementSelect?: (elementId: string) => void;
+  onElementSelect?: (elementId: string, element?: WebsiteElement) => void;
   selectedElementId?: string | null;
   buttonClass: string;
   isSelected?: boolean;

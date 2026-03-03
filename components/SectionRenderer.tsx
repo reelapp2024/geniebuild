@@ -15,7 +15,7 @@ interface SectionRendererProps {
   onMoveDown: (id: string) => void;
   onUpload?: (sectionId: string, field: string) => void;
   // New props for deep selection
-  onElementSelect?: (elementId: string) => void;
+  onElementSelect?: (elementId: string, element?: WebsiteElement) => void;
   selectedElementId?: string | null;
 }
 

@@ -7,7 +7,7 @@ interface ElementsSectionProps {
   onTextEdit: (key: any, value: string) => void;
   onUpload?: (sectionId: string, field: string) => void;
   onElementUpdate: (elementId: string, updates: Partial<WebsiteElement>) => void;
-  onElementSelect?: (elementId: string) => void;
+  onElementSelect?: (elementId: string, element?: WebsiteElement) => void;
   selectedElementId?: string | null;
   buttonClass: string;
   readOnly?: boolean;
@@ -181,10 +181,10 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
     }
   };
 
-  const handleClick = (e: React.MouseEvent, id: string) => {
+  const handleClick = (e: React.MouseEvent, element: WebsiteElement) => {
       e.stopPropagation();
       if (onElementSelect) {
-          onElementSelect(id);
+          onElementSelect(element.id, element);
       }
   };
 
@@ -235,7 +235,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                     key: `${id}-${headingTag}`, // Force re-render when tag changes
                     className: `font-bold outline-none rounded px-1 relative transition-all cursor-pointer ${selectedClass}`,
                     style: headingStyle,
-                    onClick: (e: React.MouseEvent) => handleClick(e, id),
+                    onClick: (e: React.MouseEvent) => handleClick(e, el),
                     contentEditable: !readOnly,
                     suppressContentEditableWarning: !readOnly,
                     onBlur: !readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined
@@ -268,7 +268,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                     key={`${id}-${content.textSize || 'base'}`}
                     className={`outline-none rounded px-1 relative transition-all cursor-pointer ${textSizeClass} ${selectedClass}`}
                     style={textStyle}
-                    onClick={!readOnly ? (e: React.MouseEvent) => handleClick(e, id) : undefined}
+                    onClick={!readOnly ? (e: React.MouseEvent) => handleClick(e, el) : undefined}
                     contentEditable={!readOnly}
                     suppressContentEditableWarning={!readOnly}
                     onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}
@@ -301,7 +301,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 <button 
                     className={`${buttonClass} ${!readOnly ? 'outline-none relative transition-all cursor-pointer' : ''} ${selectedClass}`}
                     style={buttonStyle}
-                    onClick={!readOnly ? (e) => handleClick(e, id) : undefined}
+                    onClick={!readOnly ? (e) => handleClick(e, el) : undefined}
                     contentEditable={!readOnly}
                     suppressContentEditableWarning={!readOnly}
                     onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}
@@ -345,7 +345,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                                 target={content.link.startsWith('http') ? '_blank' : '_self'}
                                 rel={content.link.startsWith('http') ? 'noopener noreferrer' : undefined}
                                 onClick={!readOnly ? (e) => {
-                                    handleClick(e, id);
+                                    handleClick(e, el);
                                 } : undefined}
                                 className="inline-block"
                             >
@@ -387,7 +387,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             };
             
             return (
-                <div key={id} className={`relative group cursor-pointer inline-block max-w-full ${selectedClass}`} onClick={!readOnly ? (e) => handleClick(e, id) : undefined} style={{ ...safeStyle, opacity: undefined }}>
+                <div key={id} className={`relative group cursor-pointer inline-block max-w-full ${selectedClass}`} onClick={!readOnly ? (e) => handleClick(e, el) : undefined} style={{ ...safeStyle, opacity: undefined }}>
                     <div className="relative w-full h-full">
                         <img 
                             src={fullImageUrl} 
@@ -448,7 +448,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                         if ((e.target as HTMLElement).closest('.video-edit-overlay')) {
                             return;
                         }
-                        handleClick(e, id);
+                                                handleClick(e, el);
                     } : undefined} 
                     style={safeStyle}
                 >
@@ -468,7 +468,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
-                                                handleClick(e, id);
+                                                handleClick(e, el);
                                             }}
                                             onMouseEnter={(e) => {
                                                 e.currentTarget.style.opacity = '1';
@@ -498,7 +498,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                                         onClick={!readOnly ? (e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            handleClick(e, id);
+                                            handleClick(e, el);
                                         } : undefined}
                                     />
                                     {!readOnly && (
@@ -507,7 +507,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
-                                                handleClick(e, id);
+                                                handleClick(e, el);
                                             }}
                                             onMouseEnter={(e) => {
                                                 e.currentTarget.style.opacity = '1';
@@ -547,7 +547,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             // Use theme accentColor if element color is not explicitly set
             const iconColor = safeStyle.color || style?.accentColor || theme?.accentColor || '#F59E0B';
             return (
-                <div key={id} className={`inline-block ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
+                <div key={id} className={`inline-block ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={safeStyle}>
                     <i className={iconClass} style={{ fontSize: content.iconSize || safeStyle.fontSize || '2rem', color: iconColor }}></i>
                 </div>
             );
@@ -560,7 +560,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             // Use theme accentColor if element color is not explicitly set
             const iconBoxColor = style?.accentColor || theme?.accentColor || '#F59E0B';
             return (
-                <div key={id} className={`flex gap-4 p-4 rounded-lg bg-white/5 border border-white/5 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={safeStyle}>
+                <div key={id} className={`flex gap-4 p-4 rounded-lg bg-white/5 border border-white/5 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={safeStyle}>
                     <div className="shrink-0">
                          <i className={iconBoxClass} style={{ fontSize: '2rem', color: iconBoxColor }}></i>
                     </div>
@@ -579,7 +579,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 : 'https://via.placeholder.com/400x250';
             
             return (
-                <div key={id} className={`flex flex-col gap-4 p-0 rounded-lg overflow-hidden bg-white/5 border border-white/5 ${selectedClass}`} onClick={!readOnly ? (e) => handleClick(e, id) : undefined} style={safeStyle}>
+                <div key={id} className={`flex flex-col gap-4 p-0 rounded-lg overflow-hidden bg-white/5 border border-white/5 ${selectedClass}`} onClick={!readOnly ? (e) => handleClick(e, el) : undefined} style={safeStyle}>
                      <img 
                         src={fullImageBoxUrl} 
                         className="w-full h-48 object-cover" 
@@ -602,7 +602,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
             };
             return (
-                <ul key={id} className={`list-disc list-inside space-y-2 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={listStyle}>
+                <ul key={id} className={`list-disc list-inside space-y-2 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={listStyle}>
                     {(content.items || [{title: 'List Item 1'}, {title: 'List Item 2'}, {title: 'List Item 3'}]).map((item, i) => (
                         <li key={i} className="opacity-90">
                             {item.title}
@@ -617,7 +617,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             const starColor = safeStyle.color || '#F59E0B';
             const inactiveColor = safeStyle.opacity ? `rgba(${starColor}, 0.3)` : '#6B7280';
             return (
-                <div key={id} className={`flex gap-1 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={{ ...safeStyle, color: undefined }}>
+                <div key={id} className={`flex gap-1 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={{ ...safeStyle, color: undefined }}>
                     {Array.from({ length: maxRating }, (_, i) => i + 1).map(star => (
                         <i 
                             key={star} 
@@ -638,7 +638,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                     key={id} 
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${selectedClass}`} 
                     style={{ backgroundColor: badgeBgColor, color: '#fff', ...safeStyle }}
-                    onClick={!readOnly ? (e) => handleClick(e, id) : undefined}
+                    onClick={!readOnly ? (e) => handleClick(e, el) : undefined}
                     contentEditable={!readOnly}
                     suppressContentEditableWarning={!readOnly}
                     onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}
@@ -655,7 +655,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
             };
             return (
-                <p key={id} className={`${selectedClass}`} style={highlightTextStyle} onClick={!readOnly ? (e) => handleClick(e, id) : undefined}>
+                <p key={id} className={`${selectedClass}`} style={highlightTextStyle} onClick={!readOnly ? (e) => handleClick(e, el) : undefined}>
                     Here is some <span className="px-1 rounded" style={{ backgroundColor: highlightBgColor, color: '#000' }}>{content.text || 'Highlighted'}</span> text example.
                 </p>
             );
@@ -669,7 +669,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 borderColor: blockquoteBorderColor
             };
             return (
-                <blockquote key={id} className={`border-l-4 pl-4 py-2 italic opacity-80 ${selectedClass}`} style={blockquoteStyle} onClick={!readOnly ? (e) => handleClick(e, id) : undefined}>
+                <blockquote key={id} className={`border-l-4 pl-4 py-2 italic opacity-80 ${selectedClass}`} style={blockquoteStyle} onClick={!readOnly ? (e) => handleClick(e, el) : undefined}>
                     <p className="mb-2" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}>"{content.text || 'This is a quote.'}"</p>
                     <cite className="text-sm font-bold not-italic opacity-70">- {content.author || 'Author Name'}</cite>
                 </blockquote>
@@ -682,7 +682,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
             };
             return (
-                <div key={id} className={`space-y-2 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={accordionStyle}>
+                <div key={id} className={`space-y-2 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={accordionStyle}>
                     {content.items?.map((item, idx) => (
                         <details key={idx} className="group bg-white/5 border border-white/10 rounded-lg open:bg-white/10 transition-colors">
                             <summary className="flex items-center justify-between p-4 cursor-pointer font-bold list-none" style={{ color: theme?.titleColor }}>
@@ -704,7 +704,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
             };
             return (
-                <div key={id} className={`bg-white/5 border border-white/10 rounded-lg ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={toggleStyle}>
+                <div key={id} className={`bg-white/5 border border-white/10 rounded-lg ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={toggleStyle}>
                      <details className="group">
                         <summary className="flex items-center gap-3 p-4 cursor-pointer font-bold list-none" style={{ color: theme?.titleColor }}>
                              <div className="w-10 h-6 bg-white/10 rounded-full relative group-open:bg-green-500 transition-colors">
@@ -728,7 +728,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
             };
             return (
-                <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, id)} style={tabsStyle}>
+                <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, el)} style={tabsStyle}>
                     <div className="flex border-b border-white/10 mb-4 overflow-x-auto">
                         {content.items?.map((item, idx) => (
                             <button 
@@ -777,7 +777,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
             };
             return (
-                <div key={id} className={`text-center p-6 border border-white/10 bg-white/5 rounded-xl ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={counterStyle}>
+                <div key={id} className={`text-center p-6 border border-white/10 bg-white/5 rounded-xl ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={counterStyle}>
                     <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: counterAccentColor }}>
                         {content.prefix}{content.targetNumber}{content.suffix}
                     </div>
@@ -803,7 +803,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             const alertBoxType = content.alertType || 'info';
             
             return (
-                <div key={id} className={`p-4 rounded-lg border-l-4 flex gap-4 ${selectedClass}`} onClick={(e) => handleClick(e, id)} 
+                <div key={id} className={`p-4 rounded-lg border-l-4 flex gap-4 ${selectedClass}`} onClick={(e) => handleClick(e, el)} 
                     style={{ 
                         backgroundColor: alertColors[alertBoxType],
                         borderColor: alertBorder[alertBoxType],
@@ -825,7 +825,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
             };
             return (
-                 <div key={id} className={`p-6 rounded-xl bg-white/5 border border-white/10 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={testimonialStyle}>
+                 <div key={id} className={`p-6 rounded-xl bg-white/5 border border-white/10 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={testimonialStyle}>
                      <div className="flex items-center gap-4 mb-4">
                          <img src={content.items?.[0]?.avatar || 'https://via.placeholder.com/50'} className="w-12 h-12 rounded-full object-cover" alt="Avatar" />
                          <div>
@@ -849,7 +849,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 borderColor: pricingBorderColor
             };
              return (
-                 <div key={id} className={`p-8 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center text-center ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={pricingStyle}>
+                 <div key={id} className={`p-8 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center text-center ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={pricingStyle}>
                      <h3 className="text-xl font-bold mb-2" style={{ color: theme?.titleColor }}>{content.text || 'Plan Name'}</h3>
                      <div className="text-4xl font-bold mb-1" style={{ color: theme?.accentColor }}>{content.price || '$99'}</div>
                      <div className="text-sm opacity-50 mb-6">{content.period || 'per month'}</div>
@@ -884,7 +884,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             };
 
             return (
-                 <div key={id} className={`group h-64 perspective-1000 ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={flipBoxStyle}>
+                 <div key={id} className={`group h-64 perspective-1000 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={flipBoxStyle}>
                      <div className={`relative w-full h-full transition-transform duration-700 transform-style-3d ${rotateClass}`}>
                          <div className="absolute inset-0 backface-hidden bg-white/10 border border-white/10 rounded-xl flex flex-col items-center justify-center p-6 text-center">
                               <i className={`fa-solid ${content.icon || 'fa-star'} text-4xl mb-4`} style={{color: flipBoxAccentColor}}></i>
@@ -908,7 +908,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
             };
              return (
-                 <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, id)} style={countdownStyle}>
+                 <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, el)} style={countdownStyle}>
                      <h4 className="font-bold mb-4 uppercase tracking-widest text-xs opacity-50" style={{textAlign: safeStyle.textAlign}}>{content.text || 'Offer Ends In'}</h4>
                      <CountdownTimer targetDate={content.targetDate || new Date(Date.now() + 86400000).toISOString()} style={{ ...style, accentColor: countdownAccentColor }} />
                  </div>
@@ -921,7 +921,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
             };
             return (
-                 <div key={id} className={`p-6 bg-white/5 border border-white/10 rounded-xl ${selectedClass}`} onClick={(e) => handleClick(e, id)} style={reviewCarouselStyle}>
+                 <div key={id} className={`p-6 bg-white/5 border border-white/10 rounded-xl ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={reviewCarouselStyle}>
                      <div className="flex gap-4 overflow-hidden mask-linear-gradient">
                          {(content.items || [{title: 'Review 1'}, {title: 'Review 2'}]).map((item, i) => (
                              <div key={i} className="min-w-[250px] p-4 bg-black/20 rounded border border-white/5">
@@ -936,7 +936,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
 
         default:
              return (
-                 <div key={id} className={`${selectedClass} opacity-50`} onClick={(e) => handleClick(e, id)}>
+                 <div key={id} className={`${selectedClass} opacity-50`} onClick={(e) => handleClick(e, el)}>
                      Element {type} not fully implemented in preview.
                  </div>
              );

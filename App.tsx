@@ -1245,6 +1245,7 @@ const App: React.FC = () => {
   const [siteData, setSiteData] = useState<WebsiteData>(INITIAL_TEMPLATE);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null); 
+  const [selectedVirtualElement, setSelectedVirtualElement] = useState<WebsiteElement | null>(null); 
   
   const [editTab, setEditTab] = useState<'content' | 'design' | 'advanced'>('content'); 
   const [globalTab, setGlobalTab] = useState<'themes' | 'colors' | 'typography'>('themes');
@@ -1524,221 +1525,11 @@ const App: React.FC = () => {
 
   const selectedElement = useMemo(() => {
     if (!selectedSection || !selectedElementId) return null;
-    
-    // Check if it's a regular element in elements array
     const regularElement = selectedSection.elements?.find(e => e.id === selectedElementId);
     if (regularElement) return regularElement;
-    
-    // Handle Hero and CTA section virtual elements
-    if ((selectedSection.type === 'hero' && selectedElementId.startsWith(`${selectedSection.id}-hero-`)) ||
-        (selectedSection.type === 'cta' && selectedElementId.startsWith(`${selectedSection.id}-cta-`))) {
-      // Extract elementType based on section type
-      const prefix = selectedSection.type === 'hero' ? `${selectedSection.id}-hero-` : `${selectedSection.id}-cta-`;
-      const elementType = selectedElementId.replace(prefix, '');
-      const { content, styles } = selectedSection;
-      const styleAny = styles as any;
-      
-      // Create virtual element based on type
-      let virtualElement: WebsiteElement | null = null;
-      
-      if (elementType === 'title') {
-        // For CTA, default heading tag is h2, for Hero it's h1
-        const defaultHeadingTag = selectedSection.type === 'cta' ? 'h2' : 'h1';
-        virtualElement = {
-          id: selectedElementId,
-          type: 'heading',
-          content: { 
-            text: content.title || '',
-            htmlTag: styleAny.titleHeadingTag || defaultHeadingTag
-          },
-          style: {
-            color: styles.titleColor || '',
-            fontSize: styles.titleSize || (selectedSection.type === 'cta' ? 'text-3xl md:text-5xl' : 'text-4xl md:text-6xl'),
-            fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
-            textAlign: (styleAny.titleAlign || styles.textAlign || (selectedSection.type === 'cta' ? 'center' : 'center')) as 'left' | 'center' | 'right' | 'justify',
-            fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined,
-          }
-        };
-      } else if (elementType === 'icon') {
-        virtualElement = {
-          id: selectedElementId,
-          type: 'heading',
-          content: { 
-            text: content.title || '',
-            htmlTag: styleAny.titleHeadingTag || 'h1' // Include heading tag in virtual element
-          },
-          style: {
-            color: styles.titleColor || '',
-            fontSize: styles.titleSize || 'text-4xl md:text-6xl',
-            fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
-            textAlign: (styleAny.titleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-            fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined, // Include fontFamily for Hero title
-          }
-        };
-      } else if (elementType === 'icon') {
-        // Get icon element from section.elements if it exists, otherwise create virtual element
-        const iconElement = selectedSection.elements?.find(e => e.id === selectedElementId);
-        if (iconElement) {
-          return iconElement;
-        }
-        // Create virtual element with default styles
-        virtualElement = {
-          id: selectedElementId,
-          type: 'icon',
-          content: {
-            icon: content.icon || 'fa-wand-magic-sparkles'
-          },
-          style: {
-            color: 'rgba(255, 255, 255, 0.2)',
-            fontSize: '128px' // Default size in pixels
-          }
-        };
-      } else if (elementType === 'badge') {
-        virtualElement = {
-          id: selectedElementId,
-          type: 'badge',
-          content: {
-            text: content.badgeText || 'New Generation Builder'
-          },
-          style: {
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            color: '#60a5fa',
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            textTransform: 'uppercase' as const,
-            letterSpacing: '0.2em',
-            padding: '4px 12px',
-            borderRadius: '9999px'
-          }
-        };
-      } else if (elementType === 'subtitle') {
-        // Read textSize directly from content.subtitleTextSize (stored directly, no inference needed)
-        // Fallback to inferring from subtitleSize only if subtitleTextSize is not set (for backward compatibility)
-        let textSize: 'base' | 'small' | 'large' | 'xl' = 'base';
-        
-        if (content.subtitleTextSize) {
-          // Direct storage - most reliable
-          textSize = content.subtitleTextSize;
-        } else if (styleAny.subtitleSize) {
-          // Fallback: infer from subtitleSize (for backward compatibility with old data)
-          const normalizeSize = (size: string): string => {
-            if (!size) return '';
-            return size.trim().toLowerCase().replace(/\s+/g, '');
-          };
-          const convertToPixels = (size: string): number | null => {
-            if (!size) return null;
-            const trimmed = size.trim();
-            const match = trimmed.match(/^([\d.]+)(px|rem|em)$/i);
-            if (!match) return null;
-            const value = parseFloat(match[1]);
-            const unit = match[2].toLowerCase();
-            if (unit === 'rem' || unit === 'em') return value * 16;
-            return value;
-          };
-          
-          const subtitleSize = styleAny.subtitleSize;
-          const normalizedSubtitleSize = normalizeSize(subtitleSize);
-          const subtitlePixels = convertToPixels(subtitleSize);
-          
-          const normalizedTextSmall = normalizeSize(defaultSizes.textSmall);
-          const normalizedTextLarge = normalizeSize(defaultSizes.textLarge);
-          const normalizedTextXl = normalizeSize(defaultSizes.textXl);
-          const normalizedText = normalizeSize(defaultSizes.text);
-          
-          if (normalizedSubtitleSize === normalizedTextSmall) {
-            textSize = 'small';
-          } else if (normalizedSubtitleSize === normalizedTextLarge) {
-            textSize = 'large';
-          } else if (normalizedSubtitleSize === normalizedTextXl) {
-            textSize = 'xl';
-          } else if (normalizedSubtitleSize === normalizedText) {
-            textSize = 'base';
-          } else if (subtitlePixels !== null) {
-            const textSmallPixels = convertToPixels(defaultSizes.textSmall);
-            const textLargePixels = convertToPixels(defaultSizes.textLarge);
-            const textXlPixels = convertToPixels(defaultSizes.textXl);
-            const textPixels = convertToPixels(defaultSizes.text);
-            
-            if (textSmallPixels !== null && Math.abs(subtitlePixels - textSmallPixels) < 0.1) {
-              textSize = 'small';
-            } else if (textLargePixels !== null && Math.abs(subtitlePixels - textLargePixels) < 0.1) {
-              textSize = 'large';
-            } else if (textXlPixels !== null && Math.abs(subtitlePixels - textXlPixels) < 0.1) {
-              textSize = 'xl';
-            } else if (textPixels !== null && Math.abs(subtitlePixels - textPixels) < 0.1) {
-              textSize = 'base';
-            }
-          }
-        }
-        
-        virtualElement = {
-          id: selectedElementId,
-          type: 'text',
-          content: { 
-            text: content.subtitle || '',
-            textSize: textSize
-          },
-          style: {
-            color: styles.subtitleColor || styles.textColor || '',
-            fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
-            textAlign: (styleAny.subtitleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-            fontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || undefined, // Include fontFamily for Hero subtitle
-          }
-        };
-      } else if (elementType === 'button') {
-        // Check if button element exists in section.elements
-        const buttonElement = selectedSection.elements?.find(e => e.id === selectedElementId);
-        if (buttonElement) {
-          return buttonElement;
-        }
-        // Create virtual element if not found - include all style properties from section.styles
-        virtualElement = {
-          id: selectedElementId,
-          type: 'button',
-          content: { 
-            text: content.ctaText || '',
-            link: content.ctaHref || '' // Include link in virtual element
-          },
-          style: {
-            backgroundColor: styles.buttonBackgroundColor || '',
-            color: styles.buttonTextColor || '',
-            textAlign: (styleAny.buttonAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-            fontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
-            fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
-            padding: styleAny.buttonPadding || styleAny.padding || '',
-            borderRadius: styleAny.buttonBorderRadius || styleAny.borderRadius || '',
-            fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
-          }
-        };
-      } else if (elementType === 'image') {
-        // Get image element from section.elements if it exists, otherwise hydrate from section.styles
-        const imageElement = selectedSection.elements?.find(e => e.id === selectedElementId);
-        if (imageElement) {
-          return imageElement;
-        }
-        // Hydrate virtual element from section.styles for backward compatibility with old API data
-        virtualElement = {
-          id: selectedElementId,
-          type: 'image',
-          content: { imageUrl: content.imageUrl || '', imageAlt: (content as any).imageAlt || 'Hero' },
-          style: {
-            width: '100%',
-            objectFit: styleAny.objectFit || 'cover',
-            objectPosition: styleAny.objectPosition || 'center',
-            opacity: styleAny.opacity !== undefined ? styleAny.opacity : '1',
-            filter: styleAny.filter || '',
-            overlayColor: styleAny.overlayColor || '',
-            overlayOpacity: styleAny.overlayOpacity !== undefined ? styleAny.overlayOpacity : '0'
-          }
-        };
-      }
-      
-      return virtualElement;
-    }
-    
+    if (selectedVirtualElement && selectedVirtualElement.id === selectedElementId) return selectedVirtualElement;
     return null;
-  }, [selectedSection, selectedElementId, siteData.sections, defaultSizes]);
+  }, [selectedSection, selectedElementId, selectedVirtualElement]);
 
   useEffect(() => {
     if (selectedSectionId && !isPreviewMode) {
@@ -2016,354 +1807,33 @@ const App: React.FC = () => {
           sections: prev.sections.map(s => {
               if (s.id !== sectionId) return s;
               
-              // Universal Upsert Pattern: Works for ALL sections (Hero, Standard, etc.)
+              // Universal Upsert Pattern: Works for ALL sections
               const existingElementIndex = s.elements?.findIndex(e => e.id === elementId) ?? -1;
               
               if (existingElementIndex >= 0) {
-                  // Standard update for existing real element - works for all sections
+                  // Standard update for existing element
                   const newElements = [...(s.elements || [])];
                   newElements[existingElementIndex] = {
                       ...newElements[existingElementIndex],
-                      content: updates.content ? { ...newElements[existingElementIndex].content, ...updates.content } : newElements[existingElementIndex].content,
-                      style: updates.style ? { ...newElements[existingElementIndex].style, ...updates.style } : newElements[existingElementIndex].style,
-                      settings: updates.settings ? { ...newElements[existingElementIndex].settings, ...updates.settings } : newElements[existingElementIndex].settings
+                      ...updates,
+                      content: { ...newElements[existingElementIndex].content, ...(updates.content || {}) },
+                      style: { ...newElements[existingElementIndex].style, ...(updates.style || {}) },
+                      settings: { ...newElements[existingElementIndex].settings, ...(updates.settings || {}) }
                   };
-                  
-                  // For Hero and CTA sections, also update section.content for backward compatibility
-                  const sectionUpdates: Partial<Section> = { elements: newElements };
-                  if (s.type === 'hero' && elementId.startsWith(`${sectionId}-hero-`)) {
-                      const elementType = elementId.replace(`${sectionId}-hero-`, '');
-                      if (elementType === 'title' && updates.content?.text !== undefined) {
-                          sectionUpdates.content = { ...s.content, title: updates.content.text };
-                          if (updates.content.htmlTag !== undefined) {
-                              sectionUpdates.styles = { ...s.styles, titleHeadingTag: updates.content.htmlTag as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' };
-                          }
-                      } else if (elementType === 'subtitle' && updates.content?.text !== undefined) {
-                          sectionUpdates.content = { ...s.content, subtitle: updates.content.text };
-                          if (updates.content.textSize !== undefined) {
-                              const textSize = updates.content.textSize;
-                              sectionUpdates.content = { ...sectionUpdates.content, subtitleTextSize: textSize as 'base' | 'small' | 'large' | 'xl' };
-                              const styleUpdates: any = {};
-                              if (textSize === 'small') styleUpdates.subtitleSize = defaultSizes.textSmall;
-                              else if (textSize === 'large') styleUpdates.subtitleSize = defaultSizes.textLarge;
-                              else if (textSize === 'xl') styleUpdates.subtitleSize = defaultSizes.textXl;
-                              else if (textSize === 'base') styleUpdates.subtitleSize = defaultSizes.text;
-                              if (Object.keys(styleUpdates).length > 0) {
-                                  sectionUpdates.styles = { ...s.styles, ...styleUpdates };
-                              }
-                          }
-                      } else if (elementType === 'button') {
-                          if (updates.content?.text !== undefined) sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
-                          if (updates.content?.link !== undefined) sectionUpdates.content = { ...s.content, ctaHref: updates.content.link };
-                      } else if (elementType === 'image' && updates.content?.imageUrl !== undefined) {
-                          sectionUpdates.content = { ...s.content, imageUrl: updates.content.imageUrl };
-                      } else if (elementType === 'icon' && updates.content?.icon !== undefined) {
-                          sectionUpdates.content = { ...s.content, icon: updates.content.icon };
-                      } else if (elementType === 'badge' && updates.content?.text !== undefined) {
-                          sectionUpdates.content = { ...s.content, badgeText: updates.content.text };
-                      }
-                  } else if (s.type === 'cta' && elementId.startsWith(`${sectionId}-cta-`)) {
-                      const elementType = elementId.replace(`${sectionId}-cta-`, '');
-                      if (elementType === 'title' && updates.content?.text !== undefined) {
-                          sectionUpdates.content = { ...s.content, title: updates.content.text };
-                          if (updates.content.htmlTag !== undefined) {
-                              sectionUpdates.styles = { ...s.styles, titleHeadingTag: updates.content.htmlTag as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' };
-                          }
-                      } else if (elementType === 'subtitle' && updates.content?.text !== undefined) {
-                          sectionUpdates.content = { ...s.content, subtitle: updates.content.text };
-                      } else if (elementType === 'button') {
-                          if (updates.content?.text !== undefined) sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
-                          if (updates.content?.link !== undefined) sectionUpdates.content = { ...s.content, ctaHref: updates.content.link };
-                      }
-                  }
-                  
-                  return { ...s, ...sectionUpdates };
-              } else if (s.type === 'hero' && elementId.startsWith(`${sectionId}-hero-`)) {
-                  // Upsert: First time editing a legacy hero element
-                  // Hydrate it using the existing virtual fallback logic from selectedElement, apply updates, and save as a REAL element
-                  const elementType = elementId.replace(`${sectionId}-hero-`, '');
-                  
-                  // Get the hydrated virtual element from selectedElement useMemo (it reads from section.styles and section.content)
-                  // We'll recreate it here using the same logic
-                  const content = s.content;
-                  const styles = s.styles;
-                  const styleAny = styles as any;
-                  
-                  // Helper functions for subtitle textSize determination
-                  const normalizeSize = (size: string): string => {
-                      if (!size) return '';
-                      return size.trim().toLowerCase().replace(/\s+/g, '');
+                  return { ...s, elements: newElements };
+              } else if (selectedVirtualElement && selectedVirtualElement.id === elementId) {
+                  // Universal Upsert: First edit on a hydrated element
+                  const newElement = {
+                      ...selectedVirtualElement,
+                      ...updates,
+                      content: { ...selectedVirtualElement.content, ...(updates.content || {}) },
+                      style: { ...selectedVirtualElement.style, ...(updates.style || {}) }
                   };
-                  
-                  let hydratedElement: WebsiteElement | null = null;
-                  
-                  if (elementType === 'title') {
-                      hydratedElement = {
-                          id: elementId,
-                          type: 'heading',
-                          content: {
-                              text: content.title || '',
-                              htmlTag: (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
-                          },
-                          style: {
-                              color: styles.titleColor || styles.textColor || '',
-                              fontSize: styleAny.titleSize || styleAny.titleFontSize || styleAny.fontSize || '2.5rem',
-                              fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
-                              textAlign: (styleAny.titleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-                              fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined,
-                          }
-                      };
-                  } else if (elementType === 'subtitle') {
-                      let textSize: 'base' | 'small' | 'large' | 'xl' = 'base';
-                      const subtitleSize = styleAny.subtitleSize || styleAny.subtitleFontSize || styleAny.fontSize || defaultSizes.text;
-                      // Determine textSize from subtitleSize (same logic as selectedElement)
-                      const normalizedSubtitleSize = normalizeSize(subtitleSize);
-                      const normalizedTextSmall = normalizeSize(defaultSizes.textSmall);
-                      const normalizedTextLarge = normalizeSize(defaultSizes.textLarge);
-                      const normalizedTextXl = normalizeSize(defaultSizes.textXl);
-                      const normalizedText = normalizeSize(defaultSizes.text);
-                      if (normalizedSubtitleSize === normalizedTextSmall) textSize = 'small';
-                      else if (normalizedSubtitleSize === normalizedTextLarge) textSize = 'large';
-                      else if (normalizedSubtitleSize === normalizedTextXl) textSize = 'xl';
-                      else if (normalizedSubtitleSize === normalizedText) textSize = 'base';
-                      
-                      hydratedElement = {
-                          id: elementId,
-                          type: 'text',
-                          content: {
-                              text: content.subtitle || '',
-                              textSize: textSize
-                          },
-                          style: {
-                              color: styles.subtitleColor || styles.textColor || '',
-                              fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
-                              textAlign: (styleAny.subtitleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-                              fontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || undefined,
-                          }
-                      };
-                  } else if (elementType === 'button') {
-                      hydratedElement = {
-                          id: elementId,
-                          type: 'button',
-                          content: {
-                              text: content.ctaText || '',
-                              link: content.ctaHref || ''
-                          },
-                          style: {
-                              backgroundColor: styles.buttonBackgroundColor || '#E11D48',
-                              color: styles.buttonTextColor || '#FFFFFF',
-                              textAlign: (styleAny.buttonAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-                              fontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
-                              fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
-                              padding: styleAny.buttonPadding || styleAny.padding || '',
-                              borderRadius: styleAny.buttonBorderRadius || styleAny.borderRadius || '',
-                              fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
-                          }
-                      };
-                  } else if (elementType === 'image') {
-                      hydratedElement = {
-                          id: elementId,
-                          type: 'image',
-                          content: {
-                              imageUrl: content.imageUrl || '',
-                              imageAlt: (content as any).imageAlt || 'Hero'
-                          },
-                          style: {
-                              width: '100%',
-                              objectFit: styleAny.objectFit || 'cover',
-                              objectPosition: styleAny.objectPosition || 'center',
-                              opacity: styleAny.opacity !== undefined ? styleAny.opacity : '1',
-                              filter: styleAny.filter || '',
-                              overlayColor: styleAny.overlayColor || '',
-                              overlayOpacity: styleAny.overlayOpacity !== undefined ? styleAny.overlayOpacity : '0'
-                          }
-                      };
-                  } else if (elementType === 'icon') {
-                      hydratedElement = {
-                          id: elementId,
-                          type: 'icon',
-                          content: {
-                              icon: content.icon || 'fa-wand-magic-sparkles'
-                          },
-                          style: {
-                              fontSize: styleAny.iconFontSize || '128px',
-                              color: styleAny.iconColor || 'rgba(255, 255, 255, 0.2)'
-                          }
-                      };
-                  } else if (elementType === 'badge') {
-                      hydratedElement = {
-                          id: elementId,
-                          type: 'badge',
-                          content: {
-                              text: content.badgeText || 'New Generation Builder'
-                          },
-                          style: {
-                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                              color: '#60a5fa',
-                              borderColor: 'rgba(255, 255, 255, 0.1)',
-                              fontSize: '10px',
-                              fontWeight: 'bold',
-                              textTransform: 'uppercase' as const,
-                              letterSpacing: '0.2em',
-                              padding: '4px 12px',
-                              borderRadius: '9999px'
-                          }
-                      };
-                  }
-                  
-                  if (hydratedElement) {
-                      // Apply updates to hydrated element
-                      const finalElement = {
-                          ...hydratedElement,
-                          ...updates,
-                          content: { ...hydratedElement.content, ...(updates.content || {}) },
-                          style: { ...hydratedElement.style, ...(updates.style || {}) }
-                      };
-                      
-                      // Update section.content for backward compatibility
-                      const sectionUpdates: Partial<Section> = {
-                          elements: [...(s.elements || []), finalElement]
-                      };
-                      
-                      if (elementType === 'title' && updates.content?.text !== undefined) {
-                          sectionUpdates.content = { ...s.content, title: updates.content.text };
-                          if (updates.content.htmlTag !== undefined) {
-                              sectionUpdates.styles = { ...s.styles, titleHeadingTag: updates.content.htmlTag as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' };
-                          }
-                      } else if (elementType === 'subtitle' && updates.content?.text !== undefined) {
-                          sectionUpdates.content = { ...s.content, subtitle: updates.content.text };
-                          if (updates.content.textSize !== undefined) {
-                              const textSize = updates.content.textSize;
-                              sectionUpdates.content = { ...sectionUpdates.content, subtitleTextSize: textSize as 'base' | 'small' | 'large' | 'xl' };
-                              const styleUpdates: any = {};
-                              if (textSize === 'small') styleUpdates.subtitleSize = defaultSizes.textSmall;
-                              else if (textSize === 'large') styleUpdates.subtitleSize = defaultSizes.textLarge;
-                              else if (textSize === 'xl') styleUpdates.subtitleSize = defaultSizes.textXl;
-                              else if (textSize === 'base') styleUpdates.subtitleSize = defaultSizes.text;
-                              if (Object.keys(styleUpdates).length > 0) {
-                                  sectionUpdates.styles = { ...s.styles, ...styleUpdates };
-                              }
-                          }
-                      } else if (elementType === 'button') {
-                          if (updates.content?.text !== undefined) sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
-                          if (updates.content?.link !== undefined) sectionUpdates.content = { ...s.content, ctaHref: updates.content.link };
-                      } else if (elementType === 'image' && updates.content?.imageUrl !== undefined) {
-                          sectionUpdates.content = { ...s.content, imageUrl: updates.content.imageUrl };
-                      } else if (elementType === 'icon' && updates.content?.icon !== undefined) {
-                          sectionUpdates.content = { ...s.content, icon: updates.content.icon };
-                      } else if (elementType === 'badge' && updates.content?.text !== undefined) {
-                          sectionUpdates.content = { ...s.content, badgeText: updates.content.text };
-                      }
-                      
-                      return { ...s, ...sectionUpdates };
-                  }
-              } else if (s.type === 'cta' && elementId.startsWith(`${sectionId}-cta-`)) {
-                  // Upsert: First time editing a legacy CTA element
-                  // Hydrate it using section.styles and section.content, apply updates, and save as a REAL element
-                  const elementType = elementId.replace(`${sectionId}-cta-`, '');
-                  const content = s.content;
-                  const styles = s.styles;
-                  const styleAny = styles as any;
-                  
-                  let hydratedElement: WebsiteElement | null = null;
-                  
-                  if (elementType === 'title') {
-                      hydratedElement = {
-                          id: elementId,
-                          type: 'heading',
-                          content: {
-                              text: content.title || '',
-                              htmlTag: (styles.titleHeadingTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
-                          },
-                          style: {
-                              color: styles.titleColor || styles.textColor || '',
-                              fontSize: styleAny.titleSize || styleAny.titleFontSize || styleAny.fontSize || '2.5rem',
-                              fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
-                              textAlign: (styleAny.titleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-                              fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined,
-                          }
-                      };
-                  } else if (elementType === 'subtitle') {
-                      hydratedElement = {
-                          id: elementId,
-                          type: 'text',
-                          content: {
-                              text: content.subtitle || '',
-                              textSize: 'base' as 'base' | 'small' | 'large' | 'xl'
-                          },
-                          style: {
-                              color: styles.subtitleColor || styles.textColor || '',
-                              fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
-                              textAlign: (styleAny.subtitleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-                              fontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || undefined,
-                          }
-                      };
-                  } else if (elementType === 'button') {
-                      hydratedElement = {
-                          id: elementId,
-                          type: 'button',
-                          content: {
-                              text: content.ctaText || '',
-                              link: content.ctaHref || ''
-                          },
-                          style: {
-                              backgroundColor: styles.buttonBackgroundColor || '#E11D48',
-                              color: styles.buttonTextColor || '#FFFFFF',
-                              textAlign: (styleAny.buttonAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-                              fontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
-                              fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
-                              padding: styleAny.buttonPadding || styleAny.padding || '',
-                              borderRadius: styleAny.buttonBorderRadius || styleAny.borderRadius || '',
-                              fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
-                          }
-                      };
-                  }
-                  
-                  if (hydratedElement) {
-                      // Apply updates to hydrated element
-                      const finalElement = {
-                          ...hydratedElement,
-                          ...updates,
-                          content: { ...hydratedElement.content, ...(updates.content || {}) },
-                          style: { ...hydratedElement.style, ...(updates.style || {}) }
-                      };
-                      
-                      // Update section.content for backward compatibility
-                      const sectionUpdates: Partial<Section> = {
-                          elements: [...(s.elements || []), finalElement]
-                      };
-                      
-                      if (elementType === 'title' && updates.content?.text !== undefined) {
-                          sectionUpdates.content = { ...s.content, title: updates.content.text };
-                          if (updates.content.htmlTag !== undefined) {
-                              sectionUpdates.styles = { ...s.styles, titleHeadingTag: updates.content.htmlTag as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' };
-                          }
-                      } else if (elementType === 'subtitle' && updates.content?.text !== undefined) {
-                          sectionUpdates.content = { ...s.content, subtitle: updates.content.text };
-                      } else if (elementType === 'button') {
-                          if (updates.content?.text !== undefined) sectionUpdates.content = { ...s.content, ctaText: updates.content.text };
-                          if (updates.content?.link !== undefined) sectionUpdates.content = { ...s.content, ctaHref: updates.content.link };
-                      }
-                      
-                      return { ...s, ...sectionUpdates };
-                  }
+                  return { ...s, elements: [...(s.elements || []), newElement] };
               }
               
-              // Regular element update - properly merge nested objects
-              return {
-                  ...s,
-                  elements: s.elements?.map(e => {
-                      if (e.id === elementId) {
-                          return {
-                              ...e,
-                              content: updates.content ? { ...e.content, ...updates.content } : e.content,
-                              style: updates.style ? { ...e.style, ...updates.style } : e.style,
-                              settings: updates.settings ? { ...e.settings, ...updates.settings } : e.settings
-                          };
-                      }
-                      return e;
-                  })
-              };
+              // Element not found and not a virtual element - return unchanged
+              return s;
           })
       }));
   };
@@ -3846,10 +3316,10 @@ const App: React.FC = () => {
                               onMoveDown={(id) => moveSection(id, 'down')} 
                               onUpload={triggerUpload} 
                               selectedElementId={selectedElementId} 
-                              onElementSelect={(elId) => { 
-                                // When clicking element, select both section and element
+                              onElementSelect={(elId, el) => { 
                                 setSelectedSectionId(section.id); 
                                 setSelectedElementId(elId); 
+                                setSelectedVirtualElement(el || null);
                               }} 
                             />
                         ))}
