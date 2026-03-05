@@ -64,11 +64,7 @@ export const SECTIONS_REGISTRY: SectionConfig[] = [
     variants: ['FAQCentered', 'FAQSplit'],
     defaultVariant: 'FAQCentered'
   },
-  {
-    sectionType: 'faq',
-    variants: ['FAQSection'],
-    defaultVariant: 'FAQSection'
-  },
+ 
   {
     sectionType: 'elements',
     variants: ['ElementsSection'],
