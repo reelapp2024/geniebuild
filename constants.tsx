@@ -560,6 +560,24 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     },
     elements: []
   },
+  faq: {
+    type: 'faq',
+    content: {
+      title: 'Frequently Asked Questions',
+      subtitle: 'Everything you need to know about our product and billing.',
+    },
+    styles: {
+      backgroundColor: '#0E1214',
+      textColor: '#D1D5DB',
+      titleColor: '#F8FAFC',
+      accentColor: '#3b82f6',
+      variant: 'FAQCentered',
+      paddingTop: 'pt-24',
+      paddingBottom: 'pb-24',
+      textAlign: 'center'
+    },
+    elements: []
+  },
   cta: {
       type: 'cta',
       content: {
@@ -646,5 +664,6 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
           variant: 'center'
       }
   },
+  
   // Inside export const SECTION_TEMPLATES: Record<SectionType, Partial<Section>> = {
 };

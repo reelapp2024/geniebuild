@@ -57,6 +57,10 @@ import { BannerBottomLeft } from './image-banner/BannerBottomLeft';
 import { TestimonialsGrid } from './testimonials/TestimonialsGrid';
 import { TestimonialsCentered } from './testimonials/TestimonialsCentered';
 import { TestimonialsColumns } from './testimonials/TestimonialsColumns';
+// FAQ variants
+import { FAQCentered } from './faq/FAQCentered';
+import { FAQSplit } from './faq/FAQSplit';
+
 import { ElementsSection } from './ElementsSection';
 import { AllElementsTest } from './allelementsTest/AllElementsTest';
 interface SectionRouterProps {
@@ -105,10 +109,10 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
             const headingTag = (styles.titleHeadingTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
             return React.createElement(
               headingTag,
-              { 
+              {
                 key: `faq-title-${headingTag}-${section.id}`,
-                className: titleClass.replace(/text-\w+(\s+md:text-\w+)?/g, getHeadingSizeClass(headingTag, section.styles.titleSize || 'text-3xl md:text-5xl')), 
-                style: titleStyle 
+                className: titleClass.replace(/text-\w+(\s+md:text-\w+)?/g, getHeadingSizeClass(headingTag, section.styles.titleSize || 'text-3xl md:text-5xl')),
+                style: titleStyle
               },
               content.title
             );
@@ -173,11 +177,11 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return <HeroSplitLeft {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
         case 'HeroSplitRight':
           return <HeroSplitRight {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
-          case 'HeroGradient':
-            return <HeroGradient {...baseProps} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
-          case 'HeroGeometric':
-            return <HeroGeometric {...baseProps} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
-          default:
+        case 'HeroGradient':
+          return <HeroGradient {...baseProps} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
+        case 'HeroGeometric':
+          return <HeroGeometric {...baseProps} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+        default:
           return <HeroCenter {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
       }
 
@@ -305,6 +309,28 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
               onItemEdit={props.onItemEdit}
               onRemoveItem={props.onRemoveItem}
               onAddItem={props.onAddItem}
+              onElementUpdate={props.onElementUpdate}
+              onElementSelect={props.onElementSelect}
+              selectedElementId={props.selectedElementId}
+            />
+          );
+      }
+   case 'faq':
+      switch (variant) {
+        case 'FAQSplit':
+          return (
+            <FAQSplit
+              {...baseProps}
+              onElementUpdate={props.onElementUpdate}
+              onElementSelect={props.onElementSelect}
+              selectedElementId={props.selectedElementId}
+            />
+          );
+        case 'FAQCentered':
+        default:
+          return (
+            <FAQCentered
+              {...baseProps}
               onElementUpdate={props.onElementUpdate}
               onElementSelect={props.onElementSelect}
               selectedElementId={props.selectedElementId}
