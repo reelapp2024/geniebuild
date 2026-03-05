@@ -612,21 +612,32 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
 
         case 'star-rating':
-            const rating = content.rating || 5;
-            const maxRating = content.maxRating || 5;
-            const starColor = safeStyle.color || '#F59E0B';
-            const inactiveColor = safeStyle.opacity ? `rgba(${starColor}, 0.3)` : '#6B7280';
+            const rating = content.rating !== undefined ? parseFloat(String(content.rating)) : 5;
+            const maxRating = content.maxRating !== undefined ? parseInt(String(content.maxRating)) : 5;
+            const starColor = safeStyle.color || theme?.accentColor || '#F59E0B';
+            const inactiveColor = 'rgba(255, 255, 255, 0.2)'; // Faded background star
+            
             return (
-                <div key={id} className={`flex gap-1 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={{ ...safeStyle, color: undefined }}>
-                    {Array.from({ length: maxRating }, (_, i) => i + 1).map(star => (
-                        <i 
-                            key={star} 
-                            className="fa-solid fa-star"
-                            style={{ 
-                                color: star <= rating ? starColor : inactiveColor 
-                            }}
-                        ></i>
-                    ))}
+                <div key={id} className={`flex gap-1 ${selectedClass}`} onClick={!readOnly ? (e) => handleClick(e, el) : undefined} style={{ ...safeStyle, color: undefined }}>
+                    {Array.from({ length: maxRating }, (_, i) => i + 1).map(star => {
+                        const isFull = rating >= star;
+                        const isHalf = !isFull && rating >= star - 0.5;
+                        
+                        return (
+                            <div key={star} className="relative inline-block leading-none">
+                                {/* Always render inactive background star */}
+                                <i className="fa-solid fa-star" style={{ color: inactiveColor }}></i>
+                                
+                                {/* Render colored foreground star (Full or Half) over it */}
+                                {(isFull || isHalf) && (
+                                    <i 
+                                        className={`fa-solid ${isFull ? 'fa-star' : 'fa-star-half-stroke'} absolute top-0 left-0`}
+                                        style={{ color: starColor }}
+                                    ></i>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             );
             

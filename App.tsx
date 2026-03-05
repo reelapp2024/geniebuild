@@ -1534,19 +1534,22 @@ const App: React.FC = () => {
   useEffect(() => {
     if (selectedSectionId && !isPreviewMode) {
       setIsSidebarOpen(true);
-      // If an element is selected but doesn't exist in the current section, clear it
-      if (selectedElementId && selectedSection && !selectedSection.elements?.find(e => e.id === selectedElementId)) {
-        // Check if it's a virtual element (Hero or CTA section elements)
-        const isVirtualElement = selectedElementId.startsWith(`${selectedSection.id}-hero-`) || 
-                                 selectedElementId.startsWith(`${selectedSection.id}-cta-`);
-        if (!isVirtualElement) {
+      
+      // If an element is selected, verify it actually exists either in the array OR as our active virtual element
+      if (selectedElementId && selectedSection) {
+        const existsInArray = selectedSection.elements?.find(e => e.id === selectedElementId);
+        const isOurVirtualElement = selectedVirtualElement && selectedVirtualElement.id === selectedElementId;
+        
+        // If it's completely orphaned (neither saved nor currently virtual), clear the selection
+        if (!existsInArray && !isOurVirtualElement) {
           setSelectedElementId(null);
+          setSelectedVirtualElement(null);
         }
       }
     } else {
       setIsSidebarOpen(false);
     }
-  }, [selectedSectionId, selectedElementId, isPreviewMode, selectedSection]);
+  }, [selectedSectionId, selectedElementId, isPreviewMode, selectedSection, selectedVirtualElement]);
   
   useEffect(() => {
       if(selectedElementId) {
@@ -3070,6 +3073,30 @@ const App: React.FC = () => {
                                                      placeholder="Enter badge text"
                                                  />
                                              </div>
+                                         ) : selectedElement.type === 'star-rating' ? (
+                                             <div className="space-y-4">
+                                                 <RangeInput 
+                                                     label="Rating Value (e.g., 4.5)" 
+                                                     value={selectedElement.content.rating !== undefined ? parseFloat(String(selectedElement.content.rating)) : 5} 
+                                                     min={0} 
+                                                     max={selectedElement.content.maxRating !== undefined ? parseInt(String(selectedElement.content.maxRating)) : 5} 
+                                                     step={0.5} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, rating: v} })} 
+                                                 />
+                                                 <RangeInput 
+                                                     label="Total Stars (Max)" 
+                                                     value={selectedElement.content.maxRating !== undefined ? parseInt(String(selectedElement.content.maxRating)) : 5} 
+                                                     min={1} 
+                                                     max={10} 
+                                                     step={1} 
+                                                     onChange={(v) => {
+                                                         // If max rating drops below current rating, adjust rating automatically
+                                                         const currentRating = selectedElement.content.rating !== undefined ? parseFloat(String(selectedElement.content.rating)) : 5;
+                                                         const newRating = currentRating > v ? v : currentRating;
+                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, maxRating: v, rating: newRating} });
+                                                     }} 
+                                                 />
+                                             </div>
                                          ) : (
                                              <>
                                                  <TextAreaInput 
@@ -3307,9 +3334,9 @@ const App: React.FC = () => {
                               isSelected={selectedSectionId === section.id} 
                               readOnly={isPreviewMode} 
                               onClick={() => { 
-                                // When clicking section background, select section and clear element selection
                                 setSelectedSectionId(section.id); 
                                 setSelectedElementId(null); 
+                                setSelectedVirtualElement(null); 
                               }} 
                               onDelete={deleteSection} 
                               onMoveUp={(id) => moveSection(id, 'up')} 
