@@ -70,11 +70,15 @@ export const TestimonialsColumns: React.FC<TestimonialsColumnsProps> = ({
     };
   };
 
-  // --- DEFAULT DATA FALLBACK ---
-  const items = content.items && content.items.length > 0 ? content.items : [
-    { id: 'default-1', author: 'John Doe', role: 'CEO at TechCorp', description: 'This platform completely revolutionized how our team builds websites. The unified architecture is brilliant.', avatar: 'https://i.pravatar.cc/150?img=11' },
-    { id: 'default-2', author: 'Sarah Jenkins', role: 'Lead Designer', description: 'The level of control I have over every single element without writing custom CSS is exactly what I have been looking for.', avatar: 'https://i.pravatar.cc/150?img=5' }
-  ];
+  // Safely catch live data from DB whether it's named items, testimonials, or reviews
+  const activeItems = content.testimonials || content.reviews || content.items;
+  const items = Array.isArray(activeItems) && activeItems.length > 0
+    ? activeItems
+    : [
+        { id: 'default-1', author: 'John Doe', role: 'CEO at TechCorp', description: 'This platform completely revolutionized how our team builds websites. The unified architecture is brilliant.', avatar: 'https://i.pravatar.cc/150?img=11' },
+        { id: 'default-2', author: 'Sarah Jenkins', role: 'Lead Designer', description: 'The level of control I have over every single element without writing custom CSS is exactly what I have been looking for.', avatar: 'https://i.pravatar.cc/150?img=5' },
+        { id: 'default-3', author: 'Michael Chen', role: 'Developer', description: 'Highly recommended for any serious creator.', avatar: 'https://i.pravatar.cc/150?img=8' }
+      ];
 
   return (
     <div className={`${styles.maxWidth || 'max-w-6xl'} mx-auto px-6`}>
@@ -119,7 +123,7 @@ export const TestimonialsColumns: React.FC<TestimonialsColumnsProps> = ({
               
               {/* 1. Quote Text */}
               <div className="mb-8 relative z-10 pt-4">
-                <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('quote', 'text', { text: item.description || '', textSize: 'large' }, { fontStyle: 'italic', opacity: '0.9', lineHeight: '1.7' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
+                <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('quote', 'text', { text: item.description || item.quote || item.content || item.text || '', textSize: 'large' }, { fontStyle: 'italic', opacity: '0.9', lineHeight: '1.7' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
               </div>
 
               {/* 2. Star Rating */}
@@ -131,13 +135,13 @@ export const TestimonialsColumns: React.FC<TestimonialsColumnsProps> = ({
               <div className="flex items-center gap-4 relative z-10">
                 {/* Avatar */}
                 <div className="relative group/avatar shrink-0">
-                  <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('avatar', 'image', { imageUrl: item.avatar || '', alt: item.author || 'Avatar' }, { width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
+                  <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('avatar', 'image', { imageUrl: item.avatar || item.image || item.imageUrl || '', alt: item.author || item.name || 'Avatar' }, { width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
                 </div>
                 
                 {/* Name & Role */}
                 <div className="text-left flex-1">
                   <div className="mb-0.5">
-                    <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('name', 'heading', { text: item.author || '', htmlTag: 'h6' }, { fontWeight: 'bold', margin: '0' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
+                    <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('name', 'heading', { text: item.author || item.name || item.title || '', htmlTag: 'h6' }, { fontWeight: 'bold', margin: '0' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
                   </div>
                   <div>
                     <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('role', 'text', { text: item.role || '', textSize: 'small' }, { opacity: '0.6', margin: '0' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />

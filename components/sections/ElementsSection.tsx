@@ -687,21 +687,23 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
 
         case 'accordion':
-            // Use theme textColor if element color is not explicitly set
-            const accordionStyle = {
-                ...safeStyle,
-                color: safeStyle.color || theme?.textColor || '#D1D5DB'
-            };
+            const accordionStyle = { ...safeStyle, color: safeStyle.color || theme?.textColor || '#D1D5DB' };
+            const items = content.items && content.items.length > 0 ? content.items : [
+                { title: 'Sample Question 1', content: 'Sample answer 1.' },
+                { title: 'Sample Question 2', content: 'Sample answer 2.' }
+            ];
             return (
-                <div key={id} className={`space-y-2 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={accordionStyle}>
-                    {content.items?.map((item, idx) => (
-                        <details key={idx} className="group bg-white/5 border border-white/10 rounded-lg open:bg-white/10 transition-colors">
-                            <summary className="flex items-center justify-between p-4 cursor-pointer font-bold list-none" style={{ color: theme?.titleColor }}>
-                                <span>{item.title}</span>
-                                <i className="fa-solid fa-chevron-down text-xs transition-transform group-open:rotate-180"></i>
+                <div key={id} className={`space-y-3 w-full ${selectedClass}`} onClick={!readOnly ? (e) => handleClick(e, el) : undefined} style={accordionStyle}>
+                    {items.map((item: any, idx: number) => (
+                        <details key={idx} className="group bg-white/5 border border-white/10 rounded-xl open:bg-white/10 transition-colors w-full overflow-hidden">
+                            <summary className="flex items-center justify-between p-5 cursor-pointer list-none select-none">
+                                <span className="font-bold text-lg" style={{ color: theme?.titleColor || '#F8FAFC' }}>{item.title || item.question}</span>
+                                <div className="shrink-0 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-open:rotate-180 transition-transform group-open:bg-white/10">
+                                    <i className="fa-solid fa-chevron-down text-sm" style={{ color: theme?.accentColor || '#3b82f6' }}></i>
+                                </div>
                             </summary>
-                            <div className="p-4 pt-0 text-sm opacity-80 leading-relaxed border-t border-white/5 mt-2">
-                                {item.content}
+                            <div className="p-5 pt-0 text-base opacity-80 leading-relaxed border-t border-white/5 mt-2">
+                                {item.content || item.answer}
                             </div>
                         </details>
                     ))}

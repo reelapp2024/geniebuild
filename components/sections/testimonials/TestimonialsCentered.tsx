@@ -102,13 +102,14 @@ export const TestimonialsCentered: React.FC<TestimonialsCenteredProps> = ({
     };
   };
 
-  // Default items if empty
-  const items = content.items && content.items.length > 0 
-    ? content.items 
+  // Safely catch live data from DB whether it's named items, testimonials, or reviews
+  const activeItems = content.testimonials || content.reviews || content.items;
+  const items = Array.isArray(activeItems) && activeItems.length > 0
+    ? activeItems
     : [
-        { id: 'default-1', title: '', author: 'John Doe', role: 'CEO', description: 'Great product!', avatar: 'https://i.pravatar.cc/150?img=1' },
-        { id: 'default-2', title: '', author: 'Jane Smith', role: 'Designer', description: 'Amazing service!', avatar: 'https://i.pravatar.cc/150?img=2' },
-        { id: 'default-3', title: '', author: 'Bob Johnson', role: 'Developer', description: 'Highly recommended!', avatar: 'https://i.pravatar.cc/150?img=3' }
+        { id: 'default-1', author: 'John Doe', role: 'CEO at TechCorp', description: 'This platform completely revolutionized how our team builds websites. The unified architecture is brilliant.', avatar: 'https://i.pravatar.cc/150?img=11' },
+        { id: 'default-2', author: 'Sarah Jenkins', role: 'Lead Designer', description: 'The level of control I have over every single element without writing custom CSS is exactly what I have been looking for.', avatar: 'https://i.pravatar.cc/150?img=5' },
+        { id: 'default-3', author: 'Michael Chen', role: 'Developer', description: 'Highly recommended for any serious creator.', avatar: 'https://i.pravatar.cc/150?img=8' }
       ];
 
   return (
@@ -194,7 +195,7 @@ export const TestimonialsCentered: React.FC<TestimonialsCenteredProps> = ({
               <div className="mb-8">
                 <ElementsSection 
                   isWrapped={false} 
-                  section={{ ...section, elements: [getEl('quote', 'text', { text: item.description || '', textSize: 'xl' }, { fontStyle: 'italic', fontWeight: '300' })] }} 
+                  section={{ ...section, elements: [getEl('quote', 'text', { text: item.description || item.quote || item.content || item.text || '', textSize: 'xl' }, { fontStyle: 'italic', fontWeight: '300' })] }} 
                   onElementSelect={onElementSelect} 
                   selectedElementId={selectedElementId} 
                   onElementUpdate={onElementUpdate || (() => {})} 
@@ -211,7 +212,7 @@ export const TestimonialsCentered: React.FC<TestimonialsCenteredProps> = ({
                 <div className="relative group/avatar">
                   <ElementsSection 
                     isWrapped={false} 
-                    section={{ ...section, elements: [getEl('avatar', 'image', { imageUrl: item.avatar || '', alt: item.author || 'Avatar' }, { width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover' })] }} 
+                    section={{ ...section, elements: [getEl('avatar', 'image', { imageUrl: item.avatar || item.image || item.imageUrl || '', alt: item.author || item.name || 'Avatar' }, { width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover' })] }} 
                     onElementSelect={onElementSelect} 
                     selectedElementId={selectedElementId} 
                     onElementUpdate={onElementUpdate || (() => {})} 
@@ -232,7 +233,7 @@ export const TestimonialsCentered: React.FC<TestimonialsCenteredProps> = ({
                   <div className="mb-1">
                     <ElementsSection 
                       isWrapped={false} 
-                      section={{ ...section, elements: [getEl('name', 'heading', { text: item.author || '', htmlTag: 'h6' }, { fontWeight: 'bold' })] }} 
+                      section={{ ...section, elements: [getEl('name', 'heading', { text: item.author || item.name || item.title || '', htmlTag: 'h6' }, { fontWeight: 'bold' })] }} 
                       onElementSelect={onElementSelect} 
                       selectedElementId={selectedElementId} 
                       onElementUpdate={onElementUpdate || (() => {})} 

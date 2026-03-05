@@ -3097,6 +3097,57 @@ const App: React.FC = () => {
                                                      }} 
                                                  />
                                              </div>
+                                         ) : selectedElement.type === 'accordion' ? (
+                                             (() => {
+                                                 const items = selectedElement.content.items || [];
+                                                 return (
+                                                     <div className="space-y-4">
+                                                         <div className="flex items-center justify-between mb-2">
+                                                             <label className="text-[10px] font-bold text-white/40 uppercase">Accordion Items</label>
+                                                             <button 
+                                                                 onClick={() => {
+                                                                     const newItems = [...items, { title: 'New Question', content: 'New answer goes here.' }];
+                                                                     updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                 }}
+                                                                 className="px-2 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded border border-blue-600/30 text-[9px]"
+                                                             >
+                                                                 <i className="fa-solid fa-plus mr-1"></i>Add Item
+                                                             </button>
+                                                         </div>
+                                                         {items.map((item: any, idx: number) => (
+                                                             <div key={idx} className="p-3 bg-[#151515] border border-[#333] rounded space-y-3 relative group">
+                                                                 <button 
+                                                                     onClick={() => {
+                                                                         const newItems = items.filter((_: any, i: number) => i !== idx);
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }}
+                                                                     className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] transition-opacity"
+                                                                 >
+                                                                     <i className="fa-solid fa-xmark"></i>
+                                                                 </button>
+                                                                 <TextInput 
+                                                                     label={`Question ${idx + 1}`} 
+                                                                     value={item.title} 
+                                                                     onChange={(v) => {
+                                                                         const newItems = [...items];
+                                                                         newItems[idx].title = v;
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }} 
+                                                                 />
+                                                                 <TextAreaInput 
+                                                                     label="Answer" 
+                                                                     value={item.content} 
+                                                                     onChange={(v) => {
+                                                                         const newItems = [...items];
+                                                                         newItems[idx].content = v;
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }} 
+                                                                 />
+                                                             </div>
+                                                         ))}
+                                                     </div>
+                                                 );
+                                             })()
                                          ) : (
                                              <>
                                                  <TextAreaInput 
