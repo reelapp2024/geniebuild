@@ -1,8 +1,6 @@
-
 import React, { useState } from 'react';
 import { Section, WebsiteElement } from '../types';
 import { SectionRouter } from './sections/SectionRouter';
-// Removed getHeadingSizeClass - using CSS defaults with inline style overrides
 
 interface SectionRendererProps {
   section: Section;
@@ -14,7 +12,6 @@ interface SectionRendererProps {
   onMoveUp: (id: string) => void;
   onMoveDown: (id: string) => void;
   onUpload?: (sectionId: string, field: string) => void;
-  // New props for deep selection
   onElementSelect?: (elementId: string, element?: WebsiteElement) => void;
   selectedElementId?: string | null;
 }
@@ -112,20 +109,17 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     }
   };
 
-  // Helper to detect if a string is likely a Tailwind class
-  // Broadened to include common spacing prefixes
   const isTailwindClass = (val?: string) => {
     if (!val) return false;
     const prefixes = ['text-', 'pt-', 'pb-', 'pl-', 'pr-', 'px-', 'py-', 'mt-', 'mb-', 'ml-', 'mr-', 'mx-', 'my-', 'bg-', 'font-', 'rounded-', 'shadow-', 'border-'];
     return prefixes.some(p => val.startsWith(p)) && !val.includes('px') && !val.includes('rem') && !val.includes('%');
   };
+  
   const isCustomColor = (value?: string) => value && (value.startsWith('#') || value.startsWith('rgb') || value.startsWith('hsl'));
 
-  // Generate background styles from new background system
   const getBackgroundStyles = (): React.CSSProperties => {
     const bgStyles: React.CSSProperties = {};
     
-    // Use new background system if available, otherwise fall back to legacy
     if (styles.background) {
       if (styles.background.type === 'color') {
         bgStyles.backgroundColor = styles.background.color || styles.backgroundColor || '#000000';
@@ -147,7 +141,6 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
         bgStyles.backgroundAttachment = styles.background.image.attachment || 'scroll';
       }
     } else {
-      // Legacy support: migrate old backgroundImage and backgroundColor
       if (styles.backgroundImage) {
         bgStyles.backgroundImage = `url(${styles.backgroundImage})`;
         bgStyles.backgroundSize = 'cover';
@@ -164,7 +157,6 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
   const inlineStyles: React.CSSProperties = {
     ...getBackgroundStyles(),
     ...(isCustomColor(styles.textColor) ? { color: styles.textColor } : {}),
-    // Explicit mappings for non-tailwind style values
     ...(!isTailwindClass(styles.marginTop) ? { marginTop: styles.marginTop } : {}),
     ...(!isTailwindClass(styles.marginBottom) ? { marginBottom: styles.marginBottom } : {}),
     ...(!isTailwindClass(styles.marginLeft) ? { marginLeft: styles.marginLeft } : {}),
@@ -175,11 +167,9 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     ...(!isTailwindClass(styles.paddingRight) ? { paddingRight: styles.paddingRight } : {}),
   };
 
-  // Only use bgClass if it's a Tailwind class (not custom color)
   const bgClass = !styles.background && !isCustomColor(styles.backgroundColor) ? styles.backgroundColor : '';
   const textClass = !isCustomColor(styles.textColor) ? styles.textColor : '';
   
-  // Collect all potential Tailwind classes
   const spacingClasses = [
       isTailwindClass(styles.paddingTop) ? styles.paddingTop : '',
       isTailwindClass(styles.paddingBottom) ? styles.paddingBottom : '',
@@ -215,25 +205,31 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
 
   const buttonClass = `${buttonBase} ${borderRadius}`;
   
-  // Get heading tag - default sizes are applied via CSS, but can be overridden by titleSize
-  const headingTag = (styles.titleHeadingTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-  
-  // If titleSize is provided, use it (allows individual override)
-  // Otherwise, default CSS classes will apply
   const hasCustomSize = styles.titleSize && (styles.titleSize.includes('px') || styles.titleSize.includes('rem') || styles.titleSize.includes('em'));
-  
   const titleClass = `font-bold mb-6 ${!isCustomColor(styles.titleColor) ? styles.titleColor || '' : ''}`;
-  
   const titleStyle = {
     ...(isCustomColor(styles.titleColor) ? { color: styles.titleColor } : {}),
-    // Only apply fontSize if it's a custom override (px/rem/em), otherwise let CSS handle it
     ...(hasCustomSize ? { fontSize: styles.titleSize } : {})
   };
 
   const isFixedSection = type === 'navbar' || type === 'footer';
 
-  // Get overlay styles from new background system
+  // THE FIX: Properly prioritize Theme Overlay colors over the background image block
   const getOverlayStyles = (): { style: React.CSSProperties, show: boolean } => {
+    
+    // 1. LEGACY/THEME OVERLAY (Takes precedence if it exists and isn't explicitly disabled)
+    if (styles.overlayColor && styles.overlayColor !== 'transparent') {
+      return {
+        show: true,
+        style: {
+          backgroundColor: styles.overlayColor,
+          opacity: styles.overlayOpacityValue ? (parseFloat(styles.overlayOpacityValue) > 1 ? parseFloat(styles.overlayOpacityValue)/100 : parseFloat(styles.overlayOpacityValue)) : (styles.overlayColor.startsWith('rgba') ? 1 : 0.5),
+          mixBlendMode: (styles.overlayBlendMode as any) || 'normal'
+        }
+      };
+    }
+    
+    // 2. NEW BACKGROUND SYSTEM OVERLAY
     if (styles.background?.type === 'image' && styles.background.image?.overlay?.enabled) {
       const overlay = styles.background.image.overlay;
       return {
@@ -246,26 +242,12 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       };
     }
     
-    // Legacy overlay support
-    if (styles.overlayColor) {
-      return {
-        show: true,
-        style: {
-          backgroundColor: styles.overlayColor,
-          opacity: styles.overlayOpacityValue ? (parseFloat(styles.overlayOpacityValue) > 1 ? parseFloat(styles.overlayOpacityValue)/100 : parseFloat(styles.overlayOpacityValue)) : (styles.overlayColor.startsWith('rgba') ? 1 : 0.5),
-          mixBlendMode: (styles.overlayBlendMode as any) || 'normal'
-        }
-      };
-    }
-    
     return { show: false, style: {} };
   };
 
   const overlay = getOverlayStyles();
 
-
   const renderContent = () => {
-    // Use common SectionRouter - it handles all section types and variants using the registry
     return (
       <SectionRouter
         section={section}
@@ -289,28 +271,28 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     );
   };
 
-  // Check if geometry is enabled (default to false, but true for HeroGeometric variant)
   const enableGeometry = styles.enableGeometry !== undefined ? styles.enableGeometry : (styles.variant === 'HeroGeometric');
   
   return (
     <div className={containerClass} style={inlineStyles} onClick={(e) => { if(!readOnly) { e.stopPropagation(); onClick(); }}}>
-      {/* Background overlay (for image backgrounds) */}
+      {/* Background overlay */}
       {overlay.show && (
           <div 
-            className="absolute inset-0 z-0" 
+            className="absolute inset-0 z-0 pointer-events-none" 
             style={overlay.style}
           ></div>
       )}
-      {/* Geometry overlay - appears above background, below content */}
+      
+      {/* Geometry overlay */}
       {enableGeometry && (
-        <div className="absolute inset-0 z-[1] pointer-events-none">
-          {/* Geometric Grid Overlay */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
           <div className="absolute inset-0 opacity-[0.03]" 
                style={{ backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`, backgroundSize: '50px 50px' }} />
         </div>
       )}
+      
       {isSelected && !readOnly && (
-        <div className="absolute top-4 right-4 z-20 flex items-center space-x-2 bg-black/90 backdrop-blur-md p-1.5 rounded-lg shadow-2xl border border-white/10">
+        <div className="absolute top-4 right-4 z-50 flex items-center space-x-2 bg-black/90 backdrop-blur-md p-1.5 rounded-lg shadow-2xl border border-white/10">
             <div className="px-3 text-[10px] font-black uppercase tracking-widest text-white">Section {type}</div>
             
             {!isFixedSection && (
@@ -335,7 +317,11 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
             </button>
         </div>
       )}
-      {renderContent()}
+      
+      {/* Ensure content sits above the background and overlays */}
+      <div className="relative z-10 w-full h-full">
+        {renderContent()}
+      </div>
     </div>
   );
 };

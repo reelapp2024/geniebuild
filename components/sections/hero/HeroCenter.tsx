@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Section, WebsiteElement } from '../../../types';
 import { ElementsSection } from '../ElementsSection';
@@ -150,9 +149,8 @@ export const HeroCenter: React.FC<HeroProps> = ({
     };
   };
   
-
   return (
-    <div className={`${styles.maxWidth || 'max-w-5xl'} mx-auto px-6 text-center relative z-10`}>
+    <div className={`${styles.maxWidth || 'max-w-5xl'} mx-auto px-6 text-center`}>
       {/* Render Title using ElementsSection - unwrapped for custom layout */}
       <div className="mb-6">
         <ElementsSection
