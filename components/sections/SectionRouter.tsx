@@ -91,69 +91,7 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
   const sectionType = section.type as string; // Cast to string to handle 'faq' type
   const variant = section.styles?.variant || getDefaultVariant(sectionType);
 
-  // Handle FAQ (inline component, no file) - check before validation since 'faq' is not in SectionType enum
-  if (sectionType === 'faq') {
-    const FAQSection: React.FC<{
-      section: Section;
-      titleClass: string;
-      titleStyle: React.CSSProperties;
-      readOnly: boolean;
-    }> = ({ section, titleClass, titleStyle, readOnly }) => {
-      const { content, styles } = section;
-      const faqItems = content.items || [];
-      const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-      return (
-        <div className={`${styles.maxWidth || 'max-w-4xl'} mx-auto px-6`}>
-          {content.title && (() => {
-            const headingTag = (styles.titleHeadingTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-            return React.createElement(
-              headingTag,
-              {
-                key: `faq-title-${headingTag}-${section.id}`,
-                className: titleClass.replace(/text-\w+(\s+md:text-\w+)?/g, getHeadingSizeClass(headingTag, section.styles.titleSize || 'text-3xl md:text-5xl')),
-                style: titleStyle
-              },
-              content.title
-            );
-          })()}
-          <div className="space-y-4 mt-8">
-            {faqItems.map((item: any, idx: number) => {
-              const isOpen = openIndex === idx;
-              return (
-                <div key={idx} className="border border-white/10 rounded-lg overflow-hidden bg-white/5">
-                  <button
-                    onClick={() => setOpenIndex(isOpen ? null : idx)}
-                    className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer"
-                    style={{ color: styles.titleColor || styles.textColor }}
-                    type="button"
-                  >
-                    <span className="font-semibold">{item.question}</span>
-                    <i className={`fa-solid fa-chevron-${isOpen ? 'up' : 'down'} transition-transform`}></i>
-                  </button>
-                  {isOpen && (
-                    <div className="px-6 pb-4 pt-0" style={{ color: styles.textColor || styles.descriptionColor }}>
-                      {item.answer}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    };
-
-    return (
-      <FAQSection
-        section={section}
-        titleClass={props.titleClass || ''}
-        titleStyle={props.titleStyle || {}}
-        readOnly={props.readOnly || false}
-      />
-    );
-  }
-
+ 
   // Route to correct variant component based on section type and variant
   const baseProps = {
     section: props.section,

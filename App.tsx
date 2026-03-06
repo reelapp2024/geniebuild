@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { WebsiteData, Section, SectionType, WebsiteElement, ElementType } from './types';
 import { INITIAL_TEMPLATE, SECTION_TEMPLATES, PRESET_THEMES, PRESET_FONTS } from './constants';
@@ -3127,19 +3126,21 @@ const App: React.FC = () => {
                                                                  </button>
                                                                  <TextInput 
                                                                      label={`Question ${idx + 1}`} 
-                                                                     value={item.title} 
+                                                                     value={item.title || item.question || ''} 
                                                                      onChange={(v) => {
                                                                          const newItems = [...items];
-                                                                         newItems[idx].title = v;
+                                                                         // Save as standard 'title' and clear 'question' to unify data
+                                                                         newItems[idx] = { ...newItems[idx], title: v, question: undefined };
                                                                          updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
                                                                      }} 
                                                                  />
                                                                  <TextAreaInput 
                                                                      label="Answer" 
-                                                                     value={item.content} 
+                                                                     value={item.content || item.answer || ''} 
                                                                      onChange={(v) => {
                                                                          const newItems = [...items];
-                                                                         newItems[idx].content = v;
+                                                                         // Save as standard 'content' and clear 'answer' to unify data
+                                                                         newItems[idx] = { ...newItems[idx], content: v, answer: undefined };
                                                                          updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
                                                                      }} 
                                                                  />
@@ -3182,7 +3183,7 @@ const App: React.FC = () => {
                                                                  updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, htmlTag: v as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'} });
                                                              }
                                                          }} 
-                                                     />
+                                                         />
                                                  )}
                                                  {selectedElement.type === 'text' && (() => {
                                                      // For Hero subtitle virtual elements, we need to compute textSize from subtitleSize
