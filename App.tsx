@@ -676,7 +676,7 @@ const SelectInput = ({ label, value, options, onChange, className = '' }: any) =
         const optValue = isObj ? opt.value : opt;
         const optLabel = isObj ? opt.label : opt;
         return (
-          <option key={isObj ? `${optValue}-${i}` : opt} value={optValue}>
+          <option key={isObj ? `${optValue}-${i}` : opt} value={optValue} className="bg-[#151515] text-white">
             {optLabel}
           </option>
         );
@@ -2487,22 +2487,21 @@ const AppContent: React.FC = () => {
                            label="Font Family"
                            value={styles.fontFamily || ''}
                            options={[
-  { label: `Theme Default (${themeData?.typography?.fontFamily || themeData?.fontFamily || 'Inter'})`, value: '' },
-  { label: 'Inter', value: 'Inter, sans-serif' },
-  { label: 'Roboto', value: 'Roboto, sans-serif' },
-  { label: 'Open Sans', value: '"Open Sans", sans-serif' },
-  { label: 'Lato', value: 'Lato, sans-serif' },
-  { label: 'Poppins', value: 'Poppins, sans-serif' },
-  { label: 'Montserrat', value: 'Montserrat, sans-serif' },
-  { label: 'Playfair Display', value: '"Playfair Display", serif' },
-  { label: 'Merriweather', value: 'Merriweather, serif' },
-  { label: 'Nunito', value: 'Nunito, sans-serif' },
-  { label: 'Arial', value: 'Arial, sans-serif' },
-  { label: 'Helvetica', value: 'Helvetica, sans-serif' },
-  { label: 'Georgia', value: 'Georgia, serif' }
-]}
+                              { label: `Theme Default (${(defaultTypography?.fontFamily || 'Inter').split(',')[0].replace(/['"]/g, '').trim()})`, value: '' },
+                              { label: 'Inter', value: 'Inter, sans-serif' },
+                              { label: 'Roboto', value: 'Roboto, sans-serif' },
+                              { label: 'Open Sans', value: '"Open Sans", sans-serif' },
+                              { label: 'Lato', value: 'Lato, sans-serif' },
+                              { label: 'Poppins', value: 'Poppins, sans-serif' },
+                              { label: 'Montserrat', value: 'Montserrat, sans-serif' },
+                              { label: 'Playfair Display', value: '"Playfair Display", serif' },
+                              { label: 'Merriweather', value: 'Merriweather, serif' },
+                              { label: 'Nunito', value: 'Nunito, sans-serif' },
+                              { label: 'Arial', value: 'Arial, sans-serif' },
+                              { label: 'Helvetica', value: 'Helvetica, sans-serif' },
+                              { label: 'Georgia', value: 'Georgia, serif' }
+                           ]}
                            onChange={(v: string) => {
-                               // If empty string, remove fontFamily to use theme default
                                if (v === '') {
                                    onUpdate('fontFamily', undefined);
                                } else {
@@ -3530,7 +3529,7 @@ const AppContent: React.FC = () => {
                             position: 'absolute',
                             top: 0,
                             left: 0,
-                            fontFamily: themeData?.typography?.fontFamily || themeData?.fontFamily || 'Inter, sans-serif'
+                            fontFamily: defaultTypography.fontFamily
                         }}
                     >
                         <PreviewFrame 
