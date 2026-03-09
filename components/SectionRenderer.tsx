@@ -137,10 +137,10 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
         }
       } else if (styles.background.type === 'image' && styles.background.image?.url) {
         bgStyles.backgroundImage = `url(${styles.background.image.url})`;
-        bgStyles.backgroundPosition = styles.background.image.position || 'center';
-        bgStyles.backgroundSize = styles.background.image.size || 'cover';
-        bgStyles.backgroundRepeat = styles.background.image.repeat || 'no-repeat';
-        bgStyles.backgroundAttachment = styles.background.image.attachment || 'scroll';
+        bgStyles.backgroundPosition = styles.background.image.position || styles.backgroundPosition || 'center';
+        bgStyles.backgroundSize = styles.background.image.size || styles.backgroundSize || 'cover';
+        bgStyles.backgroundRepeat = styles.background.image.repeat || styles.backgroundRepeat || 'no-repeat';
+        bgStyles.backgroundAttachment = styles.background.image.attachment || styles.backgroundAttachment || 'scroll';
       }
     } else {
       if (styles.backgroundImage) {
@@ -221,116 +221,30 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
 
   // THE FIX: Properly prioritize Theme Overlay colors over the background image block
   const getOverlayStyles = (): { style: React.CSSProperties, show: boolean } => {
+    // 1. Primary Source: Unified Background Object
+    const bgOverlay = styles.background?.overlay || styles.background?.image?.overlay;
     
-    // 1. LEGACY/THEME OVERLAY (Takes precedence if it exists and isn't explicitly disabled)
-    if (styles.overlayColor && styles.overlayColor !== 'transparent') {
+    // 2. Secondary Source: Legacy Flat Properties
+    const legacyColor = styles.overlayColor;
+    const legacyOpacity = styles.overlayOpacityValue !== undefined ? styles.overlayOpacityValue : styles.overlayOpacity;
+    const legacyBlend = styles.overlayBlendMode;
+    
+    const overlayColor = bgOverlay?.color || legacyColor;
+    const hasOverlay = overlayColor && overlayColor !== 'transparent';
+    
+    if (hasOverlay && bgOverlay?.enabled !== false) {
+      const rawOpacityStr = bgOverlay?.opacity !== undefined ? bgOverlay.opacity : (legacyOpacity !== undefined ? legacyOpacity : 0.5);
+      const parsedOpacity = typeof rawOpacityStr === 'string' ? parseFloat(rawOpacityStr) : rawOpacityStr;
+      const finalOpacity = parsedOpacity > 1 ? parsedOpacity / 100 : parsedOpacity;
+      
       return {
         show: true,
         style: {
-          backgroundColor: styles.overlayColor,
-          opacity: styles.overlayOpacityValue ? (parseFloat(styles.overlayOpacityValue) > 1 ? parseFloat(styles.overlayOpacityValue)/100 : parseFloat(styles.overlayOpacityValue)) : (styles.overlayColor.startsWith('rgba') ? 1 : 0.5),
-          mixBlendMode: (styles.overlayBlendMode as any) || 'normal'
+          backgroundColor: overlayColor,
+          opacity: finalOpacity,
+          mixBlendMode: (bgOverlay?.blendMode || legacyBlend || 'normal') as any
         }
       };
-    }
-    
-    // Helper to get theme overlay defaults
-    const getThemeOverlayDefaults = () => {
-      if (themeData?.overlay) {
-        const themeOverlay = themeData.overlay;
-        let overlayOpacity = 0.5;
-        if (themeOverlay.color) {
-          const rgbaMatch = themeOverlay.color.match(/rgba?\([^)]+\)/);
-          if (rgbaMatch) {
-            const rgbaValues = rgbaMatch[0].match(/[\d.]+/g);
-            if (rgbaValues && rgbaValues.length >= 4) {
-              overlayOpacity = parseFloat(rgbaValues[3]);
-            }
-          }
-        }
-        return {
-          color: themeOverlay.color || '#000000',
-          opacity: overlayOpacity,
-          blendMode: (themeOverlay.blend as any) || 'multiply'
-        };
-      }
-      return {
-        color: '#000000',
-        opacity: 0.5,
-        blendMode: 'normal' as const
-      };
-    };
-    
-    // 2. NEW BACKGROUND SYSTEM OVERLAY - Color Background
-    if (styles.background?.type === 'color') {
-      const overlay = styles.background.overlay;
-      const themeDefaults = getThemeOverlayDefaults();
-      // Overlay is enabled by default (unless explicitly disabled)
-      const isEnabled = overlay?.enabled !== false;
-      
-      if (isEnabled) {
-        // Use overlay settings if they exist, otherwise use theme defaults
-        const overlayColor = overlay?.color || themeDefaults.color;
-        const overlayOpacity = overlay?.opacity !== undefined ? overlay.opacity : themeDefaults.opacity;
-        const overlayBlendMode = overlay?.blendMode || themeDefaults.blendMode;
-        
-        return {
-          show: true,
-          style: {
-            backgroundColor: overlayColor,
-            opacity: overlayOpacity,
-            mixBlendMode: overlayBlendMode as any
-          }
-        };
-      }
-    }
-    
-    // 3. NEW BACKGROUND SYSTEM OVERLAY - Image Background
-    if (styles.background?.type === 'image') {
-      const overlay = styles.background.image?.overlay;
-      const themeDefaults = getThemeOverlayDefaults();
-      // Overlay is enabled by default (unless explicitly disabled)
-      const isEnabled = overlay?.enabled !== false;
-      
-      if (isEnabled && styles.background.image?.url) {
-        // Use overlay settings if they exist, otherwise use theme defaults
-        const overlayColor = overlay?.color || themeDefaults.color;
-        const overlayOpacity = overlay?.opacity !== undefined ? overlay.opacity : themeDefaults.opacity;
-        const overlayBlendMode = overlay?.blendMode || themeDefaults.blendMode;
-        
-        return {
-          show: true,
-          style: {
-            backgroundColor: overlayColor,
-            opacity: overlayOpacity,
-            mixBlendMode: overlayBlendMode as any
-          }
-        };
-      }
-    }
-    
-    // 4. NEW BACKGROUND SYSTEM OVERLAY - Gradient Background
-    if (styles.background?.type === 'gradient') {
-      const overlay = styles.background.overlay;
-      const themeDefaults = getThemeOverlayDefaults();
-      // Overlay is enabled by default (unless explicitly disabled)
-      const isEnabled = overlay?.enabled !== false;
-      
-      if (isEnabled) {
-        // Use overlay settings if they exist, otherwise use theme defaults
-        const overlayColor = overlay?.color || themeDefaults.color;
-        const overlayOpacity = overlay?.opacity !== undefined ? overlay.opacity : themeDefaults.opacity;
-        const overlayBlendMode = overlay?.blendMode || themeDefaults.blendMode;
-        
-        return {
-          show: true,
-          style: {
-            backgroundColor: overlayColor,
-            opacity: overlayOpacity,
-            mixBlendMode: overlayBlendMode as any
-          }
-        };
-      }
     }
     
     return { show: false, style: {} };

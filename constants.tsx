@@ -4,8 +4,8 @@ import { WebsiteData, Section, WebsiteElement } from './types';
 // Global Element Defaults - Universal baseline styles for all elements
 export const ELEMENT_DEFAULTS: Record<string, any> = {
   button: { backgroundColor: '#E11D48', color: '#FFFFFF', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', textAlign: 'center' },
-  heading: { color: '#F8FAFC', fontWeight: 'bold' },
-  text: { color: '#D1D5DB', opacity: 1 },
+  heading: { color: '#F8FAFC', fontWeight: 'bold' ,textAlign: 'center'},
+  text: { color: '#D1D5DB', opacity: 1 ,textAlign: 'center'},
   icon: { fontSize: '24px', color: '#3b82f6' },
   image: { objectFit: 'cover', width: '100%' },
   'star-rating': { color: '#F59E0B' }

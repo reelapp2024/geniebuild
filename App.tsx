@@ -871,98 +871,6 @@ const BackgroundControl = ({
             value={localBackground.color || '#000000'}
             onChange={(v) => updateBackground({ color: v })}
           />
-          
-          {/* Color Background Overlay */}
-          <div className="space-y-2 pt-2 border-t border-white/10">
-            <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold text-white/40 capitalize ml-1">Overlay</label>
-              <button
-                onClick={() => {
-                  const currentEnabled = localBackground.overlay?.enabled !== undefined 
-                    ? localBackground.overlay.enabled 
-                    : true; // Default to enabled
-                  updateBackground({
-                    overlay: {
-                      ...(localBackground.overlay || themeOverlayDefaults),
-                      enabled: !currentEnabled
-                    }
-                  });
-                }}
-                className={`px-2 py-1 text-[9px] rounded border transition-colors ${
-                  (localBackground.overlay?.enabled !== false) // Default to enabled
-                    ? 'bg-blue-600/20 border-blue-600/30 text-blue-400'
-                    : 'bg-[#222] border-[#333] text-white/40'
-                }`}
-              >
-                {(localBackground.overlay?.enabled !== false) ? 'Enabled' : 'Disabled'}
-              </button>
-            </div>
-
-            {(localBackground.overlay?.enabled !== false) && (
-              <div className="space-y-2 pl-2 border-l-2 border-white/10">
-                <ColorInput
-                  label="Overlay Color"
-                  value={localBackground.overlay?.color || themeOverlayDefaults.color}
-                  onChange={(v) => {
-                    const currentOverlay = localBackground.overlay || themeOverlayDefaults;
-                    updateBackground({
-                      overlay: { 
-                        ...currentOverlay, 
-                        color: v,
-                        enabled: currentOverlay.enabled !== false // Default to enabled if not explicitly false
-                      }
-                    });
-                  }}
-                />
-                <RangeInput
-                  label="Overlay Opacity"
-                  value={Math.round((localBackground.overlay?.opacity !== undefined ? localBackground.overlay.opacity : themeOverlayDefaults.opacity) * 100)}
-                  min={0}
-                  max={100}
-                  step={1}
-                  unit="%"
-                  onChange={(v) => {
-                    const currentOverlay = localBackground.overlay || themeOverlayDefaults;
-                    updateBackground({
-                      overlay: { 
-                        ...currentOverlay, 
-                        opacity: v / 100,
-                        enabled: currentOverlay.enabled !== false // Default to enabled if not explicitly false
-                      }
-                    });
-                  }}
-                />
-                <SelectInput
-                  label="Blend Mode"
-                  value={localBackground.overlay?.blendMode || 'normal'}
-                  options={[
-                    { label: 'Normal', value: 'normal' },
-                    { label: 'Multiply', value: 'multiply' },
-                    { label: 'Screen', value: 'screen' },
-                    { label: 'Overlay', value: 'overlay' },
-                    { label: 'Darken', value: 'darken' },
-                    { label: 'Lighten', value: 'lighten' },
-                    { label: 'Color Dodge', value: 'color-dodge' },
-                    { label: 'Color Burn', value: 'color-burn' },
-                    { label: 'Hard Light', value: 'hard-light' },
-                    { label: 'Soft Light', value: 'soft-light' },
-                    { label: 'Difference', value: 'difference' },
-                    { label: 'Exclusion', value: 'exclusion' }
-                  ]}
-                  onChange={(v) => {
-                    const currentOverlay = localBackground.overlay || themeOverlayDefaults;
-                    updateBackground({
-                      overlay: { 
-                        ...currentOverlay, 
-                        blendMode: v,
-                        enabled: currentOverlay.enabled !== false // Default to enabled if not explicitly false
-                      }
-                    });
-                  }}
-                />
-              </div>
-            )}
-          </div>
         </div>
       )}
 
@@ -1038,98 +946,6 @@ const BackgroundControl = ({
               </div>
             ))}
           </div>
-          
-          {/* Gradient Background Overlay */}
-          <div className="space-y-2 pt-2 border-t border-white/10">
-            <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold text-white/40 capitalize ml-1">Overlay</label>
-              <button
-                onClick={() => {
-                  const currentEnabled = localBackground.overlay?.enabled !== undefined 
-                    ? localBackground.overlay.enabled 
-                    : true; // Default to enabled
-                  updateBackground({
-                    overlay: {
-                      ...(localBackground.overlay || themeOverlayDefaults),
-                      enabled: !currentEnabled
-                    }
-                  });
-                }}
-                className={`px-2 py-1 text-[9px] rounded border transition-colors ${
-                  (localBackground.overlay?.enabled !== false) // Default to enabled
-                    ? 'bg-blue-600/20 border-blue-600/30 text-blue-400'
-                    : 'bg-[#222] border-[#333] text-white/40'
-                }`}
-              >
-                {(localBackground.overlay?.enabled !== false) ? 'Enabled' : 'Disabled'}
-              </button>
-            </div>
-
-            {(localBackground.overlay?.enabled !== false) && (
-              <div className="space-y-2 pl-2 border-l-2 border-white/10">
-                <ColorInput
-                  label="Overlay Color"
-                  value={localBackground.overlay?.color || themeOverlayDefaults.color}
-                  onChange={(v) => {
-                    const currentOverlay = localBackground.overlay || themeOverlayDefaults;
-                    updateBackground({
-                      overlay: { 
-                        ...currentOverlay, 
-                        color: v,
-                        enabled: currentOverlay.enabled !== false // Default to enabled if not explicitly false
-                      }
-                    });
-                  }}
-                />
-                <RangeInput
-                  label="Overlay Opacity"
-                  value={Math.round((localBackground.overlay?.opacity !== undefined ? localBackground.overlay.opacity : themeOverlayDefaults.opacity) * 100)}
-                  min={0}
-                  max={100}
-                  step={1}
-                  unit="%"
-                  onChange={(v) => {
-                    const currentOverlay = localBackground.overlay || themeOverlayDefaults;
-                    updateBackground({
-                      overlay: { 
-                        ...currentOverlay, 
-                        opacity: v / 100,
-                        enabled: currentOverlay.enabled !== false // Default to enabled if not explicitly false
-                      }
-                    });
-                  }}
-                />
-                <SelectInput
-                  label="Blend Mode"
-                  value={localBackground.overlay?.blendMode || 'normal'}
-                  options={[
-                    { label: 'Normal', value: 'normal' },
-                    { label: 'Multiply', value: 'multiply' },
-                    { label: 'Screen', value: 'screen' },
-                    { label: 'Overlay', value: 'overlay' },
-                    { label: 'Darken', value: 'darken' },
-                    { label: 'Lighten', value: 'lighten' },
-                    { label: 'Color Dodge', value: 'color-dodge' },
-                    { label: 'Color Burn', value: 'color-burn' },
-                    { label: 'Hard Light', value: 'hard-light' },
-                    { label: 'Soft Light', value: 'soft-light' },
-                    { label: 'Difference', value: 'difference' },
-                    { label: 'Exclusion', value: 'exclusion' }
-                  ]}
-                  onChange={(v) => {
-                    const currentOverlay = localBackground.overlay || themeOverlayDefaults;
-                    updateBackground({
-                      overlay: { 
-                        ...currentOverlay, 
-                        blendMode: v,
-                        enabled: currentOverlay.enabled !== false // Default to enabled if not explicitly false
-                      }
-                    });
-                  }}
-                />
-              </div>
-            )}
-          </div>
         </div>
       )}
 
@@ -1159,152 +975,6 @@ const BackgroundControl = ({
             uploading={uploading}
             uploadProgress={uploadProgress}
           />
-
-          <SelectInput
-            label="Position"
-            value={localBackground.image?.position || 'center'}
-            options={[
-              { label: 'Center', value: 'center' },
-              { label: 'Top', value: 'top' },
-              { label: 'Bottom', value: 'bottom' },
-              { label: 'Left', value: 'left' },
-              { label: 'Right', value: 'right' },
-              { label: 'Top Left', value: 'top left' },
-              { label: 'Top Right', value: 'top right' },
-              { label: 'Bottom Left', value: 'bottom left' },
-              { label: 'Bottom Right', value: 'bottom right' }
-            ]}
-            onChange={(v) => updateBackground({
-              image: { ...localBackground.image, position: v }
-            })}
-          />
-
-          <SelectInput
-            label="Size"
-            value={localBackground.image?.size || 'cover'}
-            options={[
-              { label: 'Cover', value: 'cover' },
-              { label: 'Contain', value: 'contain' },
-              { label: 'Auto', value: 'auto' }
-            ]}
-            onChange={(v) => updateBackground({
-              image: { ...localBackground.image, size: v }
-            })}
-          />
-
-          <TextInput
-            label="Custom Size (e.g., 50% 50%)"
-            value={localBackground.image?.size && !['cover', 'contain', 'auto'].includes(localBackground.image.size) ? localBackground.image.size : ''}
-            onChange={(v) => updateBackground({
-              image: { ...localBackground.image, size: v }
-            })}
-            placeholder="Leave empty to use preset"
-          />
-
-          <SelectInput
-            label="Repeat"
-            value={localBackground.image?.repeat || 'no-repeat'}
-            options={[
-              { label: 'No Repeat', value: 'no-repeat' },
-              { label: 'Repeat', value: 'repeat' },
-              { label: 'Repeat X', value: 'repeat-x' },
-              { label: 'Repeat Y', value: 'repeat-y' }
-            ]}
-            onChange={(v) => updateBackground({
-              image: { ...localBackground.image, repeat: v }
-            })}
-          />
-
-          <SelectInput
-            label="Attachment"
-            value={localBackground.image?.attachment || 'scroll'}
-            options={[
-              { label: 'Scroll', value: 'scroll' },
-              { label: 'Fixed', value: 'fixed' },
-              { label: 'Local', value: 'local' }
-            ]}
-            onChange={(v) => updateBackground({
-              image: { ...localBackground.image, attachment: v }
-            })}
-          />
-
-          {/* Image Overlay */}
-          <div className="space-y-2 pt-2 border-t border-white/10">
-            <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold text-white/40 capitalize ml-1">Overlay</label>
-              <button
-                onClick={() => updateBackground({
-                  image: {
-                    ...localBackground.image,
-                    overlay: {
-                      ...localBackground.image?.overlay,
-                      enabled: !localBackground.image?.overlay?.enabled
-                    }
-                  }
-                })}
-                className={`px-2 py-1 text-[9px] rounded border transition-colors ${
-                  localBackground.image?.overlay?.enabled
-                    ? 'bg-blue-600/20 border-blue-600/30 text-blue-400'
-                    : 'bg-[#222] border-[#333] text-white/40'
-                }`}
-              >
-                {localBackground.image?.overlay?.enabled ? 'Enabled' : 'Disabled'}
-              </button>
-            </div>
-
-            {localBackground.image?.overlay?.enabled && (
-              <div className="space-y-2 pl-2 border-l-2 border-white/10">
-                <ColorInput
-                  label="Overlay Color"
-                  value={localBackground.image?.overlay?.color || '#000000'}
-                  onChange={(v) => updateBackground({
-                    image: {
-                      ...localBackground.image,
-                      overlay: { ...localBackground.image?.overlay, color: v }
-                    }
-                  })}
-                />
-                <RangeInput
-                  label="Overlay Opacity"
-                  value={Math.round((localBackground.image?.overlay?.opacity || 0.5) * 100)}
-                  min={0}
-                  max={100}
-                  step={1}
-                  unit="%"
-                  onChange={(v) => updateBackground({
-                    image: {
-                      ...localBackground.image,
-                      overlay: { ...localBackground.image?.overlay, opacity: v / 100 }
-                    }
-                  })}
-                />
-                <SelectInput
-                  label="Blend Mode"
-                  value={localBackground.image?.overlay?.blendMode || 'normal'}
-                  options={[
-                    { label: 'Normal', value: 'normal' },
-                    { label: 'Multiply', value: 'multiply' },
-                    { label: 'Screen', value: 'screen' },
-                    { label: 'Overlay', value: 'overlay' },
-                    { label: 'Darken', value: 'darken' },
-                    { label: 'Lighten', value: 'lighten' },
-                    { label: 'Color Dodge', value: 'color-dodge' },
-                    { label: 'Color Burn', value: 'color-burn' },
-                    { label: 'Hard Light', value: 'hard-light' },
-                    { label: 'Soft Light', value: 'soft-light' },
-                    { label: 'Difference', value: 'difference' },
-                    { label: 'Exclusion', value: 'exclusion' }
-                  ]}
-                  onChange={(v) => updateBackground({
-                    image: {
-                      ...localBackground.image,
-                      overlay: { ...localBackground.image?.overlay, blendMode: v }
-                    }
-                  })}
-                />
-              </div>
-            )}
-          </div>
         </div>
       )}
     </div>
@@ -2936,6 +2606,99 @@ const AppContent: React.FC = () => {
                          uploading={uploading && uploadTarget?.field === 'backgroundImage' && uploadTarget?.sectionId === sectionId}
                          uploadProgress={uploading && uploadTarget?.field === 'backgroundImage' && uploadTarget?.sectionId === sectionId ? uploadProgress : 0}
                        />
+                       
+                       {/* --- EXPLICIT SECTION OVERLAY CONTROLS --- */}
+                       <div className="space-y-4 pt-4 border-t border-white/10">
+                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Background Overlay</h4>
+                         <ColorInput
+                           label="Overlay Color"
+                           value={styles.background?.overlay?.color || styles.background?.image?.overlay?.color || styles.overlayColor || 'transparent'}
+                           onChange={(v) => {
+                             onUpdate('overlayColor', v);
+                             // Save to standard overlay
+                             onUpdate('background', { ...styles.background, overlay: { ...(styles.background?.overlay || {}), color: v, enabled: v !== 'transparent' } });
+                             // Sync to image overlay if image type is active
+                             if (styles.background?.type === 'image' && styles.background?.image) {
+                               onUpdate('background', { ...styles.background, image: { ...styles.background.image, overlay: { ...(styles.background.image.overlay || {}), color: v, enabled: v !== 'transparent' } } });
+                             }
+                           }}
+                         />
+                         <RangeInput
+                           label="Overlay Opacity"
+                           value={styles.background?.overlay?.opacity !== undefined ? styles.background.overlay.opacity : (styles.background?.image?.overlay?.opacity !== undefined ? styles.background.image.overlay.opacity : parseFloat(styles.overlayOpacityValue || '0.5'))}
+                           min={0} max={1} step={0.05}
+                           onChange={(v) => {
+                             onUpdate('overlayOpacityValue', v.toString());
+                             onUpdate('background', { ...styles.background, overlay: { ...(styles.background?.overlay || {}), opacity: v } });
+                             if (styles.background?.type === 'image' && styles.background?.image) {
+                               onUpdate('background', { ...styles.background, image: { ...styles.background.image, overlay: { ...(styles.background.image.overlay || {}), opacity: v } } });
+                             }
+                           }}
+                         />
+                         <SelectInput
+                           label="Blend Mode"
+                           value={styles.background?.overlay?.blendMode || styles.background?.image?.overlay?.blendMode || styles.overlayBlendMode || 'normal'}
+                           options={[
+                             { label: 'Normal', value: 'normal' },
+                             { label: 'Multiply', value: 'multiply' },
+                             { label: 'Screen', value: 'screen' },
+                             { label: 'Overlay', value: 'overlay' },
+                             { label: 'Darken', value: 'darken' },
+                             { label: 'Lighten', value: 'lighten' },
+                             { label: 'Color Dodge', value: 'color-dodge' },
+                             { label: 'Color Burn', value: 'color-burn' },
+                             { label: 'Hard Light', value: 'hard-light' },
+                             { label: 'Soft Light', value: 'soft-light' }
+                           ]}
+                           onChange={(v) => {
+                             onUpdate('overlayBlendMode', v);
+                             onUpdate('background', { ...styles.background, overlay: { ...(styles.background?.overlay || {}), blendMode: v } });
+                             if (styles.background?.type === 'image' && styles.background?.image) {
+                               onUpdate('background', { ...styles.background, image: { ...styles.background.image, overlay: { ...(styles.background.image.overlay || {}), blendMode: v } } });
+                             }
+                           }}
+                         />
+                       </div>
+                       
+                       {/* --- EXPLICIT IMAGE SETTINGS --- */}
+                       {(styles.background?.type === 'image' || styles.backgroundImage) && (
+                         <div className="space-y-4 pt-4 border-t border-white/10">
+                           <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Image Settings</h4>
+                           <SelectInput
+                             label="Background Size"
+                             value={styles.background?.image?.size || styles.backgroundSize || 'cover'}
+                             options={[
+                               { label: 'Cover', value: 'cover' },
+                               { label: 'Contain', value: 'contain' },
+                               { label: 'Auto', value: 'auto' },
+                               { label: '100% 100%', value: '100% 100%' }
+                             ]}
+                             onChange={(v) => {
+                               onUpdate('backgroundSize', v);
+                               if (styles.background?.image) onUpdate('background', { ...styles.background, image: { ...styles.background.image, size: v } });
+                             }}
+                           />
+                           <SelectInput
+                             label="Background Position"
+                             value={styles.background?.image?.position || styles.backgroundPosition || 'center'}
+                             options={[
+                               { label: 'Center', value: 'center' },
+                               { label: 'Top', value: 'top' },
+                               { label: 'Bottom', value: 'bottom' },
+                               { label: 'Left', value: 'left' },
+                               { label: 'Right', value: 'right' },
+                               { label: 'Top Left', value: 'top left' },
+                               { label: 'Top Right', value: 'top right' },
+                               { label: 'Bottom Left', value: 'bottom left' },
+                               { label: 'Bottom Right', value: 'bottom right' }
+                             ]}
+                             onChange={(v) => {
+                               onUpdate('backgroundPosition', v);
+                               if (styles.background?.image) onUpdate('background', { ...styles.background, image: { ...styles.background.image, position: v } });
+                             }}
+                           />
+                         </div>
+                       )}
               </AccordionGroup>
               )}
               {context === 'element' && (

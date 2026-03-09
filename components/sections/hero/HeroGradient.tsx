@@ -103,51 +103,8 @@ export const HeroGradient: React.FC<HeroProps> = ({ section, onTextEdit, buttonC
     };
   };
 
-  // Get background styles from section
-  const getBackgroundStyle = (): React.CSSProperties => {
-    const bgStyle: React.CSSProperties = {};
-    
-    if (styles.background) {
-      if (styles.background.type === 'color') {
-        bgStyle.backgroundColor = styles.background.color || '#000000';
-      } else if (styles.background.type === 'gradient') {
-        const gradient = styles.background.gradient;
-        if (gradient) {
-          const stops = gradient.stops.map((stop: any) => `${stop.color} ${stop.position}%`).join(', ');
-          if (gradient.type === 'linear') {
-            bgStyle.backgroundImage = `linear-gradient(${gradient.direction || 90}deg, ${stops})`;
-          } else {
-            bgStyle.backgroundImage = `radial-gradient(circle, ${stops})`;
-          }
-        }
-      } else if (styles.background.type === 'image' && styles.background.image?.url) {
-        bgStyle.backgroundImage = `url(${styles.background.image.url})`;
-        bgStyle.backgroundPosition = styles.background.image.position || 'center';
-        bgStyle.backgroundSize = styles.background.image.size || 'cover';
-        bgStyle.backgroundRepeat = styles.background.image.repeat || 'no-repeat';
-        bgStyle.backgroundAttachment = styles.background.image.attachment || 'scroll';
-      }
-    } else {
-      // Fallback to default gradient if no background is set
-      bgStyle.backgroundImage = 'linear-gradient(135deg, #1e3a8a 0%, #000000 100%)';
-    }
-    
-    return bgStyle;
-  };
-
-  const backgroundStyle = getBackgroundStyle();
-  const hasImageOverlay = styles.background?.type === 'image' && styles.background.image?.overlay?.enabled;
-  const overlayStyle = hasImageOverlay && styles.background.image?.overlay ? {
-    backgroundColor: styles.background.image.overlay.color || '#000000',
-    opacity: styles.background.image.overlay.opacity || 0.5,
-    mixBlendMode: styles.background.image.overlay.blendMode || 'normal'
-  } : {};
-
   return (
-    <div className="relative py-24 px-6 overflow-hidden text-center" style={backgroundStyle}>
-      {hasImageOverlay && (
-        <div className="absolute inset-0 z-0" style={overlayStyle}></div>
-      )}
+    <div className="relative w-full text-center">
       <div className="max-w-4xl mx-auto relative z-10">
         {/* Render Title using ElementsSection - unwrapped for custom layout */}
         <div className="mb-6">

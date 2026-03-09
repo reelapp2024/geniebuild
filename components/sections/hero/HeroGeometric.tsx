@@ -29,13 +29,11 @@ export const HeroGeometric: React.FC<HeroProps> = ({
   const subtitleId = `${section.id}-hero-subtitle`;
   const buttonId = `${section.id}-hero-button`;
   const badgeId = `${section.id}-hero-badge`;
-  const iconId = `${section.id}-hero-icon`;
 
   // Get elements from section.elements (they exist after first edit)
   const titleElement = section.elements?.find(e => e.id === titleId);
   const subtitleElement = section.elements?.find(e => e.id === subtitleId);
   const buttonElement = section.elements?.find(e => e.id === buttonId);
-  const iconElement = section.elements?.find(e => e.id === iconId);
   const badgeElement = section.elements?.find(e => e.id === badgeId);
   
   // Theme colors for ElementsSection - pass complete section.styles for unified styling
@@ -97,6 +95,19 @@ export const HeroGeometric: React.FC<HeroProps> = ({
     };
   };
   
+  const getIconElement = (): WebsiteElement => {
+    const iconId = `${section.id}-hero-badge-icon`;
+    const existing = section.elements?.find(e => e.id === iconId);
+    if (existing) return existing;
+    
+    return {
+      id: iconId,
+      type: 'icon',
+      content: { iconClass: 'fa-solid fa-wand-magic-sparkles' },
+      style: { color: styles.accentColor || '#3b82f6' } // Links to the section's accent color
+    };
+  };
+  
   const getButtonElement = (): WebsiteElement => {
     if (buttonElement) return buttonElement;
     
@@ -121,14 +132,6 @@ export const HeroGeometric: React.FC<HeroProps> = ({
   
   // Check if geometry is enabled (default to true)
   const enableGeometry = styles.enableGeometry !== undefined ? styles.enableGeometry : true;
-  
-  // Get icon content and style from element or fallback to section content
-  // Format icon class properly (handle both 'fa-icon' and 'icon' formats) - same as regular icon elements
-  const iconValue = iconElement?.content.icon || content.icon || 'fa-wand-magic-sparkles';
-  const iconClass = iconValue.startsWith('fa-') ? `fa-solid ${iconValue}` : `fa-solid fa-${iconValue}`;
-  // Use iconSize from content OR fontSize from style (same as regular icon elements)
-  const iconFontSize = iconElement?.content.iconSize || iconElement?.style?.fontSize || '128px';
-  const iconColor = iconElement?.style?.color || 'rgba(255, 255, 255, 0.2)';
   
   // Get badge text from element or fallback to section content
   const badgeText = badgeElement?.content.text || content.badgeText || 'New Generation Builder';
@@ -242,23 +245,16 @@ export const HeroGeometric: React.FC<HeroProps> = ({
             {/* Main Glass Card */}
             <div className="absolute inset-0 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl transform rotate-3 shadow-2xl flex items-center justify-center overflow-hidden">
                 <div className="w-full h-full opacity-20 bg-gradient-to-br from-blue-500 to-purple-600" />
-                <div 
-                  className={`absolute transition-all ${!readOnly ? 'cursor-pointer' : ''} ${selectedElementId === iconId ? 'ring-2 ring-blue-500 bg-blue-500/10 rounded-lg p-2' : 'hover:bg-white/5 rounded-lg p-2'}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleElementClick(e, iconId);
-                  }}
-                  style={{ 
-                    pointerEvents: readOnly ? 'none' : 'auto'
-                  }}
-                >
-                  <i 
-                    className={iconClass}
-                    style={{ 
-                      fontSize: iconFontSize,
-                      color: iconColor
-                    }}
+                <div className="absolute">
+                  <ElementsSection 
+                    isWrapped={false} 
+                    section={{ ...section, elements: [getIconElement()] }} 
+                    onElementSelect={onElementSelect} 
+                    selectedElementId={selectedElementId} 
+                    onElementUpdate={onElementUpdate || (() => {})} 
+                    onTextEdit={onTextEdit} 
+                    readOnly={readOnly} 
+                    themeColors={themeColors} 
                   />
                 </div>
             </div>
