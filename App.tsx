@@ -1799,6 +1799,20 @@ const AppContent: React.FC = () => {
     return null;
   }, [selectedSection, selectedElementId, selectedVirtualElement]);
 
+  // STEP 1: Data Resolvers - Merge DB state OVER Template defaults
+  const activeTemplate = selectedSection ? (SECTION_TEMPLATES[selectedSection.type] || null) : null;
+  const resolvedSectionStyles: any = selectedSection ? { 
+    ...(activeTemplate?.styles || {}), 
+    ...selectedSection.styles 
+  } : {};
+
+  // Resolve Element Styles: Merge DB state OVER Template defaults
+  const defaultElementTemplate = selectedElement && activeTemplate ? activeTemplate.elements?.find(e => e.type === selectedElement.type) : null;
+  const resolvedElementStyle = selectedElement ? {
+    ...(defaultElementTemplate?.style || {}),
+    ...selectedElement.style
+  } : {};
+
   useEffect(() => {
     if (selectedSectionId && !isPreviewMode) {
       setIsSidebarOpen(true);
@@ -2850,18 +2864,54 @@ const AppContent: React.FC = () => {
               {context === 'section' && (
                   <AccordionGroup title="Background" defaultOpen={true}>
                        <BackgroundControl 
-                         value={{ ...styles.background, enableGeometry: styles.enableGeometry }} 
+                         value={{ 
+                           ...(styles.background || { 
+                             type: styles.backgroundImage ? 'image' : (styles.backgroundColor && styles.backgroundColor !== 'transparent' ? 'color' : 'color'), 
+                             color: styles.backgroundColor || '#0E1214',
+                             image: styles.backgroundImage ? { 
+                               url: styles.backgroundImage, 
+                               position: 'center', 
+                               size: 'cover', 
+                               repeat: 'no-repeat', 
+                               attachment: 'scroll', 
+                               overlay: { 
+                                 enabled: !!styles.overlayColor && styles.overlayColor !== 'transparent', 
+                                 color: styles.overlayColor || '#000000', 
+                                 opacity: parseFloat(styles.overlayOpacityValue || styles.overlayOpacity || '0.5'), 
+                                 blendMode: styles.overlayBlendMode || 'normal' 
+                               }
+                             } : undefined
+                           }), 
+                           enableGeometry: styles.enableGeometry 
+                         }} 
                          onChange={(v) => {
-                           const { enableGeometry, ...background } = v;
-                           onUpdate('background', background);
-                           if (enableGeometry !== undefined) {
-                             onUpdate('enableGeometry', enableGeometry);
+                           const { enableGeometry, ...backgroundObj } = v;
+                           
+                           // 1. Save new object state
+                           onUpdate('background', backgroundObj);
+                           if (enableGeometry !== undefined) onUpdate('enableGeometry', enableGeometry);
+                           
+                           // 2. BACKWARD COMPATIBILITY: Force update legacy properties so the canvas updates instantly
+                           if (backgroundObj.type === 'color') {
+                             onUpdate('backgroundColor', backgroundObj.color || '#000000');
+                             onUpdate('backgroundImage', '');
+                           } else if (backgroundObj.type === 'image' && backgroundObj.image) {
+                             onUpdate('backgroundImage', backgroundObj.image.url);
+                             onUpdate('backgroundColor', 'transparent');
+                             if (backgroundObj.image.overlay?.enabled) {
+                               onUpdate('overlayColor', backgroundObj.image.overlay.color);
+                               onUpdate('overlayOpacityValue', backgroundObj.image.overlay.opacity.toString());
+                               onUpdate('overlayBlendMode', backgroundObj.image.overlay.blendMode);
+                             } else {
+                               onUpdate('overlayColor', 'transparent');
+                             }
+                           } else if (backgroundObj.type === 'gradient') {
+                             onUpdate('backgroundColor', 'transparent');
+                             onUpdate('backgroundImage', '');
                            }
                          }}
                          onUpload={() => {
-                           if (sectionId) {
-                             triggerUpload(sectionId, 'backgroundImage');
-                           }
+                           if (sectionId) triggerUpload(sectionId, 'backgroundImage');
                          }}
                          uploading={uploading && uploadTarget?.field === 'backgroundImage' && uploadTarget?.sectionId === sectionId}
                          uploadProgress={uploading && uploadTarget?.field === 'backgroundImage' && uploadTarget?.sectionId === sectionId ? uploadProgress : 0}
@@ -3289,13 +3339,13 @@ const AppContent: React.FC = () => {
                                  editTab === 'design' ? (renderStyleEditor(
                                      // For buttons, merge element.style with section.styles.buttonFontWeight, etc. for proper dropdown display
                                      selectedElement.type === 'button' ? {
-                                         ...selectedElement.style,
+                                         ...resolvedElementStyle,
                                          // Fallback to section.styles for button-specific properties if not in element.style
-                                         fontWeight: selectedElement.style?.fontWeight || (selectedSection.styles as any)?.buttonFontWeight || (selectedSection.styles as any)?.fontWeight || 'bold',
-                                         fontSize: selectedElement.style?.fontSize || (selectedSection.styles as any)?.buttonSize || (selectedSection.styles as any)?.buttonFontSize || (selectedSection.styles as any)?.fontSize || '1rem',
-                                         textAlign: selectedElement.style?.textAlign || (selectedSection.styles as any)?.buttonAlign || selectedSection.styles?.textAlign || 'center',
-                                         fontFamily: selectedElement.style?.fontFamily || (selectedSection.styles as any)?.buttonFontFamily || (selectedSection.styles as any)?.fontFamily || undefined,
-                                     } : selectedElement.style, 
+                                         fontWeight: resolvedElementStyle?.fontWeight || (resolvedSectionStyles as any)?.buttonFontWeight || (resolvedSectionStyles as any)?.fontWeight || 'bold',
+                                         fontSize: resolvedElementStyle?.fontSize || (resolvedSectionStyles as any)?.buttonSize || (resolvedSectionStyles as any)?.buttonFontSize || (resolvedSectionStyles as any)?.fontSize || '1rem',
+                                         textAlign: resolvedElementStyle?.textAlign || (resolvedSectionStyles as any)?.buttonAlign || resolvedSectionStyles?.textAlign || 'center',
+                                         fontFamily: resolvedElementStyle?.fontFamily || (resolvedSectionStyles as any)?.buttonFontFamily || (resolvedSectionStyles as any)?.fontFamily || undefined,
+                                     } : resolvedElementStyle, 
                                      (k,v) => updateElement(selectedSection.id, selectedElement.id, { style: { ...selectedElement.style, [k]: v } }), 
                                      'element', 
                                      selectedElement.type, 
@@ -3598,7 +3648,7 @@ const AppContent: React.FC = () => {
                                  )
                              ) : (
                                  selectedSection && (
-                                     editTab === 'design' ? (renderStyleEditor(selectedSection.styles, (k,v) => updateSectionStyle(selectedSection.id, k, v), 'section', undefined, selectedSection.id)) : (
+                                     editTab === 'design' ? (renderStyleEditor(resolvedSectionStyles, (k,v) => updateSectionStyle(selectedSection.id, k, v), 'section', undefined, selectedSection.id)) : (
                                          <div className="space-y-6">
                                              {/* Variant Info and Refresh Button */}
                                              {(() => {

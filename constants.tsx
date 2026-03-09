@@ -432,6 +432,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     ],
     styles: {
       backgroundColor: '#0E1214',
+      background: { type: 'color', color: '#0E1214' },
       textColor: '#D1D5DB',
       titleColor: '#F8FAFC',
       accentColor: '#F59E0B',
@@ -451,6 +452,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
       elements: [...BASIC_ELEMENTS_LIST.slice(0,3)], 
       styles: {
           backgroundColor: '#0E1214',
+          background: { type: 'color', color: '#0E1214' },
           textColor: '#C7CDD6',
           accentColor: '#F59E0B',
           buttonBackgroundColor: '#E11D48',
@@ -473,6 +475,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     },
     styles: {
         backgroundColor: '#0E1214',
+        background: { type: 'color', color: '#0E1214' },
         textColor: '#C7CDD6',
         accentColor: '#F59E0B',
         buttonBackgroundColor: '#E11D48',
@@ -498,6 +501,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
       },
       styles: {
           backgroundColor: '#0E1214',
+          background: { type: 'color', color: '#0E1214' },
           textColor: '#C7CDD6',
           accentColor: '#F59E0B',
           buttonBackgroundColor: '#E11D48',
@@ -523,6 +527,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     },
     styles: {
         backgroundColor: '#0E1214',
+        background: { type: 'color', color: '#0E1214' },
         textColor: '#C7CDD6',
         accentColor: '#F59E0B',
         buttonBackgroundColor: '#E11D48',
@@ -548,6 +553,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     },
     styles: {
         backgroundColor: '#0E1214',
+        background: { type: 'color', color: '#0E1214' },
         textColor: '#D1D5DB',
         titleColor: '#F8FAFC',
         accentColor: '#F59E0B',
@@ -568,6 +574,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     },
     styles: {
       backgroundColor: '#0E1214',
+      background: { type: 'color', color: '#0E1214' },
       textColor: '#D1D5DB',
       titleColor: '#F8FAFC',
       accentColor: '#3b82f6',
@@ -587,6 +594,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
       },
       styles: {
           backgroundColor: '#0E1214',
+          background: { type: 'color', color: '#0E1214' },
           textColor: '#C7CDD6',
           accentColor: '#F59E0B',
           buttonBackgroundColor: '#E11D48',
@@ -608,6 +616,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     },
     styles: {
         backgroundColor: '#0E1214',
+        background: { type: 'color', color: '#0E1214' },
         textColor: '#C7CDD6',
         accentColor: '#F59E0B',
         buttonBackgroundColor: '#FFFFFF',
@@ -629,6 +638,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     },
     styles: {
         backgroundColor: '#0E1214',
+        background: { type: 'color', color: '#0E1214' },
         textColor: '#C7CDD6',
         accentColor: '#F59E0B',
         buttonBackgroundColor: '#FFFFFF',
@@ -650,6 +660,22 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
       },
       styles: {
           backgroundColor: '#0E1214',
+          background: { 
+            type: 'image', 
+            image: { 
+              url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1600', 
+              position: 'center', 
+              size: 'cover', 
+              repeat: 'no-repeat', 
+              attachment: 'scroll', 
+              overlay: { 
+                enabled: true, 
+                color: '#000000', 
+                opacity: 0.6, 
+                blendMode: 'normal' 
+              }
+            } 
+          },
           textColor: '#C7CDD6',
           accentColor: '#F59E0B',
           buttonBackgroundColor: '#E11D48',
