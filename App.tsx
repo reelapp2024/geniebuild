@@ -663,28 +663,27 @@ const FontSizeInput = ({ label, value, onChange, placeholder }: { label: string,
   );
 };
 
-const SelectInput = ({ label, value, options, onChange }: { label: string, value: string | undefined, options: {label: string, value: string}[], onChange: (val: string) => void }) => {
-    // Ensure value is exactly one of the option values, or use first option as default
-    const currentValue = (value && options.some(opt => opt.value === value)) ? value : (options[0]?.value || '');
-    return (
-        <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-white/40 capitalize ml-1">{label}</label>
-            <div className="relative">
-                <select 
-                    className="w-full bg-[#151515] border border-[#333] rounded p-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-colors appearance-none cursor-pointer"
-                    value={currentValue}
-                    onChange={(e) => {
-                        e.preventDefault();
-                        onChange(e.target.value);
-                    }}
-                >
-                    {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
-                <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/30 pointer-events-none"></i>
-            </div>
-        </div>
-    );
-};
+const SelectInput = ({ label, value, options, onChange, className = '' }: any) => (
+  <div className={`flex flex-col space-y-2 ${className}`}>
+    {label && <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</label>}
+    <select
+      value={value || ''}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
+    >
+      {options.map((opt: any, i: number) => {
+        const isObj = typeof opt === 'object' && opt !== null;
+        const optValue = isObj ? opt.value : opt;
+        const optLabel = isObj ? opt.label : opt;
+        return (
+          <option key={isObj ? `${optValue}-${i}` : opt} value={optValue}>
+            {optLabel}
+          </option>
+        );
+      })}
+    </select>
+  </div>
+);
 
 // Comprehensive Background Control Component
 const BackgroundControl = ({ 
@@ -2484,19 +2483,21 @@ const AppContent: React.FC = () => {
               <AccordionGroup title="Typography" defaultOpen={true}>
                        <ColorInput label="Text Color" value={styles.color || styles.textColor} onChange={(v) => onUpdate('color', v)} />
                        {(elementType === 'heading' || elementType === 'text') && (
-                       <FontSelectInput 
-                           label="Font Family" 
-                           value={styles.fontFamily || ''} 
-                           options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))} 
-                           onChange={(v) => {
+                       <SelectInput
+                           label="Font Family"
+                           value={styles.fontFamily || ''}
+                           options={[
+                             { label: `Theme Default (${themeData?.typography?.fontFamily || themeData?.fontFamily || 'Inter'})`, value: '' },
+                             'Inter', 'Roboto', 'Open Sans', 'Lato', 'Poppins', 'Montserrat', 'Playfair Display', 'Merriweather', 'Nunito', 'Arial', 'Helvetica', 'Georgia'
+                           ]}
+                           onChange={(v: string) => {
                                // If empty string, remove fontFamily to use theme default
                                if (v === '') {
                                    onUpdate('fontFamily', undefined);
                                } else {
                                    onUpdate('fontFamily', v);
                                }
-                           }} 
-                           defaultFont={defaultTypography.fontFamily}
+                           }}
                        />
                    )}
                        {elementType === 'icon' && (
@@ -2889,7 +2890,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className={`h-screen bg-black text-white selection:bg-blue-500/30 overflow-hidden flex flex-col`}>
+    <div className="h-screen bg-black text-white selection:bg-blue-500/30 overflow-hidden flex flex-col">
         <header className="h-14 border-b border-white/10 bg-[#050505] flex items-center justify-between px-4 shrink-0 z-50">
             <div className="flex items-center gap-4">
                 <span className="font-bold text-lg tracking-tighter">Genie<span className="text-blue-500">Build</span></span>
@@ -3517,7 +3518,8 @@ const AppContent: React.FC = () => {
                             transformOrigin: 'top left',
                             position: 'absolute',
                             top: 0,
-                            left: 0
+                            left: 0,
+                            fontFamily: themeData?.typography?.fontFamily || themeData?.fontFamily || 'Inter, sans-serif'
                         }}
                     >
                         <PreviewFrame 
