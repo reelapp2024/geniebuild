@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { PRESET_FONTS } from '../constants';
 
 interface PreviewFrameProps {
   children: React.ReactNode;
@@ -11,6 +12,37 @@ interface PreviewFrameProps {
 export const PreviewFrame: React.FC<PreviewFrameProps> = ({ children, className, style }) => {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
+
+  // INJECT GOOGLE FONTS INTO IFRAME IN REAL-TIME
+  useEffect(() => {
+    const iframe = frameRef.current;
+    if (!iframe) return;
+
+    const handleLoad = () => {
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) return;
+      // Check if already injected to prevent duplicates
+      if (!iframeDoc.getElementById('geniebuild-fonts')) {
+        const fontFamilies = PRESET_FONTS.map(f => f.name.replace(/\s+/g, '+') + ':wght@300;400;700;900');
+        const url = `https://fonts.googleapis.com/css2?family=${fontFamilies.join('&family=')}&display=swap`;
+        
+        const link = iframeDoc.createElement('link');
+        link.id = 'geniebuild-fonts';
+        link.rel = 'stylesheet';
+        link.href = url;
+        iframeDoc.head.appendChild(link);
+      }
+    };
+    
+    // Run immediately if already loaded, otherwise wait for load
+    if (iframe.contentDocument?.readyState === 'complete') {
+      handleLoad();
+      return;
+    } else {
+      iframe.addEventListener('load', handleLoad);
+      return () => iframe.removeEventListener('load', handleLoad);
+    }
+  }, [mountNode]); // Re-inject if the HTML completely resets
 
   useEffect(() => {
     const frame = frameRef.current;

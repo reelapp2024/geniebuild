@@ -502,7 +502,15 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
       'center': { textAlign: 'center', background: { type: 'color', color: '#0E1214' } },
       'split-left': { textAlign: 'left', background: { type: 'color', color: '#111111' } },
       'split-right': { textAlign: 'left', background: { type: 'color', color: '#111111' } },
-      'gradient': { textAlign: 'center', background: { type: 'gradient', gradient: { type: 'linear', direction: 90, stops: [{ color: '#0E1214', position: 0 }, { color: '#1E293B', position: 100 }] } } }
+      'gradient': { 
+          textAlign: 'center', 
+          background: { 
+              type: 'gradient', 
+              gradient: { type: 'linear', direction: 90, stops: [{ color: '#0E1214', position: 0 }, { color: '#1E293B', position: 100 }] } 
+          },
+          // Provide immediate CSS fallback for the SectionRenderer
+          backgroundImage: 'linear-gradient(90deg, #0E1214 0%, #1E293B 100%)' 
+      }
     }
   },
   features: {
