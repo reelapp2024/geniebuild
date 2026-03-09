@@ -992,153 +992,6 @@ const BackgroundControl = ({
   );
 };
 
-// Font mapping utilities - normalize CSS font-family strings to keys
-const normalizeFontKey = (fontName: string): string => {
-    // Convert "Inter" -> "inter", "Open Sans" -> "open-sans", etc.
-    return fontName.toLowerCase().replace(/\s+/g, '-').replace(/['"]/g, '');
-};
-
-const extractFontName = (cssFontFamily: string): string => {
-    // Extract font name from CSS string like '"Inter", sans-serif' -> "Inter"
-    // Handle both quoted and unquoted formats
-    const match = cssFontFamily.match(/['"]([^'"]+)['"]/);
-    if (match) return match[1];
-    
-    // Fallback: get first part before comma
-    const firstPart = cssFontFamily.split(',')[0].trim();
-    return firstPart.replace(/['"]/g, '');
-};
-
-// Normalize CSS font value for comparison (remove extra spaces, normalize quotes)
-const normalizeCSSValue = (cssValue: string): string => {
-    return cssValue.replace(/\s+/g, ' ').trim();
-};
-
-// Create font key to CSS value mapping
-const createFontMap = () => {
-    const map: Record<string, string> = {};
-    PRESET_FONTS.forEach(font => {
-        const key = normalizeFontKey(font.name);
-        map[key] = font.value;
-    });
-    return map;
-};
-
-const FONT_MAP = createFontMap();
-
-// Get font key from CSS font-family string (reverse lookup with fuzzy matching)
-const getFontKeyFromCSS = (cssValue: string | undefined): string | null => {
-    if (!cssValue || cssValue === '') return null;
-    
-    const normalizedCSS = normalizeCSSValue(cssValue);
-    
-    // Try exact match first (normalized)
-    const exactMatch = PRESET_FONTS.find(f => normalizeCSSValue(f.value) === normalizedCSS);
-    if (exactMatch) {
-        return normalizeFontKey(exactMatch.name);
-    }
-    
-    // Try to extract font name and find matching preset
-    const fontName = extractFontName(cssValue);
-    const normalizedFontName = fontName.toLowerCase().trim();
-    
-    // Find preset font by name (case-insensitive, flexible matching)
-    const presetMatch = PRESET_FONTS.find(f => 
-        f.name.toLowerCase() === normalizedFontName ||
-        normalizeFontKey(f.name) === normalizeFontKey(fontName)
-    );
-    
-    if (presetMatch) {
-        return normalizeFontKey(presetMatch.name);
-    }
-    
-    // Last resort: try to create a key from the font name
-    const key = normalizeFontKey(fontName);
-    if (FONT_MAP[key]) {
-        return key;
-    }
-    
-    return null;
-};
-
-// Get CSS font-family string from key
-const getCSSFromFontKey = (key: string): string | null => {
-    return FONT_MAP[key] || null;
-};
-
-const FontSelectInput = ({ label, value, options, onChange, defaultFont }: { label: string, value: string | undefined, options: {label: string, value: string}[], onChange: (val: string) => void, defaultFont?: string }) => {
-    // Get default font name for display in label
-    const defaultFontKey = defaultFont ? getFontKeyFromCSS(defaultFont) : null;
-    const defaultFontName = defaultFontKey 
-        ? PRESET_FONTS.find(f => normalizeFontKey(f.name) === defaultFontKey)?.name || 'Default'
-        : 'Default';
-    
-    // Build simple options list with normalized keys
-    const allOptions = options.map(opt => ({
-        key: getFontKeyFromCSS(opt.value) || normalizeFontKey(extractFontName(opt.value)),
-        label: opt.label,
-        cssValue: opt.value
-    }));
-    
-    // Determine the current selected key
-    let selectedKey: string = '';
-    if (value && value !== '') {
-        const valueKey = getFontKeyFromCSS(value);
-        if (valueKey) {
-            selectedKey = valueKey;
-        }
-    }
-    
-    // Ensure selectedKey exists in allOptions
-    const validSelectedKey = allOptions.find(opt => opt.key === selectedKey)?.key || '';
-    
-    // Get display font for preview
-    const selectedOption = allOptions.find(opt => opt.key === validSelectedKey);
-    const displayFont = selectedOption?.cssValue || (value || 'inherit');
-    
-    return (
-        <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-white/40 capitalize ml-1">
-                {label}
-                {defaultFont && (
-                    <span className="text-[9px] text-white/30 ml-2">({defaultFontName})</span>
-                )}
-            </label>
-            <div className="relative">
-                <select 
-                    className="w-full bg-[#151515] border border-[#333] rounded p-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-colors appearance-none cursor-pointer"
-                    value={validSelectedKey}
-                    onChange={(e) => {
-                        const newSelectedKey = e.target.value;
-                        // Convert key back to CSS font-family string
-                        const cssValue = getCSSFromFontKey(newSelectedKey);
-                        if (cssValue) {
-                            onChange(cssValue);
-                        } else {
-                            // Fallback: find from options
-                            const option = allOptions.find(opt => opt.key === newSelectedKey);
-                            if (option?.cssValue) {
-                                onChange(option.cssValue);
-                            }
-                        }
-                    }}
-                    style={{ fontFamily: displayFont }}
-                >
-                    {allOptions.map(opt => (
-                        <option 
-                            key={opt.key} 
-                            value={opt.key}
-                            style={{ fontFamily: opt.cssValue }}
-                        >
-                            {opt.label}
-                        </option>
-                    ))}
-                </select>
-                <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/30 pointer-events-none"></i>
-            </div>
-        </div>
-    );
-};
 
 const ButtonGroup = ({ options, value, onChange }: { options: {icon: string, value: string, label: string}[], value: string | undefined, onChange: (val: string) => void }) => {
     const currentValue = value || 'left'; // Default to 'left' if undefined
@@ -1237,6 +1090,24 @@ const AppContent: React.FC = () => {
     fontFamily: 'Inter, sans-serif'
   });
   const [savingTheme, setSavingTheme] = useState(false);
+
+  // PRELOAD ALL FONTS FOR INSTANT REAL-TIME PREVIEW
+  useEffect(() => {
+    const loadFonts = () => {
+      const fontFamilies = PRESET_FONTS.map(f => f.name.replace(/\s+/g, '+') + ':wght@300;400;700;900');
+      const url = `https://fonts.googleapis.com/css2?family=${fontFamilies.join('&family=')}&display=swap`;
+      
+      // Check if already loaded to avoid duplicates
+      if (!document.getElementById('geniebuild-fonts')) {
+        const link = document.createElement('link');
+        link.id = 'geniebuild-fonts';
+        link.rel = 'stylesheet';
+        link.href = url;
+        document.head.appendChild(link);
+      }
+    };
+    loadFonts();
+  }, []);
 
   // Load page data from API if projectId and pageId are in URL
   useEffect(() => {
@@ -2500,18 +2371,7 @@ const AppContent: React.FC = () => {
                            value={styles.fontFamily || ''}
                            options={[
                               { label: `Theme Default (${(defaultTypography?.fontFamily || 'Inter').split(',')[0].replace(/['"]/g, '').trim()})`, value: '' },
-                              { label: 'Inter', value: 'Inter, sans-serif' },
-                              { label: 'Roboto', value: 'Roboto, sans-serif' },
-                              { label: 'Open Sans', value: '"Open Sans", sans-serif' },
-                              { label: 'Lato', value: 'Lato, sans-serif' },
-                              { label: 'Poppins', value: 'Poppins, sans-serif' },
-                              { label: 'Montserrat', value: 'Montserrat, sans-serif' },
-                              { label: 'Playfair Display', value: '"Playfair Display", serif' },
-                              { label: 'Merriweather', value: 'Merriweather, serif' },
-                              { label: 'Nunito', value: 'Nunito, sans-serif' },
-                              { label: 'Arial', value: 'Arial, sans-serif' },
-                              { label: 'Helvetica', value: 'Helvetica, sans-serif' },
-                              { label: 'Georgia', value: 'Georgia, serif' }
+                              ...PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))
                            ]}
                            onChange={(v: string) => {
                                if (v === '') {
@@ -3040,11 +2900,11 @@ const AppContent: React.FC = () => {
                              {globalTab === 'typography' && (
                                 <div className="space-y-6">
                                     <AccordionGroup title="Default Font" defaultOpen={true}>
-                                        <FontSelectInput 
+                                        <SelectInput 
                                             label="Font Family" 
                                             value={defaultTypography.fontFamily} 
                                             options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))} 
-                                            onChange={(v) => setDefaultTypography(prev => ({ ...prev, fontFamily: v }))} 
+                                            onChange={(v: string) => setDefaultTypography(prev => ({ ...prev, fontFamily: v }))} 
                                         />
                                     </AccordionGroup>
                                     <AccordionGroup title="Heading Sizes" defaultOpen={true}>
