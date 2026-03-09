@@ -1627,13 +1627,15 @@ const AppContent: React.FC = () => {
       }
       ${fontSizesCSS}
     `;
-    const styleEl = document.createElement('style');
-    styleEl.id = 'dynamic-theme-styles';
+    let styleEl = document.getElementById('dynamic-theme-styles');
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'dynamic-theme-styles';
+        document.head.appendChild(styleEl);
+    }
+    // Update innerHTML without destroying the node, keeping the iframe MutationObserver connected!
     styleEl.innerHTML = styleString;
-    const existing = document.getElementById('dynamic-theme-styles');
-    if (existing) existing.remove();
-    document.head.appendChild(styleEl);
-    return () => { styleEl.remove(); }
+    return () => { /* Don't remove - keep the element alive for MutationObserver */ }
   }, [siteData.globalStyles.colors, defaultSizes, defaultTypography]);
 
 

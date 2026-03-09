@@ -506,10 +506,18 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
           textAlign: 'center', 
           background: { 
               type: 'gradient', 
-              gradient: { type: 'linear', direction: 90, stops: [{ color: '#0E1214', position: 0 }, { color: '#1E293B', position: 100 }] } 
+              gradient: { 
+                  type: 'linear', 
+                  direction: 90, 
+                  stops: [
+                      { color: '#1e3a8a', position: 0 }, 
+                      { color: '#000000', position: 100 }
+                  ] 
+              },
+              overlay: { enabled: false, color: '#000000', opacity: 0.5, blendMode: 'normal' }
           },
-          // Provide immediate CSS fallback for the SectionRenderer
-          backgroundImage: 'linear-gradient(90deg, #0E1214 0%, #1E293B 100%)' 
+          backgroundImage: 'linear-gradient(90deg, #1e3a8a 0%, #000000 100%)',
+          backgroundColor: 'transparent'
       }
     }
   },
