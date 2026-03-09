@@ -134,7 +134,7 @@ export const TestimonialsColumns: React.FC<TestimonialsColumnsProps> = ({
               {/* 3. User Profile Block */}
               <div className="flex items-center gap-4 relative z-10">
                 {/* Avatar */}
-                <div className="relative group/avatar shrink-0">
+                <div className="shrink-0">
                   <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('avatar', 'image', { imageUrl: item.avatar || item.image || item.imageUrl || '', alt: item.author || item.name || 'Avatar' }, { width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
                 </div>
                 

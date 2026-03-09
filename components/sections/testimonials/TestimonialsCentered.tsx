@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Section, WebsiteElement } from '../../../types';
 import { ElementsSection } from '../ElementsSection';
@@ -208,8 +207,8 @@ export const TestimonialsCentered: React.FC<TestimonialsCenteredProps> = ({
               
               {/* Author Info - Centered Stack */}
               <div className="flex flex-col items-center gap-4">
-                {/* Avatar - Centered */}
-                <div className="relative group/avatar">
+                {/* Avatar - Centered and now SELECTABLE! */}
+                <div className="shrink-0">
                   <ElementsSection 
                     isWrapped={false} 
                     section={{ ...section, elements: [getEl('avatar', 'image', { imageUrl: item.avatar || item.image || item.imageUrl || '', alt: item.author || item.name || 'Avatar' }, { width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover' })] }} 
@@ -221,11 +220,6 @@ export const TestimonialsCentered: React.FC<TestimonialsCenteredProps> = ({
                     readOnly={readOnly} 
                     themeColors={themeColors} 
                   />
-                  {!readOnly && (
-                    <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center text-[8px] uppercase font-bold tracking-tighter cursor-pointer">
-                      Edit
-                    </div>
-                  )}
                 </div>
                 
                 {/* Name and Role - Centered */}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Section, WebsiteElement } from '../../../types';
 import { ElementsSection } from '../ElementsSection';
@@ -211,7 +210,7 @@ export const TestimonialsGrid: React.FC<TestimonialsGridProps> = ({
               
               {/* Author Info Row */}
               <div className="flex items-center gap-4">
-                <div className="relative group/avatar">
+                <div className="shrink-0">
                   <ElementsSection 
                     isWrapped={false} 
                     section={{ ...section, elements: [getEl('avatar', 'image', { imageUrl: item.avatar || item.image || item.imageUrl || '', alt: item.author || item.name || 'Avatar' }, { width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' })] }} 
@@ -223,11 +222,6 @@ export const TestimonialsGrid: React.FC<TestimonialsGridProps> = ({
                     readOnly={readOnly} 
                     themeColors={themeColors} 
                   />
-                  {!readOnly && (
-                    <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center text-[8px] uppercase font-bold tracking-tighter cursor-pointer">
-                      Edit
-                    </div>
-                  )}
                 </div>
                 <div className="text-left flex-1">
                   <div className="mb-1">
