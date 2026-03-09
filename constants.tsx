@@ -1,6 +1,16 @@
 
 import { WebsiteData, Section, WebsiteElement } from './types';
 
+// Global Element Defaults - Universal baseline styles for all elements
+export const ELEMENT_DEFAULTS: Record<string, any> = {
+  button: { backgroundColor: '#E11D48', color: '#FFFFFF', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', textAlign: 'center' },
+  heading: { color: '#F8FAFC', fontWeight: 'bold' },
+  text: { color: '#D1D5DB', opacity: 1 },
+  icon: { fontSize: '24px', color: '#3b82f6' },
+  image: { objectFit: 'cover', width: '100%' },
+  'star-rating': { color: '#F59E0B' }
+};
+
 export const PRESET_FONTS = [
   // Sans-serif fonts
   { name: 'Inter', value: '"Inter", sans-serif' },
@@ -487,6 +497,12 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
         titleSize: 'text-5xl md:text-7xl',
         titleColor: '#F8FAFC',
         variant: 'center'
+    },
+    variantOverrides: {
+      'center': { textAlign: 'center', background: { type: 'color', color: '#0E1214' } },
+      'split-left': { textAlign: 'left', background: { type: 'color', color: '#111111' } },
+      'split-right': { textAlign: 'left', background: { type: 'color', color: '#111111' } },
+      'gradient': { textAlign: 'center', background: { type: 'gradient', gradient: { type: 'linear', direction: 90, stops: [{ color: '#0E1214', position: 0 }, { color: '#1E293B', position: 100 }] } } }
     }
   },
   features: {
@@ -564,7 +580,12 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
         textAlign: 'center',
         variant: 'TestimonialsGrid'
     },
-    elements: []
+    elements: [],
+    variantOverrides: {
+      'TestimonialsGrid': { textAlign: 'center', background: { type: 'color', color: '#0E1214' } },
+      'TestimonialsCentered': { textAlign: 'center', background: { type: 'color', color: '#0E1214' }, maxWidth: 'max-w-4xl' },
+      'TestimonialsColumns': { textAlign: 'left', background: { type: 'color', color: '#0E1214' } }
+    }
   },
   faq: {
     type: 'faq',
@@ -583,7 +604,11 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
       paddingBottom: 'pb-24',
       textAlign: 'center'
     },
-    elements: []
+    elements: [],
+    variantOverrides: {
+      'FAQCentered': { textAlign: 'center', background: { type: 'color', color: '#0E1214' }, maxWidth: 'max-w-4xl' },
+      'FAQSplit': { textAlign: 'left', background: { type: 'color', color: '#0E1214' } }
+    }
   },
   cta: {
       type: 'cta',
@@ -605,6 +630,10 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
           textAlign: 'center',
           titleSize: 'text-4xl md:text-6xl',
           variant: 'center'
+      },
+      variantOverrides: {
+        'center': { textAlign: 'center', background: { type: 'color', color: '#0E1214' } },
+        'split': { textAlign: 'left', background: { type: 'color', color: '#111111' } }
       }
   },
   navbar: {

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { WebsiteData, Section, SectionType, WebsiteElement, ElementType } from './types';
-import { INITIAL_TEMPLATE, SECTION_TEMPLATES, PRESET_THEMES, PRESET_FONTS } from './constants';
+import { INITIAL_TEMPLATE, SECTION_TEMPLATES, PRESET_THEMES, PRESET_FONTS, ELEMENT_DEFAULTS } from './constants';
 import { geminiService } from './services/geminiService';
 import SectionRenderer from './components/SectionRenderer';
 import { PreviewFrame } from './components/PreviewFrame';
@@ -1799,17 +1799,23 @@ const AppContent: React.FC = () => {
     return null;
   }, [selectedSection, selectedElementId, selectedVirtualElement]);
 
-  // STEP 1: Data Resolvers - Merge DB state OVER Template defaults
+  // STEP 4: Advanced Cascading Data Resolvers
+  // 1. Resolve Section Styles: Base Defaults -> Variant Overrides -> DB State
   const activeTemplate = selectedSection ? (SECTION_TEMPLATES[selectedSection.type] || null) : null;
-  const resolvedSectionStyles: any = selectedSection ? { 
-    ...(activeTemplate?.styles || {}), 
-    ...selectedSection.styles 
+  const currentVariant = selectedSection?.styles?.variant || activeTemplate?.styles?.variant || 'center';
+  const variantOverrides = activeTemplate?.variantOverrides?.[currentVariant] || {};
+  const resolvedSectionStyles: any = selectedSection ? {
+    ...(activeTemplate?.styles || {}),
+    ...variantOverrides,
+    ...selectedSection.styles
   } : {};
 
-  // Resolve Element Styles: Merge DB state OVER Template defaults
-  const defaultElementTemplate = selectedElement && activeTemplate ? activeTemplate.elements?.find(e => e.type === selectedElement.type) : null;
+  // 2. Resolve Element Styles: Global Element Defaults -> Section Element Defaults -> DB State
+  const baseElementDefault = selectedElement ? (ELEMENT_DEFAULTS[selectedElement.type] || {}) : {};
+  const sectionElementDefault = selectedElement && activeTemplate ? activeTemplate.elements?.find(e => e.type === selectedElement.type)?.style : {};
   const resolvedElementStyle = selectedElement ? {
-    ...(defaultElementTemplate?.style || {}),
+    ...baseElementDefault,
+    ...sectionElementDefault,
     ...selectedElement.style
   } : {};
 

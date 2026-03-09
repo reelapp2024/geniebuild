@@ -354,6 +354,9 @@ export interface Section {
     fontFamily?: string;
   }>>;
   
+  // Default styles applied when a specific variant is selected
+  variantOverrides?: Record<string, any>;
+  
   styles: {
     // Container
     backgroundColor: string; // Deprecated - use background.type instead
