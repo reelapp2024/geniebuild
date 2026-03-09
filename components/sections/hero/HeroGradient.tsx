@@ -57,7 +57,6 @@ export const HeroGradient: React.FC<HeroProps> = ({ section, onTextEdit, buttonC
   const getTitleElement = (): WebsiteElement => {
     if (titleElement) return titleElement;
     
-    const styleAny = styles as any;
     return {
       id: titleId,
       type: 'heading',
@@ -66,11 +65,7 @@ export const HeroGradient: React.FC<HeroProps> = ({ section, onTextEdit, buttonC
         htmlTag: (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
       },
       style: {
-        color: styles.titleColor || '',
-        fontSize: styles.titleSize || '',
-        fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
-        textAlign: (styleAny.titleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-        fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined,
+        color: styles.titleColor || ''
       }
     };
   };
@@ -78,7 +73,6 @@ export const HeroGradient: React.FC<HeroProps> = ({ section, onTextEdit, buttonC
   const getSubtitleElement = (): WebsiteElement => {
     if (subtitleElement) return subtitleElement;
     
-    const styleAny = styles as any;
     return {
       id: subtitleId,
       type: 'text',
@@ -87,10 +81,7 @@ export const HeroGradient: React.FC<HeroProps> = ({ section, onTextEdit, buttonC
         textSize: 'base' as 'base' | 'small' | 'large' | 'xl'
       },
       style: {
-        color: styles.subtitleColor || styles.textColor || '',
-        fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
-        textAlign: (styleAny.subtitleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-        fontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || undefined,
+        color: styles.subtitleColor || styles.textColor || ''
       }
     };
   };
@@ -98,7 +89,6 @@ export const HeroGradient: React.FC<HeroProps> = ({ section, onTextEdit, buttonC
   const getButtonElement = (): WebsiteElement => {
     if (buttonElement) return buttonElement;
     
-    const styleAny = styles as any;
     return {
       id: buttonId,
       type: 'button',
@@ -108,13 +98,7 @@ export const HeroGradient: React.FC<HeroProps> = ({ section, onTextEdit, buttonC
       },
       style: {
         backgroundColor: styles.buttonBackgroundColor || '',
-        color: styles.buttonTextColor || '',
-        textAlign: 'center' as 'left' | 'center' | 'right' | 'justify',
-        fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
-        fontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
-        padding: styleAny.buttonPadding || styleAny.padding || '',
-        borderRadius: styleAny.buttonBorderRadius || styleAny.borderRadius || '',
-        fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
+        color: styles.buttonTextColor || ''
       }
     };
   };

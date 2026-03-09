@@ -82,11 +82,7 @@ export const HeroMulticolor: React.FC<HeroProps> = ({
         htmlTag: (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
       },
       style: {
-        color: headingColor,
-        fontSize: styles.titleSize || '',
-        fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
-        textAlign: (styleAny.titleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-        fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined,
+        color: styles.titleColor || ''
       }
     };
   };
@@ -101,11 +97,7 @@ export const HeroMulticolor: React.FC<HeroProps> = ({
         textSize: 'large' as 'base' | 'small' | 'large' | 'xl'
       },
       style: {
-        color: descriptionColor,
-        fontSize: styles.subtitleSize || '',
-        fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
-        textAlign: (styleAny.subtitleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-        fontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || undefined,
+        color: styles.subtitleColor || styles.textColor || ''
       }
     };
   };
@@ -118,10 +110,7 @@ export const HeroMulticolor: React.FC<HeroProps> = ({
       content: {
         text: content.badgeText || 'Trusted by 10,000+ Customers'
       },
-      style: {
-        backgroundColor: themeData?.badge?.background || `rgba(${parseInt(primaryColor.slice(1, 3), 16)}, ${parseInt(primaryColor.slice(3, 5), 16)}, ${parseInt(primaryColor.slice(5, 7), 16)}, 0.15)`,
-        color: themeData?.badge?.text || headingColor,
-      }
+      style: {}
     };
   };
   
@@ -135,11 +124,8 @@ export const HeroMulticolor: React.FC<HeroProps> = ({
         link: content.ctaHref || '#'
       },
       style: {
-        backgroundColor: primaryColor,
-        color: themeData?.primaryButton?.text || styles.buttonTextColor || '#FFFFFF',
-        fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
-        fontSize: styleAny.buttonFontSize || styleAny.fontSize || undefined,
-        fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
+        backgroundColor: styles.buttonBackgroundColor || '',
+        color: styles.buttonTextColor || ''
       }
     };
   };
@@ -154,12 +140,8 @@ export const HeroMulticolor: React.FC<HeroProps> = ({
         link: content.secondaryCtaHref || '#'
       },
       style: {
-        backgroundColor: themeData?.secondaryButton?.bg || 'transparent',
-        color: themeData?.secondaryButton?.text || headingColor,
-        border: `2px solid ${themeData?.secondaryButton?.border || primaryColor}`,
-        fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
-        fontSize: styleAny.buttonFontSize || styleAny.fontSize || undefined,
-        fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
+        backgroundColor: styles.secondaryButtonBackgroundColor || 'transparent',
+        color: styles.secondaryButtonTextColor || ''
       }
     };
   };
@@ -173,15 +155,7 @@ export const HeroMulticolor: React.FC<HeroProps> = ({
         imageUrl: content.imageUrl || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
         alt: 'Hero Background'
       },
-      style: {
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        zIndex: 0,
-      }
+      style: {}
     };
   };
 

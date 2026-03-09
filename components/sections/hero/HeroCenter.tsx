@@ -68,7 +68,6 @@ export const HeroCenter: React.FC<HeroProps> = ({
   const getTitleElement = (): WebsiteElement => {
     if (titleElement) return titleElement;
     
-    const styleAny = styles as any;
     return {
       id: titleId,
       type: 'heading',
@@ -77,11 +76,7 @@ export const HeroCenter: React.FC<HeroProps> = ({
         htmlTag: (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
       },
       style: {
-        color: styles.titleColor || '',
-        fontSize: styles.titleSize || '',
-        fontWeight: styleAny.titleFontWeight || styleAny.fontWeight || 'bold',
-        textAlign: (styleAny.titleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-        fontFamily: styleAny.titleFontFamily || styleAny.fontFamily || undefined,
+        color: styles.titleColor || ''
       }
     };
   };
@@ -89,7 +84,6 @@ export const HeroCenter: React.FC<HeroProps> = ({
   const getSubtitleElement = (): WebsiteElement => {
     if (subtitleElement) return subtitleElement;
     
-    const styleAny = styles as any;
     return {
       id: subtitleId,
       type: 'text',
@@ -98,10 +92,7 @@ export const HeroCenter: React.FC<HeroProps> = ({
         textSize: 'base' as 'base' | 'small' | 'large' | 'xl'
       },
       style: {
-        color: styles.subtitleColor || styles.textColor || '',
-        fontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight || '400',
-        textAlign: (styleAny.subtitleAlign || styles.textAlign || 'center') as 'left' | 'center' | 'right' | 'justify',
-        fontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || undefined,
+        color: styles.subtitleColor || styles.textColor || ''
       }
     };
   };
@@ -109,7 +100,6 @@ export const HeroCenter: React.FC<HeroProps> = ({
   const getButtonElement = (): WebsiteElement => {
     if (buttonElement) return buttonElement;
     
-    const styleAny = styles as any;
     return {
       id: buttonId,
       type: 'button',
@@ -119,13 +109,7 @@ export const HeroCenter: React.FC<HeroProps> = ({
       },
       style: {
         backgroundColor: styles.buttonBackgroundColor || '',
-        color: styles.buttonTextColor || '',
-        textAlign: 'center' as 'left' | 'center' | 'right' | 'justify',
-        fontWeight: styleAny.buttonFontWeight || styleAny.fontWeight || 'bold',
-        fontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize || '1rem',
-        padding: styleAny.buttonPadding || styleAny.padding || '',
-        borderRadius: styleAny.buttonBorderRadius || styleAny.borderRadius || '',
-        fontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || undefined,
+        color: styles.buttonTextColor || ''
       }
     };
   };
@@ -134,7 +118,7 @@ export const HeroCenter: React.FC<HeroProps> = ({
     // If real element exists, use it (all styles come from element.style)
     if (imageElement) return imageElement;
     
-    // Bare minimum fallback - only default structure, no section.styles mapping
+    // Bare minimum fallback - only default structure, let ELEMENT_DEFAULTS handle styling
     return {
       id: imageId,
       type: 'image',
@@ -142,10 +126,7 @@ export const HeroCenter: React.FC<HeroProps> = ({
         imageUrl: content.imageUrl || '',
         imageAlt: 'Hero'
       },
-      style: {
-        width: '100%',
-        objectFit: 'cover',
-      }
+      style: {}
     };
   };
   
@@ -198,11 +179,8 @@ export const HeroCenter: React.FC<HeroProps> = ({
               type: 'button',
               content: { text: content.ctaText || 'Click Here', link: content.ctaHref || '' },
               style: {
-                backgroundColor: styles.buttonBackgroundColor,
-                color: styles.buttonTextColor,
-                textAlign: (styles as any).buttonAlign || styles.textAlign || 'center',
-                fontWeight: (styles as any).buttonFontWeight || (styles as any).fontWeight || 'bold',
-                fontSize: (styles as any).buttonFontSize || '1.125rem'
+                backgroundColor: styles.buttonBackgroundColor || '',
+                color: styles.buttonTextColor || ''
               }
             }]
           }}
