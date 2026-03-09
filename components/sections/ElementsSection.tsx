@@ -529,7 +529,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 ? (content.icon.startsWith('fa-') ? `fa-solid ${content.icon}` : `fa-solid fa-${content.icon}`)
                 : 'fa-solid fa-star';
             // Use theme accentColor if element color is not explicitly set
-            const iconColor = safeStyle.color || style?.accentColor || theme?.accentColor || '#F59E0B';
+            const iconColor = safeStyle.color || renderStyle?.accentColor || theme?.accentColor || '#F59E0B';
             return (
                 <div key={id} className={`inline-block ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={safeStyle}>
                     <i className={iconClass} style={{ fontSize: content.iconSize || safeStyle.fontSize || '2rem', color: iconColor }}></i>
@@ -542,7 +542,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 ? (content.icon.startsWith('fa-') ? `fa-solid ${content.icon}` : `fa-solid fa-${content.icon}`)
                 : 'fa-solid fa-layer-group';
             // Use theme accentColor if element color is not explicitly set
-            const iconBoxColor = style?.accentColor || theme?.accentColor || '#F59E0B';
+            const iconBoxColor = renderStyle?.accentColor || theme?.accentColor || '#F59E0B';
             return (
                 <div key={id} className={`flex gap-4 p-4 rounded-lg bg-white/5 border border-white/5 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={safeStyle}>
                     <div className="shrink-0">
@@ -627,7 +627,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             
         case 'badge':
             // Use theme accentColor if element backgroundColor is not explicitly set
-            const badgeBgColor = style?.backgroundColor || style?.accentColor || theme?.accentColor || '#3b82f6';
+            const badgeBgColor = renderStyle?.backgroundColor || renderStyle?.accentColor || theme?.accentColor || '#3b82f6';
             return (
                 <span 
                     key={id} 
@@ -644,7 +644,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
 
         case 'highlight-text':
             // Use theme accentColor if element backgroundColor is not explicitly set
-            const highlightBgColor = style?.accentColor || theme?.accentColor || '#facc15';
+            const highlightBgColor = renderStyle?.accentColor || theme?.accentColor || '#facc15';
             const highlightTextStyle = {
                 ...safeStyle,
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
@@ -657,7 +657,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
 
         case 'blockquote':
             // Use theme accentColor and textColor if element colors are not explicitly set
-            const blockquoteBorderColor = style?.borderColor || style?.accentColor || theme?.accentColor || '#fff';
+            const blockquoteBorderColor = renderStyle?.borderColor || renderStyle?.accentColor || theme?.accentColor || '#fff';
             const blockquoteStyle = {
                 ...safeStyle,
                 color: safeStyle.color || theme?.textColor || '#D1D5DB',
@@ -719,7 +719,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
         case 'tabs':
             const currentTab = activeTabs[id] || 0;
             // Use theme accentColor and textColor if element colors are not explicitly set
-            const tabsAccentColor = style?.accentColor || theme?.accentColor || '#3b82f6';
+            const tabsAccentColor = renderStyle?.accentColor || theme?.accentColor || '#3b82f6';
             const tabsStyle = {
                 ...safeStyle,
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
@@ -746,7 +746,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
 
         case 'progress-bar':
             // Use theme accentColor and textColor if element colors are not explicitly set
-            const progressBarColor = style?.accentColor || theme?.accentColor || '#3b82f6';
+            const progressBarColor = renderStyle?.accentColor || theme?.accentColor || '#3b82f6';
             const progressBarStyle = {
                 ...safeStyle,
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
@@ -768,7 +768,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
 
         case 'counter':
             // Use theme accentColor and textColor if element colors are not explicitly set
-            const counterAccentColor = style?.accentColor || theme?.accentColor || '#ffffff';
+            const counterAccentColor = renderStyle?.accentColor || theme?.accentColor || '#ffffff';
             const counterStyle = {
                 ...safeStyle,
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
@@ -839,7 +839,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
 
         case 'pricing-table':
             // Use theme accentColor and textColor if element colors are not explicitly set
-            const pricingBorderColor = style?.borderColor || style?.accentColor || theme?.accentColor || '#3b82f6';
+            const pricingBorderColor = renderStyle?.borderColor || renderStyle?.accentColor || theme?.accentColor || '#3b82f6';
             const pricingStyle = {
                 ...safeStyle,
                 color: safeStyle.color || theme?.textColor || '#D1D5DB',
@@ -874,7 +874,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             const backRotate = (dir === 'top' || dir === 'bottom') ? 'rotate-x-180' : 'rotate-y-180';
             
             // Use theme accentColor if element color is not explicitly set
-            const flipBoxAccentColor = style?.accentColor || theme?.accentColor || '#3b82f6';
+            const flipBoxAccentColor = renderStyle?.accentColor || theme?.accentColor || '#3b82f6';
             const flipBoxStyle = {
                 ...safeStyle,
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
@@ -899,7 +899,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
 
         case 'countdown-timer':
             // Use theme accentColor and textColor if element colors are not explicitly set
-            const countdownAccentColor = style?.accentColor || theme?.accentColor || '#F59E0B';
+            const countdownAccentColor = renderStyle?.accentColor || theme?.accentColor || '#F59E0B';
             const countdownStyle = {
                 ...safeStyle,
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
