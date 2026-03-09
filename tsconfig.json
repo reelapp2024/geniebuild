@@ -21,6 +21,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@ui/blocks": [
+        "../../packages/ui/src/index.ts"
       ]
     },
     "allowImportingTsExtensions": true,

@@ -6,6 +6,7 @@ import SectionRenderer from './components/SectionRenderer';
 import { PreviewFrame } from './components/PreviewFrame';
 import toast, { Toaster } from 'react-hot-toast';
 import { getDefaultVariant, getVariantsForSection } from './components/SectionsAndVariantRegistry';
+import { ThemeProvider, useTheme } from '@ui/blocks';
 
 // Get URL parameters
 const getUrlParams = () => {
@@ -699,13 +700,60 @@ const BackgroundControl = ({
   uploading?: boolean,
   uploadProgress?: number
 }) => {
-  const background = value || { type: 'color', color: '#000000' };
+  const { themeData } = useTheme();
+  
+  // Get theme overlay defaults
+  const getThemeOverlayDefaults = () => {
+    if (themeData?.overlay) {
+      const themeOverlay = themeData.overlay;
+      // Extract opacity from rgba if present
+      let overlayOpacity = 0.5;
+      if (themeOverlay.color) {
+        const rgbaMatch = themeOverlay.color.match(/rgba?\([^)]+\)/);
+        if (rgbaMatch) {
+          const rgbaValues = rgbaMatch[0].match(/[\d.]+/g);
+          if (rgbaValues && rgbaValues.length >= 4) {
+            overlayOpacity = parseFloat(rgbaValues[3]);
+          }
+        }
+      }
+      return {
+        enabled: true,
+        color: themeOverlay.color || '#000000',
+        opacity: overlayOpacity,
+        blendMode: (themeOverlay.blend as any) || 'multiply'
+      };
+    }
+    // Default overlay settings (enabled by default)
+    return {
+      enabled: true,
+      color: '#000000',
+      opacity: 0.5,
+      blendMode: 'normal' as const
+    };
+  };
+  
+  const themeOverlayDefaults = getThemeOverlayDefaults();
+  const background = value || { type: 'color', color: '#000000', overlay: themeOverlayDefaults };
   const [localBackground, setLocalBackground] = useState(background);
 
   // Update local state when prop changes
   React.useEffect(() => {
-    setLocalBackground(value || { type: 'color', color: '#000000' });
-  }, [value]);
+    const defaultBg = value || { 
+      type: 'color', 
+      color: '#000000', 
+      overlay: themeOverlayDefaults 
+    };
+    // If overlay is not set, initialize with theme defaults
+    if (defaultBg && !defaultBg.overlay) {
+      defaultBg.overlay = themeOverlayDefaults;
+    }
+    // If overlay exists but enabled is undefined/null, enable it
+    if (defaultBg?.overlay && defaultBg.overlay.enabled === undefined) {
+      defaultBg.overlay.enabled = true;
+    }
+    setLocalBackground(defaultBg);
+  }, [value, themeOverlayDefaults]);
 
   const updateBackground = (updates: any) => {
     const newBg = { ...localBackground, ...updates };
@@ -784,7 +832,11 @@ const BackgroundControl = ({
         ]}
         onChange={(v) => {
           if (v === 'color') {
-            updateBackground({ type: 'color', color: localBackground.color || '#000000' });
+            updateBackground({ 
+              type: 'color', 
+              color: localBackground.color || '#000000',
+              overlay: localBackground.overlay || themeOverlayDefaults
+            });
           } else if (v === 'gradient') {
             updateBackground({
               type: 'gradient',
@@ -792,7 +844,8 @@ const BackgroundControl = ({
                 type: 'linear',
                 direction: 90,
                 stops: [{ color: '#000000', position: 0 }, { color: '#ffffff', position: 100 }]
-              }
+              },
+              overlay: localBackground.overlay || themeOverlayDefaults
             });
           } else if (v === 'image') {
             updateBackground({
@@ -803,7 +856,7 @@ const BackgroundControl = ({
                 size: 'cover',
                 repeat: 'no-repeat',
                 attachment: 'scroll',
-                overlay: { enabled: false, color: '#000000', opacity: 0.5, blendMode: 'normal' }
+                overlay: themeOverlayDefaults
               }
             });
           }
@@ -812,11 +865,105 @@ const BackgroundControl = ({
 
       {/* Color Background */}
       {localBackground.type === 'color' && (
-        <ColorInput
-          label="Background Color"
-          value={localBackground.color || '#000000'}
-          onChange={(v) => updateBackground({ color: v })}
-        />
+        <div className="space-y-3">
+          <ColorInput
+            label="Background Color"
+            value={localBackground.color || '#000000'}
+            onChange={(v) => updateBackground({ color: v })}
+          />
+          
+          {/* Color Background Overlay */}
+          <div className="space-y-2 pt-2 border-t border-white/10">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold text-white/40 capitalize ml-1">Overlay</label>
+              <button
+                onClick={() => {
+                  const currentEnabled = localBackground.overlay?.enabled !== undefined 
+                    ? localBackground.overlay.enabled 
+                    : true; // Default to enabled
+                  updateBackground({
+                    overlay: {
+                      ...(localBackground.overlay || themeOverlayDefaults),
+                      enabled: !currentEnabled
+                    }
+                  });
+                }}
+                className={`px-2 py-1 text-[9px] rounded border transition-colors ${
+                  (localBackground.overlay?.enabled !== false) // Default to enabled
+                    ? 'bg-blue-600/20 border-blue-600/30 text-blue-400'
+                    : 'bg-[#222] border-[#333] text-white/40'
+                }`}
+              >
+                {(localBackground.overlay?.enabled !== false) ? 'Enabled' : 'Disabled'}
+              </button>
+            </div>
+
+            {(localBackground.overlay?.enabled !== false) && (
+              <div className="space-y-2 pl-2 border-l-2 border-white/10">
+                <ColorInput
+                  label="Overlay Color"
+                  value={localBackground.overlay?.color || themeOverlayDefaults.color}
+                  onChange={(v) => {
+                    const currentOverlay = localBackground.overlay || themeOverlayDefaults;
+                    updateBackground({
+                      overlay: { 
+                        ...currentOverlay, 
+                        color: v,
+                        enabled: currentOverlay.enabled !== false // Default to enabled if not explicitly false
+                      }
+                    });
+                  }}
+                />
+                <RangeInput
+                  label="Overlay Opacity"
+                  value={Math.round((localBackground.overlay?.opacity !== undefined ? localBackground.overlay.opacity : themeOverlayDefaults.opacity) * 100)}
+                  min={0}
+                  max={100}
+                  step={1}
+                  unit="%"
+                  onChange={(v) => {
+                    const currentOverlay = localBackground.overlay || themeOverlayDefaults;
+                    updateBackground({
+                      overlay: { 
+                        ...currentOverlay, 
+                        opacity: v / 100,
+                        enabled: currentOverlay.enabled !== false // Default to enabled if not explicitly false
+                      }
+                    });
+                  }}
+                />
+                <SelectInput
+                  label="Blend Mode"
+                  value={localBackground.overlay?.blendMode || 'normal'}
+                  options={[
+                    { label: 'Normal', value: 'normal' },
+                    { label: 'Multiply', value: 'multiply' },
+                    { label: 'Screen', value: 'screen' },
+                    { label: 'Overlay', value: 'overlay' },
+                    { label: 'Darken', value: 'darken' },
+                    { label: 'Lighten', value: 'lighten' },
+                    { label: 'Color Dodge', value: 'color-dodge' },
+                    { label: 'Color Burn', value: 'color-burn' },
+                    { label: 'Hard Light', value: 'hard-light' },
+                    { label: 'Soft Light', value: 'soft-light' },
+                    { label: 'Difference', value: 'difference' },
+                    { label: 'Exclusion', value: 'exclusion' }
+                  ]}
+                  onChange={(v) => {
+                    const currentOverlay = localBackground.overlay || themeOverlayDefaults;
+                    updateBackground({
+                      overlay: { 
+                        ...currentOverlay, 
+                        blendMode: v,
+                        enabled: currentOverlay.enabled !== false // Default to enabled if not explicitly false
+                      }
+                    });
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Gradient Background */}
@@ -891,6 +1038,98 @@ const BackgroundControl = ({
               </div>
             ))}
           </div>
+          
+          {/* Gradient Background Overlay */}
+          <div className="space-y-2 pt-2 border-t border-white/10">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold text-white/40 capitalize ml-1">Overlay</label>
+              <button
+                onClick={() => {
+                  const currentEnabled = localBackground.overlay?.enabled !== undefined 
+                    ? localBackground.overlay.enabled 
+                    : true; // Default to enabled
+                  updateBackground({
+                    overlay: {
+                      ...(localBackground.overlay || themeOverlayDefaults),
+                      enabled: !currentEnabled
+                    }
+                  });
+                }}
+                className={`px-2 py-1 text-[9px] rounded border transition-colors ${
+                  (localBackground.overlay?.enabled !== false) // Default to enabled
+                    ? 'bg-blue-600/20 border-blue-600/30 text-blue-400'
+                    : 'bg-[#222] border-[#333] text-white/40'
+                }`}
+              >
+                {(localBackground.overlay?.enabled !== false) ? 'Enabled' : 'Disabled'}
+              </button>
+            </div>
+
+            {(localBackground.overlay?.enabled !== false) && (
+              <div className="space-y-2 pl-2 border-l-2 border-white/10">
+                <ColorInput
+                  label="Overlay Color"
+                  value={localBackground.overlay?.color || themeOverlayDefaults.color}
+                  onChange={(v) => {
+                    const currentOverlay = localBackground.overlay || themeOverlayDefaults;
+                    updateBackground({
+                      overlay: { 
+                        ...currentOverlay, 
+                        color: v,
+                        enabled: currentOverlay.enabled !== false // Default to enabled if not explicitly false
+                      }
+                    });
+                  }}
+                />
+                <RangeInput
+                  label="Overlay Opacity"
+                  value={Math.round((localBackground.overlay?.opacity !== undefined ? localBackground.overlay.opacity : themeOverlayDefaults.opacity) * 100)}
+                  min={0}
+                  max={100}
+                  step={1}
+                  unit="%"
+                  onChange={(v) => {
+                    const currentOverlay = localBackground.overlay || themeOverlayDefaults;
+                    updateBackground({
+                      overlay: { 
+                        ...currentOverlay, 
+                        opacity: v / 100,
+                        enabled: currentOverlay.enabled !== false // Default to enabled if not explicitly false
+                      }
+                    });
+                  }}
+                />
+                <SelectInput
+                  label="Blend Mode"
+                  value={localBackground.overlay?.blendMode || 'normal'}
+                  options={[
+                    { label: 'Normal', value: 'normal' },
+                    { label: 'Multiply', value: 'multiply' },
+                    { label: 'Screen', value: 'screen' },
+                    { label: 'Overlay', value: 'overlay' },
+                    { label: 'Darken', value: 'darken' },
+                    { label: 'Lighten', value: 'lighten' },
+                    { label: 'Color Dodge', value: 'color-dodge' },
+                    { label: 'Color Burn', value: 'color-burn' },
+                    { label: 'Hard Light', value: 'hard-light' },
+                    { label: 'Soft Light', value: 'soft-light' },
+                    { label: 'Difference', value: 'difference' },
+                    { label: 'Exclusion', value: 'exclusion' }
+                  ]}
+                  onChange={(v) => {
+                    const currentOverlay = localBackground.overlay || themeOverlayDefaults;
+                    updateBackground({
+                      overlay: { 
+                        ...currentOverlay, 
+                        blendMode: v,
+                        enabled: currentOverlay.enabled !== false // Default to enabled if not explicitly false
+                      }
+                    });
+                  }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -908,7 +1147,7 @@ const BackgroundControl = ({
                 size: 'cover',
                 repeat: 'no-repeat',
                 attachment: 'scroll',
-                overlay: { enabled: false, color: '#000000', opacity: 0.5, blendMode: 'normal' }
+                overlay: themeOverlayDefaults
               };
               // Update background with image URL and ensure type is 'image'
               updateBackground({
@@ -1240,7 +1479,37 @@ const ButtonGroup = ({ options, value, onChange }: { options: {icon: string, val
 
 // --- Main App Component ---
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { themeData } = useTheme();
+  
+  // Helper to get theme overlay defaults (accessible throughout AppContent)
+  const getThemeOverlayDefaults = () => {
+    if (themeData?.overlay) {
+      const themeOverlay = themeData.overlay;
+      let overlayOpacity = 0.5;
+      if (themeOverlay.color) {
+        const rgbaMatch = themeOverlay.color.match(/rgba?\([^)]+\)/);
+        if (rgbaMatch) {
+          const rgbaValues = rgbaMatch[0].match(/[\d.]+/g);
+          if (rgbaValues && rgbaValues.length >= 4) {
+            overlayOpacity = parseFloat(rgbaValues[3]);
+          }
+        }
+      }
+      return {
+        enabled: true,
+        color: themeOverlay.color || '#000000',
+        opacity: overlayOpacity,
+        blendMode: (themeOverlay.blend as any) || 'multiply'
+      };
+    }
+    return {
+      enabled: true,
+      color: '#000000',
+      opacity: 0.5,
+      blendMode: 'normal' as const
+    };
+  };
   const [siteData, setSiteData] = useState<WebsiteData>(INITIAL_TEMPLATE);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null); 
@@ -2376,14 +2645,31 @@ const App: React.FC = () => {
             // Update the new background.image.url structure
             const section = siteData.sections.find(s => s.id === uploadTarget.sectionId);
             if (section) {
-              const currentBackground = section.styles?.background || { type: 'image', image: { url: '', position: 'center', size: 'cover', repeat: 'no-repeat', attachment: 'scroll', overlay: { enabled: false, color: '#000000', opacity: 0.5, blendMode: 'normal' } } };
+              const themeOverlayDefaults = getThemeOverlayDefaults();
+              const currentBackground = section.styles?.background || { 
+                type: 'image', 
+                image: { 
+                  url: '', 
+                  position: 'center', 
+                  size: 'cover', 
+                  repeat: 'no-repeat', 
+                  attachment: 'scroll', 
+                  overlay: themeOverlayDefaults 
+                } 
+              };
               
               // Ensure background type is 'image' and update the URL
               const updatedBackground = {
                 ...currentBackground,
                 type: 'image',
                 image: {
-                  ...(currentBackground.image || { position: 'center', size: 'cover', repeat: 'no-repeat', attachment: 'scroll', overlay: { enabled: false, color: '#000000', opacity: 0.5, blendMode: 'normal' } }),
+                  ...(currentBackground.image || { 
+                    position: 'center', 
+                    size: 'cover', 
+                    repeat: 'no-repeat', 
+                    attachment: 'scroll', 
+                    overlay: themeOverlayDefaults 
+                  }),
                   url: fullImageUrl
                 }
               };
@@ -2581,6 +2867,49 @@ const App: React.FC = () => {
                          uploadProgress={uploading && uploadTarget?.field === 'backgroundImage' && uploadTarget?.sectionId === sectionId ? uploadProgress : 0}
                        />
               </AccordionGroup>
+              )}
+              {context === 'element' && (
+                  <AccordionGroup title="Background & Overlay" defaultOpen={false}>
+                      <ColorInput label="Background Color" value={styles.backgroundColor || ''} onChange={(v) => onUpdate('backgroundColor', v)} />
+                      {elementType === 'image' && (
+                          <>
+                              <RangeInput 
+                                  label="Opacity" 
+                                  value={styles.opacity !== undefined ? Math.round(parseFloat(styles.opacity) * 100) : 100} 
+                                  min={0} 
+                                  max={100} 
+                                  step={1} 
+                                  unit="%" 
+                                  onChange={(v) => onUpdate('opacity', (v / 100).toString())} 
+                              />
+                              <ColorInput 
+                                  label="Overlay Color" 
+                                  value={(styles as any).overlayColor || ''} 
+                                  onChange={(v) => onUpdate('overlayColor', v)} 
+                              />
+                              <RangeInput 
+                                  label="Overlay Opacity" 
+                                  value={(styles as any).overlayOpacity !== undefined ? Math.round(parseFloat((styles as any).overlayOpacity) * 100) : 0} 
+                                  min={0} 
+                                  max={100} 
+                                  step={1} 
+                                  unit="%" 
+                                  onChange={(v) => onUpdate('overlayOpacity', (v / 100).toString())} 
+                              />
+                          </>
+                      )}
+                      {elementType !== 'image' && (
+                          <RangeInput 
+                              label="Opacity" 
+                              value={styles.opacity !== undefined ? Math.round(parseFloat(styles.opacity) * 100) : 100} 
+                              min={0} 
+                              max={100} 
+                              step={1} 
+                              unit="%" 
+                              onChange={(v) => onUpdate('opacity', (v / 100).toString())} 
+                          />
+                      )}
+                  </AccordionGroup>
               )}
               {context === 'element' && elementType === 'image' && (
                   <>
@@ -3445,6 +3774,17 @@ const App: React.FC = () => {
           }}
         />
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  const urlParams = getUrlParams();
+  const projectId = urlParams.projectId || undefined;
+  
+  return (
+    <ThemeProvider projectId={projectId} isBuilder={true}>
+      <AppContent />
+    </ThemeProvider>
   );
 };
 

@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+          '@ui/blocks': path.resolve(__dirname, '../../packages/ui/src/index.ts'),
         }
       }
     };

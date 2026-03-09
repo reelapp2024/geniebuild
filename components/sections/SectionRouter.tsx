@@ -23,6 +23,7 @@ import { HeroSplitLeft } from './hero/HeroSplitLeft';
 import { HeroSplitRight } from './hero/HeroSplitRight';
 import { HeroGradient } from './hero/HeroGradient';
 import { HeroGeometric } from './hero/HeroGeometric';
+import { HeroMulticolor } from './hero/HeroMulticolor';
 // Navbar variants
 import { NavbarSimple } from './navbar/NavbarSimple';
 import { NavbarCentered } from './navbar/NavbarCentered';
@@ -119,6 +120,8 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return <HeroGradient {...baseProps} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
         case 'HeroGeometric':
           return <HeroGeometric {...baseProps} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+        case 'HeroMulticolor':
+          return <HeroMulticolor {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         default:
           return <HeroCenter {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
       }

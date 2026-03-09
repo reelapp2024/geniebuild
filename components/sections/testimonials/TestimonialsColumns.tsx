@@ -11,7 +11,7 @@ interface TestimonialsColumnsProps {
   onAddItem?: () => void;
   titleClass?: string;
   titleStyle?: React.CSSProperties;
-  onElementSelect?: (elementId: string) => void;
+  onElementSelect?: (elementId: string, element?: WebsiteElement) => void;
   onElementUpdate?: (elementId: string, updates: any) => void;
   selectedElementId?: string | null;
   readOnly?: boolean;
@@ -86,11 +86,11 @@ export const TestimonialsColumns: React.FC<TestimonialsColumnsProps> = ({
       {/* HEADER SECTION */}
       <div className="mb-16 text-center max-w-3xl mx-auto">
         <div className="mb-4">
-          <ElementsSection isWrapped={false} section={{ ...section, elements: [getTitleElement()] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
+          <ElementsSection isWrapped={false} section={{ ...section, elements: [getTitleElement()] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} buttonClass={buttonClass} readOnly={readOnly} themeColors={themeColors} />
         </div>
         {content.subtitle && (
           <div className="opacity-70">
-            <ElementsSection isWrapped={false} section={{ ...section, elements: [getSubtitleElement()] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
+            <ElementsSection isWrapped={false} section={{ ...section, elements: [getSubtitleElement()] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} buttonClass={buttonClass} readOnly={readOnly} themeColors={themeColors} />
           </div>
         )}
       </div>
@@ -123,28 +123,28 @@ export const TestimonialsColumns: React.FC<TestimonialsColumnsProps> = ({
               
               {/* 1. Quote Text */}
               <div className="mb-8 relative z-10 pt-4">
-                <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('quote', 'text', { text: item.description || item.quote || item.content || item.text || '', textSize: 'large' }, { fontStyle: 'italic', opacity: '0.9', lineHeight: '1.7' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
+                <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('quote', 'text', { text: item.description || item.quote || item.content || item.text || '', textSize: 'large' }, { fontStyle: 'italic', opacity: '0.9', lineHeight: '1.7' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} buttonClass={buttonClass} readOnly={readOnly} themeColors={themeColors} />
               </div>
 
               {/* 2. Star Rating */}
               <div className="mb-8 flex justify-start relative z-10">
-                <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('stars', 'star-rating', { rating: 5, maxRating: 5 }, { color: styles.accentColor || '#F59E0B', fontSize: '14px' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
+                <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('stars', 'star-rating', { rating: 5, maxRating: 5 }, { color: styles.accentColor || '#F59E0B', fontSize: '14px' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} buttonClass={buttonClass} readOnly={readOnly} themeColors={themeColors} />
               </div>
               
               {/* 3. User Profile Block */}
               <div className="flex items-center gap-4 relative z-10">
                 {/* Avatar */}
                 <div className="shrink-0">
-                  <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('avatar', 'image', { imageUrl: item.avatar || item.image || item.imageUrl || '', alt: item.author || item.name || 'Avatar' }, { width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
+                  <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('avatar', 'image', { imageUrl: item.avatar || item.image || item.imageUrl || '', alt: item.author || item.name || 'Avatar' }, { width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} buttonClass={buttonClass} readOnly={readOnly} themeColors={themeColors} />
                 </div>
                 
                 {/* Name & Role */}
                 <div className="text-left flex-1">
                   <div className="mb-0.5">
-                    <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('name', 'heading', { text: item.author || item.name || item.title || '', htmlTag: 'h6' }, { fontWeight: 'bold', margin: '0' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
+                    <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('name', 'heading', { text: item.author || item.name || item.title || '', htmlTag: 'h6' }, { fontWeight: 'bold', margin: '0' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} buttonClass={buttonClass} readOnly={readOnly} themeColors={themeColors} />
                   </div>
                   <div>
-                    <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('role', 'text', { text: item.role || '', textSize: 'small' }, { opacity: '0.6', margin: '0' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} readOnly={readOnly} themeColors={themeColors} />
+                    <ElementsSection isWrapped={false} section={{ ...section, elements: [getEl('role', 'text', { text: item.role || '', textSize: 'small' }, { opacity: '0.6', margin: '0' })] }} onElementSelect={onElementSelect} selectedElementId={selectedElementId} onElementUpdate={onElementUpdate || (() => {})} onTextEdit={onTextEdit} buttonClass={buttonClass} readOnly={readOnly} themeColors={themeColors} />
                   </div>
                 </div>
               </div>

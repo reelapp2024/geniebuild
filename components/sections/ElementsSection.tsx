@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Section, WebsiteElement } from '../../types';
+import { useTheme } from '@ui/blocks';
 
 interface ElementsSectionProps {
   section: Section;
@@ -128,17 +129,19 @@ const getSafeStyle = (style: any): React.CSSProperties => {
 export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onElementUpdate, onElementSelect, selectedElementId, buttonClass, readOnly = false, isWrapped = true, themeColors }) => {
   const elements = section.elements || [];
   const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
+  const { themeData } = useTheme();
   
   // Get theme colors from section styles or passed prop
   // Include all global style properties for unified styling
+  // Fallback to ThemeProvider themeData if section styles are not set
   const styleAny = section.styles as any;
   const theme = themeColors || {
-    titleColor: section.styles?.titleColor,
-    textColor: section.styles?.textColor,
-    accentColor: section.styles?.accentColor,
-    buttonBackgroundColor: section.styles?.buttonBackgroundColor,
-    buttonTextColor: section.styles?.buttonTextColor,
-    backgroundColor: section.styles?.backgroundColor,
+    titleColor: section.styles?.titleColor || themeData?.heading,
+    textColor: section.styles?.textColor || themeData?.description,
+    accentColor: section.styles?.accentColor || themeData?.accent,
+    buttonBackgroundColor: section.styles?.buttonBackgroundColor || themeData?.primaryButton?.bg,
+    buttonTextColor: section.styles?.buttonTextColor || themeData?.primaryButton?.text,
+    backgroundColor: section.styles?.backgroundColor || themeData?.surface,
     // Global button styles
     buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
     buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,

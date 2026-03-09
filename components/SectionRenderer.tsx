@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Section, WebsiteElement } from '../types';
 import { SectionRouter } from './sections/SectionRouter';
+import { useTheme } from '@ui/blocks';
 
 interface SectionRendererProps {
   section: Section;
@@ -30,6 +31,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
   selectedElementId
 }) => {
   const { type, content, styles } = section;
+  const { themeData } = useTheme();
 
   const handleTextEdit = (key: keyof typeof content, value: string) => {
     if (readOnly) return;
@@ -122,7 +124,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     
     if (styles.background) {
       if (styles.background.type === 'color') {
-        bgStyles.backgroundColor = styles.background.color || styles.backgroundColor || '#000000';
+        bgStyles.backgroundColor = styles.background.color || styles.backgroundColor || themeData?.surface || '#000000';
       } else if (styles.background.type === 'gradient') {
         const gradient = styles.background.gradient;
         if (gradient) {
@@ -148,6 +150,9 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       }
       if (isCustomColor(styles.backgroundColor)) {
         bgStyles.backgroundColor = styles.backgroundColor;
+      } else if (!styles.backgroundColor && themeData?.surface) {
+        // Use theme surface color as default background if no background is set
+        bgStyles.backgroundColor = themeData.surface;
       }
     }
     
@@ -229,17 +234,103 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       };
     }
     
-    // 2. NEW BACKGROUND SYSTEM OVERLAY
-    if (styles.background?.type === 'image' && styles.background.image?.overlay?.enabled) {
-      const overlay = styles.background.image.overlay;
-      return {
-        show: true,
-        style: {
-          backgroundColor: overlay.color || '#000000',
-          opacity: overlay.opacity || 0.5,
-          mixBlendMode: overlay.blendMode || 'normal'
+    // Helper to get theme overlay defaults
+    const getThemeOverlayDefaults = () => {
+      if (themeData?.overlay) {
+        const themeOverlay = themeData.overlay;
+        let overlayOpacity = 0.5;
+        if (themeOverlay.color) {
+          const rgbaMatch = themeOverlay.color.match(/rgba?\([^)]+\)/);
+          if (rgbaMatch) {
+            const rgbaValues = rgbaMatch[0].match(/[\d.]+/g);
+            if (rgbaValues && rgbaValues.length >= 4) {
+              overlayOpacity = parseFloat(rgbaValues[3]);
+            }
+          }
         }
+        return {
+          color: themeOverlay.color || '#000000',
+          opacity: overlayOpacity,
+          blendMode: (themeOverlay.blend as any) || 'multiply'
+        };
+      }
+      return {
+        color: '#000000',
+        opacity: 0.5,
+        blendMode: 'normal' as const
       };
+    };
+    
+    // 2. NEW BACKGROUND SYSTEM OVERLAY - Color Background
+    if (styles.background?.type === 'color') {
+      const overlay = styles.background.overlay;
+      const themeDefaults = getThemeOverlayDefaults();
+      // Overlay is enabled by default (unless explicitly disabled)
+      const isEnabled = overlay?.enabled !== false;
+      
+      if (isEnabled) {
+        // Use overlay settings if they exist, otherwise use theme defaults
+        const overlayColor = overlay?.color || themeDefaults.color;
+        const overlayOpacity = overlay?.opacity !== undefined ? overlay.opacity : themeDefaults.opacity;
+        const overlayBlendMode = overlay?.blendMode || themeDefaults.blendMode;
+        
+        return {
+          show: true,
+          style: {
+            backgroundColor: overlayColor,
+            opacity: overlayOpacity,
+            mixBlendMode: overlayBlendMode as any
+          }
+        };
+      }
+    }
+    
+    // 3. NEW BACKGROUND SYSTEM OVERLAY - Image Background
+    if (styles.background?.type === 'image') {
+      const overlay = styles.background.image?.overlay;
+      const themeDefaults = getThemeOverlayDefaults();
+      // Overlay is enabled by default (unless explicitly disabled)
+      const isEnabled = overlay?.enabled !== false;
+      
+      if (isEnabled && styles.background.image?.url) {
+        // Use overlay settings if they exist, otherwise use theme defaults
+        const overlayColor = overlay?.color || themeDefaults.color;
+        const overlayOpacity = overlay?.opacity !== undefined ? overlay.opacity : themeDefaults.opacity;
+        const overlayBlendMode = overlay?.blendMode || themeDefaults.blendMode;
+        
+        return {
+          show: true,
+          style: {
+            backgroundColor: overlayColor,
+            opacity: overlayOpacity,
+            mixBlendMode: overlayBlendMode as any
+          }
+        };
+      }
+    }
+    
+    // 4. NEW BACKGROUND SYSTEM OVERLAY - Gradient Background
+    if (styles.background?.type === 'gradient') {
+      const overlay = styles.background.overlay;
+      const themeDefaults = getThemeOverlayDefaults();
+      // Overlay is enabled by default (unless explicitly disabled)
+      const isEnabled = overlay?.enabled !== false;
+      
+      if (isEnabled) {
+        // Use overlay settings if they exist, otherwise use theme defaults
+        const overlayColor = overlay?.color || themeDefaults.color;
+        const overlayOpacity = overlay?.opacity !== undefined ? overlay.opacity : themeDefaults.opacity;
+        const overlayBlendMode = overlay?.blendMode || themeDefaults.blendMode;
+        
+        return {
+          show: true,
+          style: {
+            backgroundColor: overlayColor,
+            opacity: overlayOpacity,
+            mixBlendMode: overlayBlendMode as any
+          }
+        };
+      }
     }
     
     return { show: false, style: {} };
