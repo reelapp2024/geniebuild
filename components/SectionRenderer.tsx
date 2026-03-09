@@ -297,7 +297,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       )}
       
       {isSelected && !readOnly && (
-        <div className="absolute top-4 right-4 z-50 flex items-center space-x-2 bg-black/90 backdrop-blur-md p-1.5 rounded-lg shadow-2xl border border-white/10">
+        <div className="absolute top-4 right-4 z-50 flex items-center space-x-2 bg-black/90 backdrop-blur-md p-1.5 rounded-lg shadow-2xl border border-white/10 font-sans">
             <div className="px-3 text-[10px] font-black uppercase tracking-widest text-white">Section {type}</div>
             
             {!isFixedSection && (

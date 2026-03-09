@@ -663,27 +663,39 @@ const FontSizeInput = ({ label, value, onChange, placeholder }: { label: string,
   );
 };
 
-const SelectInput = ({ label, value, options, onChange, className = '' }: any) => (
-  <div className={`flex flex-col space-y-2 ${className}`}>
-    {label && <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</label>}
-    <select
-      value={value || ''}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
-    >
-      {options.map((opt: any, i: number) => {
-        const isObj = typeof opt === 'object' && opt !== null;
-        const optValue = isObj ? opt.value : opt;
-        const optLabel = isObj ? opt.label : opt;
-        return (
-          <option key={isObj ? `${optValue}-${i}` : opt} value={optValue} className="bg-[#151515] text-white">
-            {optLabel}
-          </option>
-        );
-      })}
-    </select>
-  </div>
-);
+const SelectInput = ({ label, value, options, onChange, className = '' }: any) => {
+  // Helper to check if this is likely a font dropdown
+  const isFontSelect = label?.toLowerCase().includes('font');
+  
+  return (
+    <div className={`flex flex-col space-y-2 ${className}`}>
+      {label && <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</label>}
+      <select
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
+        style={isFontSelect && value ? { fontFamily: value } : {}}
+      >
+        {options.map((opt: any, i: number) => {
+          const isObj = typeof opt === 'object' && opt !== null;
+          const optValue = isObj ? opt.value : opt;
+          const optLabel = isObj ? opt.label : opt;
+
+          return (
+            <option 
+              key={isObj ? `${optValue}-${i}` : opt} 
+              value={optValue} 
+              className="bg-[#151515] text-white"
+              style={isFontSelect && optValue ? { fontFamily: optValue } : {}}
+            >
+              {optLabel}
+            </option>
+          );
+        })}
+      </select>
+    </div>
+  );
+};
 
 // Comprehensive Background Control Component
 const BackgroundControl = ({ 
