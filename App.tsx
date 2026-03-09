@@ -2487,9 +2487,20 @@ const AppContent: React.FC = () => {
                            label="Font Family"
                            value={styles.fontFamily || ''}
                            options={[
-                             { label: `Theme Default (${themeData?.typography?.fontFamily || themeData?.fontFamily || 'Inter'})`, value: '' },
-                             'Inter', 'Roboto', 'Open Sans', 'Lato', 'Poppins', 'Montserrat', 'Playfair Display', 'Merriweather', 'Nunito', 'Arial', 'Helvetica', 'Georgia'
-                           ]}
+  { label: `Theme Default (${themeData?.typography?.fontFamily || themeData?.fontFamily || 'Inter'})`, value: '' },
+  { label: 'Inter', value: 'Inter, sans-serif' },
+  { label: 'Roboto', value: 'Roboto, sans-serif' },
+  { label: 'Open Sans', value: '"Open Sans", sans-serif' },
+  { label: 'Lato', value: 'Lato, sans-serif' },
+  { label: 'Poppins', value: 'Poppins, sans-serif' },
+  { label: 'Montserrat', value: 'Montserrat, sans-serif' },
+  { label: 'Playfair Display', value: '"Playfair Display", serif' },
+  { label: 'Merriweather', value: 'Merriweather, serif' },
+  { label: 'Nunito', value: 'Nunito, sans-serif' },
+  { label: 'Arial', value: 'Arial, sans-serif' },
+  { label: 'Helvetica', value: 'Helvetica, sans-serif' },
+  { label: 'Georgia', value: 'Georgia, serif' }
+]}
                            onChange={(v: string) => {
                                // If empty string, remove fontFamily to use theme default
                                if (v === '') {
