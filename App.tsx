@@ -2742,7 +2742,21 @@ const AppContent: React.FC = () => {
 
   const addNewSection = (type: SectionType) => {
     const template = SECTION_TEMPLATES[type] || SECTION_TEMPLATES.hero;
-    const newSection: Section = { ...template as Section, id: `section-${Date.now()}` };
+    const defaultVariant = template.styles?.variant || 'center';
+    
+    // Ensure the new section gets its specific variant overrides immediately
+    const variantOverrides = template.variantOverrides?.[defaultVariant] || {};
+    
+    const newSection: Section = { 
+        ...template, 
+        id: `section-${Date.now()}`,
+        type: template.type || type,
+        styles: {
+            ...template.styles,
+            ...variantOverrides
+        }
+    } as Section;
+    
     setSiteData(prev => {
         const sections = [...prev.sections];
         const heroIdx = sections.findIndex(s => s.type === 'hero');

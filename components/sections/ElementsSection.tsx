@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Section, WebsiteElement } from '../../types';
 import { useTheme } from '@ui/blocks';
+import { ELEMENT_DEFAULTS } from '../../constants';
 
 interface ElementsSectionProps {
   section: Section;
@@ -196,17 +197,23 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
     const isSelected = selectedElementId === id;
     const selectedClass = isSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black z-20' : 'hover:ring-1 hover:ring-white/20';
 
+    // STEP 1: Merge Global Element Defaults with Element's specific style
+    const renderStyle = {
+      ...(ELEMENT_DEFAULTS[el.type] || {}),
+      ...(el.style || {})
+    };
+
     // Merge element style with theme colors (only if element doesn't have explicit colors)
-    let mergedStyle = { ...style };
+    let mergedStyle = { ...renderStyle };
     if (theme) {
       // Only apply theme colors if element doesn't have explicit colors
-      if (!style?.color || style.color === 'transparent' || style.color === '') {
+      if (!renderStyle?.color || renderStyle.color === 'transparent' || renderStyle.color === '') {
         mergedStyle.color = theme.textColor;
       }
       // For buttons, use button theme colors
-      if ((type === 'button' || type === 'call-to-action') && (!style?.backgroundColor || style.backgroundColor === 'transparent' || style.backgroundColor === '')) {
+      if ((type === 'button' || type === 'call-to-action') && (!renderStyle?.backgroundColor || renderStyle.backgroundColor === 'transparent' || renderStyle.backgroundColor === '')) {
         mergedStyle.backgroundColor = theme.buttonBackgroundColor;
-        if (!style?.color || style.color === 'transparent' || style.color === '') {
+        if (!renderStyle?.color || renderStyle.color === 'transparent' || renderStyle.color === '') {
           mergedStyle.color = theme.buttonTextColor;
         }
       }
@@ -327,9 +334,9 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             };
             
             // CRITICAL: Use display: flex and map element.style.textAlign to justify-content
-            // Read textAlign directly from element.style (before getSafeStyle processes it)
+            // Read textAlign directly from renderStyle (which includes ELEMENT_DEFAULTS)
             // Then fallback to theme styles
-            const elementTextAlign = (style?.textAlign as string) || undefined;
+            const elementTextAlign = (renderStyle?.textAlign as string) || undefined;
             const buttonTextAlign = elementTextAlign || theme?.buttonAlign || theme?.textAlign || 'center';
             
             return (
@@ -371,13 +378,13 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 ? (imageUrl.startsWith('http') ? imageUrl : `http://localhost:1111${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`)
                 : 'https://via.placeholder.com/600x400';
             
-            // Extract image-specific styles from original style (before getSafeStyle removes custom properties)
-            const imageOpacity = (style?.opacity !== undefined ? (typeof style.opacity === 'string' ? parseFloat(style.opacity) : style.opacity) : (safeStyle.opacity !== undefined ? (typeof safeStyle.opacity === 'string' ? parseFloat(safeStyle.opacity) : safeStyle.opacity) : 1));
-            const objectFit = (style?.objectFit || safeStyle.objectFit || 'cover') as any;
-            const objectPosition = (style?.objectPosition || safeStyle.objectPosition || 'center') as string;
-            const imageFilter = (style?.filter || safeStyle.filter || '') as string;
-            const overlayColor = (style as any)?.overlayColor;
-            const overlayOpacity = (style as any)?.overlayOpacity !== undefined ? (typeof (style as any).overlayOpacity === 'string' ? parseFloat((style as any).overlayOpacity) : (style as any).overlayOpacity) : 0;
+            // Extract image-specific styles from renderStyle (which includes ELEMENT_DEFAULTS)
+            const imageOpacity = (renderStyle?.opacity !== undefined ? (typeof renderStyle.opacity === 'string' ? parseFloat(renderStyle.opacity) : renderStyle.opacity) : (safeStyle.opacity !== undefined ? (typeof safeStyle.opacity === 'string' ? parseFloat(safeStyle.opacity) : safeStyle.opacity) : 1));
+            const objectFit = (renderStyle?.objectFit || safeStyle.objectFit || 'cover') as any;
+            const objectPosition = (renderStyle?.objectPosition || safeStyle.objectPosition || 'center') as string;
+            const imageFilter = (renderStyle?.filter || safeStyle.filter || '') as string;
+            const overlayColor = (renderStyle as any)?.overlayColor;
+            const overlayOpacity = (renderStyle as any)?.overlayOpacity !== undefined ? (typeof (renderStyle as any).overlayOpacity === 'string' ? parseFloat((renderStyle as any).overlayOpacity) : (renderStyle as any).overlayOpacity) : 0;
             
             // Build image style
             const imageStyle: React.CSSProperties = {
