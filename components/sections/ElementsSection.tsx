@@ -346,19 +346,17 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
 
         case 'image':
-            // Construct full image URL - if it's a relative path, prepend base URL
-            const imageUrl = content.imageUrl || content.src || '';
-            const fullImageUrl = imageUrl 
-                ? (imageUrl.startsWith('http') ? imageUrl : `http://localhost:1111${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`)
-                : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
-            
             const objectFit = (renderStyle?.objectFit || 'cover') as any;
             const objectPosition = (renderStyle?.objectPosition || 'center') as string;
             const overlayColor = (renderStyle as any)?.overlayColor;
             const overlayOpacity = (renderStyle as any)?.overlayOpacity !== undefined ? parseFloat((renderStyle as any).overlayOpacity) : 0;
             
-            // 1. The Wrapper handles the Shape, Border, Shadow, and Filtering
-            const wrapperStyle: React.CSSProperties = {
+            const imageUrl = content.imageUrl || content.src || '';
+            const fullImageUrl = imageUrl 
+                ? (imageUrl.startsWith('http') ? imageUrl : `http://localhost:1111${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`)
+                : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
+            // 1. Core Outer Style (No hardcoded boxShadow here!)
+            const outerStyle: React.CSSProperties = {
                 position: 'relative',
                 width: renderStyle?.width || '100%',
                 aspectRatio: renderStyle?.aspectRatio || 'auto',
@@ -366,14 +364,28 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 borderWidth: renderStyle?.borderWidth || '0px',
                 borderStyle: renderStyle?.borderStyle || 'none',
                 borderColor: renderStyle?.borderColor || 'transparent',
-                boxShadow: renderStyle?.boxShadow || 'none',
                 filter: renderStyle?.filter || 'none',
-                overflow: 'hidden', // CRITICAL: Clips the overlay to the border radius!
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
             };
-            // 2. The Image just fills the wrapper
+            // 2. The Professional Shadow & Ring Merger
+            let finalBoxShadow = (renderStyle?.boxShadow && renderStyle.boxShadow !== 'none') ? renderStyle.boxShadow : undefined;
+            
+            if (isSelected && !readOnly) {
+                // Tailwind's exact ring-2 ring-blue-500 ring-offset-2 ring-offset-black equivalent
+                const ringShadow = '0 0 0 2px #000000, 0 0 0 4px #3b82f6';
+                // Merge user shadow with selection ring, or just apply ring
+                finalBoxShadow = finalBoxShadow ? `${finalBoxShadow}, ${ringShadow}` : ringShadow;
+            }
+            if (finalBoxShadow) {
+                outerStyle.boxShadow = finalBoxShadow;
+            }
+            // 3. Inner Style (Safely handles clipping)
+            const innerStyle: React.CSSProperties = {
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                borderRadius: 'inherit',
+                overflow: 'hidden',
+            };
             const imgStyle: React.CSSProperties = {
                 width: '100%',
                 height: '100%',
@@ -382,26 +394,32 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 opacity: renderStyle?.opacity !== undefined ? renderStyle.opacity : 1,
             };
             return (
-                <div key={id} className={`group transition-all duration-300 ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black' : ''}`} onClick={!readOnly ? (e) => handleClick(e, el) : undefined} style={wrapperStyle}>
-                    <img
-                        src={fullImageUrl}
-                        alt={content.imageAlt || content.alt || 'Image'}
-                        style={imgStyle}
-                        onError={(e) => {
-                            // Fallback to placeholder if image fails to load
-                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x400';
-                        }}
-                    />
-                    {/* Overlay is now perfectly clipped by the wrapper */}
-                    {overlayOpacity > 0 && (
-                        <div
-                            className="absolute inset-0 pointer-events-none transition-opacity duration-300"
-                            style={{
-                                backgroundColor: overlayColor || '#000000',
-                                opacity: overlayOpacity,
+                <div 
+                    key={id}
+                    style={outerStyle} 
+                    className="group transition-all duration-300"
+                    onClick={!readOnly ? (e) => handleClick(e, el) : undefined}
+                >
+                    <div style={innerStyle}>
+                        <img
+                            src={fullImageUrl}
+                            alt={content.imageAlt || content.altText || content.alt || 'Image'}
+                            style={imgStyle}
+                            onError={(e) => {
+                                // Fallback to placeholder if image fails to load
+                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x400';
                             }}
                         />
-                    )}
+                        {overlayOpacity > 0 && (
+                            <div
+                                className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+                                style={{
+                                    backgroundColor: overlayColor || '#000000',
+                                    opacity: overlayOpacity,
+                                }}
+                            />
+                        )}
+                    </div>
                 </div>
             );
 
