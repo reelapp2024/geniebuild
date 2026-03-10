@@ -2500,12 +2500,12 @@ const AppContent: React.FC = () => {
                            value={styles.background?.overlay?.color || styles.background?.image?.overlay?.color || styles.overlayColor || 'transparent'}
                            onChange={(v) => {
                              onUpdate('overlayColor', v);
-                             // Save to standard overlay
-                             onUpdate('background', { ...styles.background, overlay: { ...(styles.background?.overlay || {}), color: v, enabled: v !== 'transparent' } });
-                             // Sync to image overlay if image type is active
-                             if (styles.background?.type === 'image' && styles.background?.image) {
-                               onUpdate('background', { ...styles.background, image: { ...styles.background.image, overlay: { ...(styles.background.image.overlay || {}), color: v, enabled: v !== 'transparent' } } });
+                             const newBg = { ...(styles.background || {}) };
+                             newBg.overlay = { ...(newBg.overlay || {}), color: v, enabled: v !== 'transparent' };
+                             if (newBg.type === 'image' && newBg.image) {
+                               newBg.image = { ...newBg.image, overlay: { ...(newBg.image.overlay || {}), color: v, enabled: v !== 'transparent' } };
                              }
+                             onUpdate('background', newBg);
                            }}
                          />
                          <RangeInput
@@ -2514,10 +2514,12 @@ const AppContent: React.FC = () => {
                            min={0} max={1} step={0.05}
                            onChange={(v) => {
                              onUpdate('overlayOpacityValue', v.toString());
-                             onUpdate('background', { ...styles.background, overlay: { ...(styles.background?.overlay || {}), opacity: v } });
-                             if (styles.background?.type === 'image' && styles.background?.image) {
-                               onUpdate('background', { ...styles.background, image: { ...styles.background.image, overlay: { ...(styles.background.image.overlay || {}), opacity: v } } });
+                             const newBg = { ...(styles.background || {}) };
+                             newBg.overlay = { ...(newBg.overlay || {}), opacity: v };
+                             if (newBg.type === 'image' && newBg.image) {
+                               newBg.image = { ...newBg.image, overlay: { ...(newBg.image.overlay || {}), opacity: v } };
                              }
+                             onUpdate('background', newBg);
                            }}
                          />
                          <SelectInput
@@ -2537,10 +2539,12 @@ const AppContent: React.FC = () => {
                            ]}
                            onChange={(v) => {
                              onUpdate('overlayBlendMode', v);
-                             onUpdate('background', { ...styles.background, overlay: { ...(styles.background?.overlay || {}), blendMode: v } });
-                             if (styles.background?.type === 'image' && styles.background?.image) {
-                               onUpdate('background', { ...styles.background, image: { ...styles.background.image, overlay: { ...(styles.background.image.overlay || {}), blendMode: v } } });
+                             const newBg = { ...(styles.background || {}) };
+                             newBg.overlay = { ...(newBg.overlay || {}), blendMode: v };
+                             if (newBg.type === 'image' && newBg.image) {
+                               newBg.image = { ...newBg.image, overlay: { ...(newBg.image.overlay || {}), blendMode: v } };
                              }
+                             onUpdate('background', newBg);
                            }}
                          />
                        </div>

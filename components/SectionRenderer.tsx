@@ -222,7 +222,8 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
   // THE FIX: Properly prioritize Theme Overlay colors over the background image block
   const getOverlayStyles = (): { style: React.CSSProperties, show: boolean } => {
     // 1. Primary Source: Unified Background Object
-    const bgOverlay = styles.background?.overlay || styles.background?.image?.overlay;
+    // Prioritize image overlay when background type is 'image'
+    const bgOverlay = (styles.background?.type === 'image' ? styles.background?.image?.overlay : styles.background?.overlay) || styles.background?.overlay || styles.background?.image?.overlay;
     
     // 2. Secondary Source: Legacy Flat Properties
     const legacyColor = styles.overlayColor;
