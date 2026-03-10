@@ -350,50 +350,58 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             const imageUrl = content.imageUrl || content.src || '';
             const fullImageUrl = imageUrl 
                 ? (imageUrl.startsWith('http') ? imageUrl : `http://localhost:1111${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`)
-                : 'https://via.placeholder.com/600x400';
+                : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
             
-            // Extract image-specific styles from renderStyle (which includes ELEMENT_DEFAULTS)
-            const imageOpacity = (renderStyle?.opacity !== undefined ? (typeof renderStyle.opacity === 'string' ? parseFloat(renderStyle.opacity) : renderStyle.opacity) : (safeStyle.opacity !== undefined ? (typeof safeStyle.opacity === 'string' ? parseFloat(safeStyle.opacity) : safeStyle.opacity) : 1));
-            const objectFit = (renderStyle?.objectFit || safeStyle.objectFit || 'cover') as any;
-            const objectPosition = (renderStyle?.objectPosition || safeStyle.objectPosition || 'center') as string;
-            const imageFilter = (renderStyle?.filter || safeStyle.filter || '') as string;
+            const objectFit = (renderStyle?.objectFit || 'cover') as any;
+            const objectPosition = (renderStyle?.objectPosition || 'center') as string;
             const overlayColor = (renderStyle as any)?.overlayColor;
-            const overlayOpacity = (renderStyle as any)?.overlayOpacity !== undefined ? (typeof (renderStyle as any).overlayOpacity === 'string' ? parseFloat((renderStyle as any).overlayOpacity) : (renderStyle as any).overlayOpacity) : 0;
+            const overlayOpacity = (renderStyle as any)?.overlayOpacity !== undefined ? parseFloat((renderStyle as any).overlayOpacity) : 0;
             
-            // Build image style
-            const imageStyle: React.CSSProperties = {
+            // 1. The Wrapper handles the Shape, Border, Shadow, and Filtering
+            const wrapperStyle: React.CSSProperties = {
+                position: 'relative',
+                width: renderStyle?.width || '100%',
+                aspectRatio: renderStyle?.aspectRatio || 'auto',
+                borderRadius: renderStyle?.borderRadius || '0%',
+                borderWidth: renderStyle?.borderWidth || '0px',
+                borderStyle: renderStyle?.borderStyle || 'none',
+                borderColor: renderStyle?.borderColor || 'transparent',
+                boxShadow: renderStyle?.boxShadow || 'none',
+                filter: renderStyle?.filter || 'none',
+                overflow: 'hidden', // CRITICAL: Clips the overlay to the border radius!
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+            };
+            // 2. The Image just fills the wrapper
+            const imgStyle: React.CSSProperties = {
                 width: '100%',
                 height: '100%',
-                opacity: imageOpacity,
-                objectFit: objectFit as any,
+                objectFit: objectFit,
                 objectPosition: objectPosition,
-                filter: imageFilter || undefined,
+                opacity: renderStyle?.opacity !== undefined ? renderStyle.opacity : 1,
             };
-            
             return (
-                <div key={id} className={`relative group cursor-pointer inline-block max-w-full ${selectedClass}`} onClick={!readOnly ? (e) => handleClick(e, el) : undefined} style={{ ...safeStyle, opacity: undefined }}>
-                    <div className="relative w-full h-full">
-                        <img 
-                            src={fullImageUrl} 
-                            alt={content.imageAlt || content.alt || 'Image'} 
-                            className="max-w-full h-auto"
-                            style={imageStyle}
-                            onError={(e) => {
-                                // Fallback to placeholder if image fails to load
-                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x400';
+                <div key={id} className={`group transition-all duration-300 ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black' : ''}`} onClick={!readOnly ? (e) => handleClick(e, el) : undefined} style={wrapperStyle}>
+                    <img
+                        src={fullImageUrl}
+                        alt={content.imageAlt || content.alt || 'Image'}
+                        style={imgStyle}
+                        onError={(e) => {
+                            // Fallback to placeholder if image fails to load
+                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x400';
+                        }}
+                    />
+                    {/* Overlay is now perfectly clipped by the wrapper */}
+                    {overlayOpacity > 0 && (
+                        <div
+                            className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+                            style={{
+                                backgroundColor: overlayColor || '#000000',
+                                opacity: overlayOpacity,
                             }}
                         />
-                        {/* Overlay */}
-                        {overlayColor && overlayOpacity > 0 && (
-                            <div 
-                                className="absolute inset-0 pointer-events-none"
-                                style={{
-                                    backgroundColor: overlayColor,
-                                    opacity: overlayOpacity,
-                                }}
-                            />
-                        )}
-                    </div>
+                    )}
                 </div>
             );
 

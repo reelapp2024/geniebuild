@@ -7,7 +7,17 @@ export const ELEMENT_DEFAULTS: Record<string, any> = {
   heading: { color: '#F8FAFC', fontWeight: 'bold' ,textAlign: 'center'},
   text: { color: '#D1D5DB', opacity: 1 ,textAlign: 'center'},
   icon: { fontSize: '24px', color: '#3b82f6' },
-  image: { objectFit: 'cover', width: '100%' },
+  image: { 
+    objectFit: 'cover', 
+    width: '100%',
+    aspectRatio: 'auto',
+    borderRadius: '0%',
+    borderWidth: '0px',
+    borderStyle: 'none',
+    borderColor: 'transparent',
+    boxShadow: 'none',
+    filter: 'none'
+  },
   'star-rating': { color: '#F59E0B' }
 };
 

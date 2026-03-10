@@ -2634,133 +2634,86 @@ const AppContent: React.FC = () => {
                   </AccordionGroup>
               )}
               {context === 'element' && elementType === 'image' && (
-                  <>
-                      <AccordionGroup title="Image Effects" defaultOpen={true}>
-                          <RangeInput 
-                              label="Opacity" 
-                              value={styles.opacity !== undefined ? Math.round(parseFloat(styles.opacity) * 100) : 100} 
-                              min={0} 
-                              max={100} 
-                              step={1} 
-                              unit="%" 
-                              onChange={(v) => onUpdate('opacity', (v / 100).toString())} 
-                          />
-                          <ColorInput 
-                              label="Overlay Color" 
-                              value={styles.overlayColor || ''} 
-                              onChange={(v) => onUpdate('overlayColor', v)} 
-                          />
-                          <RangeInput 
-                              label="Overlay Opacity" 
-                              value={styles.overlayOpacity !== undefined ? Math.round(parseFloat(styles.overlayOpacity) * 100) : 0} 
-                              min={0} 
-                              max={100} 
-                              step={1} 
-                              unit="%" 
-                              onChange={(v) => onUpdate('overlayOpacity', (v / 100).toString())} 
-                          />
-                          <SelectInput 
-                              label="Object Fit" 
-                              value={styles.objectFit || 'cover'} 
-                              options={[
-                                  {label: 'Cover', value: 'cover'},
-                                  {label: 'Contain', value: 'contain'},
-                                  {label: 'Fill', value: 'fill'},
-                                  {label: 'None', value: 'none'},
-                                  {label: 'Scale Down', value: 'scale-down'}
-                              ]} 
-                              onChange={(v) => onUpdate('objectFit', v)} 
-                          />
-                          <SelectInput 
-                              label="Object Position" 
-                              value={styles.objectPosition || 'center'} 
-                              options={[
-                                  {label: 'Center', value: 'center'},
-                                  {label: 'Top', value: 'top'},
-                                  {label: 'Bottom', value: 'bottom'},
-                                  {label: 'Left', value: 'left'},
-                                  {label: 'Right', value: 'right'},
-                                  {label: 'Top Left', value: 'top left'},
-                                  {label: 'Top Right', value: 'top right'},
-                                  {label: 'Bottom Left', value: 'bottom left'},
-                                  {label: 'Bottom Right', value: 'bottom right'}
-                              ]} 
-                              onChange={(v) => onUpdate('objectPosition', v)} 
-                          />
-                      </AccordionGroup>
-                      <AccordionGroup title="Filters">
-                          <RangeInput 
-                              label="Brightness" 
-                              value={styles.filter?.includes('brightness') ? Math.round(parseFloat(styles.filter.match(/brightness\(([^)]+)\)/)?.[1] || '1') * 100) : 100} 
-                              min={0} 
-                              max={200} 
-                              step={1} 
-                              unit="%" 
-                              onChange={(v) => {
-                                  const currentFilter = styles.filter || '';
-                                  const brightness = `brightness(${v / 100})`;
-                                  const newFilter = currentFilter.replace(/brightness\([^)]+\)/g, '').trim() + ' ' + brightness;
-                                  onUpdate('filter', newFilter.trim());
-                              }} 
-                          />
-                          <RangeInput 
-                              label="Contrast" 
-                              value={styles.filter?.includes('contrast') ? Math.round(parseFloat(styles.filter.match(/contrast\(([^)]+)\)/)?.[1] || '1') * 100) : 100} 
-                              min={0} 
-                              max={200} 
-                              step={1} 
-                              unit="%" 
-                              onChange={(v) => {
-                                  const currentFilter = styles.filter || '';
-                                  const contrast = `contrast(${v / 100})`;
-                                  const newFilter = currentFilter.replace(/contrast\([^)]+\)/g, '').trim() + ' ' + contrast;
-                                  onUpdate('filter', newFilter.trim());
-                              }} 
-                          />
-                          <RangeInput 
-                              label="Saturation" 
-                              value={styles.filter?.includes('saturate') ? Math.round(parseFloat(styles.filter.match(/saturate\(([^)]+)\)/)?.[1] || '1') * 100) : 100} 
-                              min={0} 
-                              max={200} 
-                              step={1} 
-                              unit="%" 
-                              onChange={(v) => {
-                                  const currentFilter = styles.filter || '';
-                                  const saturate = `saturate(${v / 100})`;
-                                  const newFilter = currentFilter.replace(/saturate\([^)]+\)/g, '').trim() + ' ' + saturate;
-                                  onUpdate('filter', newFilter.trim());
-                              }} 
-                          />
-                          <RangeInput 
-                              label="Blur" 
-                              value={styles.filter?.includes('blur') ? Math.round(parseFloat(styles.filter.match(/blur\(([^)]+)\)/)?.[1] || '0') * 10) : 0} 
-                              min={0} 
-                              max={100} 
-                              step={1} 
-                              unit="px" 
-                              onChange={(v) => {
-                                  const currentFilter = styles.filter || '';
-                                  const blur = `blur(${v / 10}px)`;
-                                  const newFilter = currentFilter.replace(/blur\([^)]+\)/g, '').trim() + ' ' + blur;
-                                  onUpdate('filter', newFilter.trim());
-                              }} 
-                          />
-                          <RangeInput 
-                              label="Hue Rotate" 
-                              value={styles.filter?.includes('hue-rotate') ? Math.round(parseFloat(styles.filter.match(/hue-rotate\(([^)]+)\)/)?.[1] || '0')) : 0} 
-                              min={0} 
-                              max={360} 
-                              step={1} 
-                              unit="deg" 
-                              onChange={(v) => {
-                                  const currentFilter = styles.filter || '';
-                                  const hueRotate = `hue-rotate(${v}deg)`;
-                                  const newFilter = currentFilter.replace(/hue-rotate\([^)]+\)/g, '').trim() + ' ' + hueRotate;
-                                  onUpdate('filter', newFilter.trim());
-                              }} 
-                          />
-                      </AccordionGroup>
-                  </>
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-white/10 pb-2">Shape & Structure</h4>
+                  <SelectInput
+                    label="Image Shape (Aspect Ratio)"
+                    value={styles.aspectRatio || 'auto'}
+                    options={[
+                      { label: 'Original (Auto)', value: 'auto' },
+                      { label: 'Square (1:1)', value: '1 / 1' },
+                      { label: 'Landscape (16:9)', value: '16 / 9' },
+                      { label: 'Portrait (3:4)', value: '3 / 4' }
+                    ]}
+                    onChange={(v: string) => onUpdate('aspectRatio', v)}
+                  />
+                  <RangeInput
+                    label="Corner Roundness (%)"
+                    value={parseFloat(styles.borderRadius) || 0}
+                    min={0} max={50} step={1}
+                    onChange={(v: number) => onUpdate('borderRadius', `${v}%`)}
+                  />
+                  <SelectInput
+                    label="Image Fit"
+                    value={styles.objectFit || 'cover'}
+                    options={['cover', 'contain', 'fill']}
+                    onChange={(v: string) => onUpdate('objectFit', v)}
+                  />
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-white/10 pb-2 pt-2">Borders & Effects</h4>
+                  <RangeInput
+                    label="Border Width (px)"
+                    value={parseFloat(styles.borderWidth) || 0}
+                    min={0} max={20} step={1}
+                    onChange={(v: number) => {
+                      onUpdate('borderWidth', `${v}px`);
+                      if (v > 0 && (!styles.borderStyle || styles.borderStyle === 'none')) onUpdate('borderStyle', 'solid');
+                      if (v === 0) onUpdate('borderStyle', 'none');
+                    }}
+                  />
+                  {(parseFloat(styles.borderWidth) > 0) && (
+                    <ColorInput
+                      label="Border Color"
+                      value={styles.borderColor || '#ffffff'}
+                      onChange={(v: string) => onUpdate('borderColor', v)}
+                    />
+                  )}
+                  <SelectInput
+                    label="Box Shadow"
+                    value={styles.boxShadow || 'none'}
+                    options={[
+                      { label: 'None', value: 'none' },
+                      { label: 'Soft Drop', value: '0 10px 15px -3px rgba(0, 0, 0, 0.3)' },
+                      { label: 'Heavy Float', value: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' },
+                      { label: 'Glow Effect', value: `0 0 30px ${themeColors?.accentColor || 'rgba(255,255,255,0.3)'}` }
+                    ]}
+                    onChange={(v: string) => onUpdate('boxShadow', v)}
+                  />
+                  <SelectInput
+                    label="Color Filter"
+                    value={styles.filter || 'none'}
+                    options={[
+                      { label: 'Normal', value: 'none' },
+                      { label: 'Grayscale', value: 'grayscale(100%)' },
+                      { label: 'Sepia Vintage', value: 'sepia(100%)' },
+                      { label: 'High Contrast', value: 'contrast(150%) saturate(150%)' },
+                      { label: 'Blurred Soft', value: 'blur(4px)' }
+                    ]}
+                    onChange={(v: string) => onUpdate('filter', v)}
+                  />
+                  
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-white/10 pb-2 pt-2">Image Tint Overlay</h4>
+                  <ColorInput
+                    label="Overlay Color"
+                    value={styles.overlayColor || 'transparent'}
+                    onChange={(v: string) => onUpdate('overlayColor', v)}
+                  />
+                  <RangeInput
+                    label="Overlay Opacity"
+                    value={parseFloat(styles.overlayOpacity || '0')}
+                    min={0} max={1} step={0.05}
+                    onChange={(v: number) => onUpdate('overlayOpacity', v.toString())}
+                  />
+                </div>
               )}
           </div>
       );
