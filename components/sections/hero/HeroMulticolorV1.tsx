@@ -2,6 +2,7 @@ import React from 'react';
 import { Section, WebsiteElement } from '../../../types';
 import { ElementsSection } from '../ElementsSection';
 import { useTheme } from '@ui/blocks';
+import { PRESET_THEMES } from '../../../constants';
 
 interface HeroProps {
   section: Section;
@@ -88,10 +89,18 @@ export const HeroMulticolorV1: React.FC<HeroProps> = ({
       color: themeData?.overlay?.color || 'rgba(14, 16, 20, 0)',
       blend: themeData?.overlay?.blend || 'multiply'
     },
-    badge: {
-      background: themeData?.badge?.background || 'rgba(225,29,72,0.15)',
-      text: themeData?.badge?.text || '#F8FAFC'
-    },
+    badge: (() => {
+      const preset = PRESET_THEMES.find(t => t.elements.surface.toLowerCase() === (styles?.backgroundColor || '').toLowerCase());
+      if (preset) {
+        return { background: preset.elements.badge.background, text: preset.elements.badge.text };
+      }
+      const hex = styles?.buttonBackgroundColor || '#3b82f6';
+      let r = 59, g = 130, b = 246;
+      if (hex.startsWith('#') && hex.length === 7) {
+        r = parseInt(hex.slice(1, 3), 16); g = parseInt(hex.slice(3, 5), 16); b = parseInt(hex.slice(5, 7), 16);
+      }
+      return { background: `rgba(${r}, ${g}, ${b}, 0.15)`, text: styles?.buttonTextColor || '#FFFFFF' };
+    })(),
     trust: themeData?.trust || {
       text: '#C7CDD6',
       dot1: '#22C55E',

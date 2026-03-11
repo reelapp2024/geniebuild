@@ -2505,103 +2505,66 @@ const AppContent: React.FC = () => {
                    </div>
               </AccordionGroup>
               )}
-              {context === 'element' && elementType === 'badge' && (
-                  <AccordionGroup title="Badge Styles" defaultOpen={true}>
-                      <div className="mb-3">
-                          <button
-                              type="button"
-                              onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  // Reset badge styles to dynamic theme fallbacks
-                                  if (onBatchUpdate) {
-                                      onBatchUpdate({
-                                          backgroundColor: '',
-                                          color: '',
-                                          borderColor: '',
-                                          padding: undefined,
-                                          borderRadius: undefined
-                                      });
-                                  } else {
-                                      onUpdate('backgroundColor', '');
-                                      onUpdate('color', '');
-                                      onUpdate('borderColor', '');
-                                      onUpdate('padding', undefined);
-                                      onUpdate('borderRadius', undefined);
-                                  }
-                              }}
-                              className="w-full px-3 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/40 text-blue-400 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                              title="Reset to dynamic theme badge styles"
-                          >
-                              <i className="fa-solid fa-rotate-left"></i>
-                              Default Theme Badge
-                          </button>
-                      </div>
-                      <ColorInput 
-                          label="Background Color" 
-                          value={styles.backgroundColor || themeData?.badge?.background || ''} 
-                          onChange={(v) => onUpdate('backgroundColor', v)} 
-                      />
-                      <ColorInput 
-                          label="Text Color" 
-                          value={styles.color || themeData?.badge?.text || ''} 
-                          onChange={(v) => onUpdate('color', v)} 
-                      />
-                      <TextInput 
-                          label="Padding" 
-                          value={typeof styles.padding === 'string' ? styles.padding : ''} 
-                          onChange={(v) => onUpdate('padding', v)} 
-                          placeholder="e.g., 4px 12px" 
-                      />
-                      <SelectInput 
-                          label="Size" 
-                          value={styles.fontSize || '0.75rem'} 
-                          options={[
-                              {label: 'XS (10px)', value: '0.625rem'},
-                              {label: 'SM (12px)', value: '0.75rem'},
-                              {label: 'Base (14px)', value: '0.875rem'},
-                              {label: 'MD (16px)', value: '1rem'},
-                              {label: 'LG (18px)', value: '1.125rem'}
-                          ]}
-                          onChange={(v) => onUpdate('fontSize', v)} 
-                      />
-                      <TextInput label="Padding" value={typeof styles.padding === 'string' ? styles.padding : '4px 12px'} onChange={(v) => onUpdate('padding', v)} placeholder="e.g., 4px 12px" />
-                      {(() => {
-                          // Parse borderRadius to number for slider (handle px, rem, %)
-                          const parseBorderRadius = (val: string | undefined): number => {
-                              if (!val) return 50; // Default to 50% (rounded)
-                              if (val === '9999px' || val === '50%') return 50;
-                              const match = val.match(/([\d.]+)(px|%|rem)/);
-                              if (match) {
-                                  const num = parseFloat(match[1]);
-                                  if (match[2] === '%') return Math.min(100, Math.max(0, num));
-                                  if (match[2] === 'px') return Math.min(100, Math.max(0, num));
-                                  if (match[2] === 'rem') return Math.min(100, Math.max(0, num * 16));
-                              }
-                              return 50;
-                          };
-                          
-                          const formatBorderRadius = (val: number): string => {
-                              if (val >= 50) return '9999px'; // Fully rounded
-                              return `${val}px`;
-                          };
-                          
-                          const currentValue = parseBorderRadius(styles.borderRadius);
-                          
-                          return (
-                              <RangeInput
-                                  label="Border Radius"
-                                  value={currentValue}
-                                  min={0}
-                                  max={50}
-                                  step={1}
-                                  unit="px"
-                                  onChange={(v) => onUpdate('borderRadius', formatBorderRadius(v))}
-                              />
-                          );
-                      })()}
-                  </AccordionGroup>
-              )}
+              {context === 'element' && elementType === 'badge' && (() => {
+                  const liveSurface = siteData.globalStyles.colors.backgroundColor || '';
+                  const preset = PRESET_THEMES.find(t => t.elements.surface.toLowerCase() === liveSurface.toLowerCase());
+                  
+                  let fallbackBg = preset?.elements.badge.background;
+                  let fallbackText = preset?.elements.badge.text;
+                  
+                  if (!fallbackBg) {
+                      const hex = siteData.globalStyles.colors.buttonBackgroundColor || '#3b82f6';
+                      let r = 59, g = 130, b = 246;
+                      if (hex.startsWith('#') && hex.length === 7) {
+                          r = parseInt(hex.slice(1, 3), 16); g = parseInt(hex.slice(3, 5), 16); b = parseInt(hex.slice(5, 7), 16);
+                      }
+                      fallbackBg = `rgba(${r}, ${g}, ${b}, 0.15)`;
+                      fallbackText = siteData.globalStyles.colors.buttonTextColor || '#FFFFFF';
+                  }
+
+                  return (
+                      <AccordionGroup title="Badge Styles" defaultOpen={true}>
+                          <div className="mb-3">
+                              <button
+                                  type="button"
+                                  onClick={(e) => {
+                                      e.preventDefault(); e.stopPropagation();
+                                      if (onBatchUpdate) { onBatchUpdate({ backgroundColor: '', color: '', borderColor: '', padding: undefined, borderRadius: undefined }); } 
+                                      else { onUpdate('backgroundColor', ''); onUpdate('color', ''); onUpdate('borderColor', ''); onUpdate('padding', undefined); onUpdate('borderRadius', undefined); }
+                                  }}
+                                  className="w-full px-3 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/40 text-blue-400 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                              >
+                                  <i className="fa-solid fa-rotate-left"></i> Default Theme Badge
+                              </button>
+                          </div>
+                          <ColorInput label="Background Color" value={styles.backgroundColor || fallbackBg} onChange={(v) => onUpdate('backgroundColor', v)} />
+                          <ColorInput label="Text Color" value={styles.color || fallbackText} onChange={(v) => onUpdate('color', v)} />
+                          <TextInput label="Padding" value={typeof styles.padding === 'string' ? styles.padding : ''} onChange={(v) => onUpdate('padding', v)} placeholder="e.g., 4px 12px" />
+                          <SelectInput 
+                              label="Size" 
+                              value={styles.fontSize || '0.75rem'} 
+                              options={[{label: 'XS (10px)', value: '0.625rem'}, {label: 'SM (12px)', value: '0.75rem'}, {label: 'Base (14px)', value: '0.875rem'}, {label: 'MD (16px)', value: '1rem'}, {label: 'LG (18px)', value: '1.125rem'}]}
+                              onChange={(v: string) => onUpdate('fontSize', v)} 
+                          />
+                          {(() => {
+                              const parseBorderRadius = (val: string | undefined): number => {
+                                  if (!val) return 50; 
+                                  if (val === '9999px' || val === '50%') return 50;
+                                  const match = val.match(/([\d.]+)(px|%|rem)/);
+                                  if (match) {
+                                      const num = parseFloat(match[1]);
+                                      if (match[2] === '%') return Math.min(100, Math.max(0, num));
+                                      if (match[2] === 'px') return Math.min(100, Math.max(0, num));
+                                      if (match[2] === 'rem') return Math.min(100, Math.max(0, num * 16));
+                                  } return 50;
+                              };
+                              const formatBorderRadius = (val: number): string => val >= 50 ? '9999px' : `${val}px`;
+                              const currentValue = parseBorderRadius(styles.borderRadius);
+                              return <RangeInput label="Border Radius" value={currentValue} min={0} max={50} step={1} unit="px" onChange={(v) => onUpdate('borderRadius', formatBorderRadius(v))} />
+                          })()}
+                      </AccordionGroup>
+                  );
+              })()}
               {context === 'element' && elementType === 'button' && (
                   <AccordionGroup title="Button Styles" defaultOpen={true}>
                       <div className="mb-3">

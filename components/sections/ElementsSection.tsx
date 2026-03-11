@@ -652,9 +652,22 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
             
         case 'badge':
-            // 1. Get current theme badge colors (these update reactively)
-            const currentThemeBg = themeData?.badge?.background || 'rgba(225,29,72,0.15)';
-            const currentThemeText = themeData?.badge?.text || '#F8FAFC';
+            // 1. Get LIVE theme badge colors (Bypassing stale ThemeProvider context)
+            const getLiveBadgeColors = () => {
+                const liveSurface = theme?.backgroundColor || '';
+                const preset = PRESET_THEMES.find(t => t.elements.surface.toLowerCase() === liveSurface.toLowerCase());
+                if (preset) return { bg: preset.elements.badge.background, text: preset.elements.badge.text };
+                
+                const hex = theme?.buttonBackgroundColor || '#3b82f6';
+                let r = 59, g = 130, b = 246;
+                if (hex.startsWith('#') && hex.length === 7) {
+                    r = parseInt(hex.slice(1, 3), 16) || r; g = parseInt(hex.slice(3, 5), 16) || g; b = parseInt(hex.slice(5, 7), 16) || b;
+                }
+                return { bg: `rgba(${r}, ${g}, ${b}, 0.15)`, text: theme?.buttonTextColor || '#FFFFFF' };
+            };
+            const liveBadge = getLiveBadgeColors();
+            const currentThemeBg = liveBadge.bg;
+            const currentThemeText = liveBadge.text;
             
             // 2. Safely extract element style
             const elementStyle = el.style || {};

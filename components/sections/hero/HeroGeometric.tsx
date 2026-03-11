@@ -2,6 +2,7 @@ import React from 'react';
 import { Section, WebsiteElement } from '../../../types';
 import { ElementsSection } from '../ElementsSection';
 import { useTheme } from '@ui/blocks';
+import { PRESET_THEMES } from '../../../constants';
 
 interface HeroProps {
   section: Section;
@@ -161,8 +162,18 @@ export const HeroGeometric: React.FC<HeroProps> = ({
           <div 
             className={`inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-[0.2em] mb-8 transition-all ${!readOnly ? 'outline-none cursor-text rounded-lg' : ''} ${selectedElementId === badgeId ? 'ring-2 ring-blue-500 bg-blue-500/10' : 'hover:bg-white/10'}`}
             style={{
-              backgroundColor: badgeElement?.style?.backgroundColor || themeData?.badge?.background || 'rgba(59, 130, 246, 0.1)',
-              color: badgeElement?.style?.color || themeData?.badge?.text || '#60a5fa',
+              backgroundColor: badgeElement?.style?.backgroundColor || (() => {
+                  const preset = PRESET_THEMES.find(t => t.elements.surface.toLowerCase() === (styles?.backgroundColor || '').toLowerCase());
+                  if (preset) return preset.elements.badge.background;
+                  const hex = styles?.buttonBackgroundColor || '#3b82f6';
+                  let r = 59, g = 130, b = 246;
+                  if (hex.startsWith('#') && hex.length === 7) { r = parseInt(hex.slice(1, 3), 16); g = parseInt(hex.slice(3, 5), 16); b = parseInt(hex.slice(5, 7), 16); }
+                  return `rgba(${r}, ${g}, ${b}, 0.15)`;
+              })(),
+              color: badgeElement?.style?.color || (() => {
+                  const preset = PRESET_THEMES.find(t => t.elements.surface.toLowerCase() === (styles?.backgroundColor || '').toLowerCase());
+                  return preset ? preset.elements.badge.text : (styles?.buttonTextColor || '#FFFFFF');
+              })(),
               borderColor: badgeElement?.style?.borderColor || 'transparent',
               fontSize: badgeElement?.style?.fontSize || '10px',
               fontWeight: badgeElement?.style?.fontWeight || 'bold',
