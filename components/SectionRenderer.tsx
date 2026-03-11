@@ -150,10 +150,21 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       }
       if (isCustomColor(styles.backgroundColor)) {
         bgStyles.backgroundColor = styles.backgroundColor;
-      } else if (!styles.backgroundColor && themeData?.surface) {
-        // Use theme surface color as default background if no background is set
-        bgStyles.backgroundColor = themeData.surface;
+      } else {
+        // Fall back to theme surface color if no background is set (including empty string, null, undefined)
+        const hasBackground = styles.backgroundColor && styles.backgroundColor.trim() !== '';
+        if (!hasBackground && themeData?.surface) {
+          bgStyles.backgroundColor = themeData.surface;
+        } else if (hasBackground && !isCustomColor(styles.backgroundColor)) {
+          // Keep Tailwind class-based backgrounds
+          bgStyles.backgroundColor = undefined;
+        }
       }
+    }
+    
+    // ALWAYS set surface color as fallback (like website multicolor theme does)
+    if (!bgStyles.backgroundColor && themeData?.surface) {
+      bgStyles.backgroundColor = themeData.surface;
     }
     
     return bgStyles;
@@ -161,7 +172,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
 
   const inlineStyles: React.CSSProperties = {
     ...getBackgroundStyles(),
-    ...(isCustomColor(styles.textColor) ? { color: styles.textColor } : {}),
+    ...(isCustomColor(styles.textColor) ? { color: styles.textColor } : { color: themeData?.description }),
     ...(!isTailwindClass(styles.marginTop) ? { marginTop: styles.marginTop } : {}),
     ...(!isTailwindClass(styles.marginBottom) ? { marginBottom: styles.marginBottom } : {}),
     ...(!isTailwindClass(styles.marginLeft) ? { marginLeft: styles.marginLeft } : {}),
@@ -219,39 +230,64 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
 
   const isFixedSection = type === 'navbar' || type === 'footer';
 
-  // THE FIX: Properly prioritize Theme Overlay colors over the background image block
-  const getOverlayStyles = (): { style: React.CSSProperties, show: boolean } => {
+  // MATCH WEBSITE MULTICOLOR THEME: Two-layer overlay system (gradient + solid color)
+  const getOverlayStyles = (): { 
+    gradientOverlay: React.CSSProperties | null, 
+    colorOverlay: React.CSSProperties | null 
+  } => {
+    // Check if section has background image (overlays only apply to images, like website)
+    const hasBackgroundImage = styles.background?.type === 'image' || !!styles.backgroundImage;
+    
+    if (!hasBackgroundImage) {
+      return { gradientOverlay: null, colorOverlay: null };
+    }
+    
     // 1. Primary Source: Unified Background Object
-    // Prioritize image overlay when background type is 'image'
-    const bgOverlay = (styles.background?.type === 'image' ? styles.background?.image?.overlay : styles.background?.overlay) || styles.background?.overlay || styles.background?.image?.overlay;
+    const bgOverlay = (styles.background?.type === 'image' 
+      ? styles.background?.image?.overlay 
+      : styles.background?.overlay) || styles.background?.overlay || styles.background?.image?.overlay;
     
     // 2. Secondary Source: Legacy Flat Properties
     const legacyColor = styles.overlayColor;
-    const legacyOpacity = styles.overlayOpacityValue !== undefined ? styles.overlayOpacityValue : styles.overlayOpacity;
     const legacyBlend = styles.overlayBlendMode;
     
-    const overlayColor = bgOverlay?.color || legacyColor;
-    const hasOverlay = overlayColor && overlayColor !== 'transparent';
+    // 3. Determine overlay color (section -> legacy -> theme)
+    // Website ALWAYS applies overlay when background image exists (no enabled check)
+    const overlayColor = bgOverlay?.color || legacyColor || themeData?.overlay?.color;
     
-    if (hasOverlay && bgOverlay?.enabled !== false) {
-      const rawOpacityStr = bgOverlay?.opacity !== undefined ? bgOverlay.opacity : (legacyOpacity !== undefined ? legacyOpacity : 0.5);
-      const parsedOpacity = typeof rawOpacityStr === 'string' ? parseFloat(rawOpacityStr) : rawOpacityStr;
-      const finalOpacity = parsedOpacity > 1 ? parsedOpacity / 100 : parsedOpacity;
-      
-      return {
-        show: true,
-        style: {
-          backgroundColor: overlayColor,
-          opacity: finalOpacity,
-          mixBlendMode: (bgOverlay?.blendMode || legacyBlend || 'normal') as any
-        }
-      };
+    // 4. Determine blend mode (section -> legacy -> theme -> default 'multiply')
+    const blendMode = bgOverlay?.blendMode || legacyBlend || themeData?.overlay?.blend || 'multiply';
+    
+    // Only skip if explicitly disabled or color is transparent
+    if (bgOverlay?.enabled === false || !overlayColor || overlayColor === 'transparent') {
+      return { gradientOverlay: null, colorOverlay: null };
     }
     
-    return { show: false, style: {} };
+    // Layer 1: Gradient overlay (like website multicolor theme)
+    // Website uses: background: `linear-gradient(135deg, ${colors.gradient.from}, ${colors.gradient.to})`
+    const gradientOverlay = themeData?.gradient ? {
+      background: `linear-gradient(135deg, ${themeData.gradient.from}, ${themeData.gradient.to})`,
+      mixBlendMode: blendMode as any,
+      position: 'absolute',
+      inset: 0,
+      zIndex: 0,
+      pointerEvents: 'none'
+    } : null;
+    
+    // Layer 2: Solid color overlay (like website multicolor theme)
+    // Website uses: backgroundColor: colors.overlay.color (already includes opacity in rgba format)
+    const colorOverlay = {
+      backgroundColor: overlayColor, // Already includes opacity in rgba format from theme
+      position: 'absolute',
+      inset: 0,
+      zIndex: 0,
+      pointerEvents: 'none'
+    };
+    
+    return { gradientOverlay, colorOverlay };
   };
 
-  const overlay = getOverlayStyles();
+  const overlays = getOverlayStyles();
 
   const renderContent = () => {
     return (
@@ -281,12 +317,20 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
   
   return (
     <div className={containerClass} style={inlineStyles} onClick={(e) => { if(!readOnly) { e.stopPropagation(); onClick(); }}}>
-      {/* Background overlay */}
-      {overlay.show && (
-          <div 
-            className="absolute inset-0 z-0 pointer-events-none" 
-            style={overlay.style}
-          ></div>
+      {/* Background overlay - Layer 1: Gradient (like website multicolor theme) */}
+      {overlays.gradientOverlay && (
+        <div 
+          className="absolute inset-0 z-0 pointer-events-none" 
+          style={overlays.gradientOverlay}
+        ></div>
+      )}
+      
+      {/* Background overlay - Layer 2: Solid Color (like website multicolor theme) */}
+      {overlays.colorOverlay && (
+        <div 
+          className="absolute inset-0 z-0 pointer-events-none" 
+          style={overlays.colorOverlay}
+        ></div>
       )}
       
       {/* Geometry overlay */}
