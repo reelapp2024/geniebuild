@@ -109,8 +109,8 @@ export const HeroGeometric: React.FC<HeroProps> = ({
     return {
       id: iconId,
       type: 'icon',
-      content: { iconClass: 'fa-solid fa-wand-magic-sparkles' },
-      style: { color: styles.accentColor || '#3b82f6' } // Links to the section's accent color
+      content: { icon: 'fa-wand-magic-sparkles' }, // Fixed: use 'icon' instead of 'iconClass'
+      style: {} // Fixed: leave empty so ElementsSection applies theme.accentColor dynamically
     };
   };
   
@@ -161,9 +161,9 @@ export const HeroGeometric: React.FC<HeroProps> = ({
           <div 
             className={`inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-[0.2em] mb-8 transition-all ${!readOnly ? 'outline-none cursor-text rounded-lg' : ''} ${selectedElementId === badgeId ? 'ring-2 ring-blue-500 bg-blue-500/10' : 'hover:bg-white/10'}`}
             style={{
-              backgroundColor: badgeElement?.style?.backgroundColor || 'rgba(255, 255, 255, 0.05)',
-              color: badgeElement?.style?.color || '#60a5fa',
-              borderColor: badgeElement?.style?.borderColor || 'rgba(255, 255, 255, 0.1)',
+              backgroundColor: badgeElement?.style?.backgroundColor || themeData?.badge?.background || 'rgba(59, 130, 246, 0.1)',
+              color: badgeElement?.style?.color || themeData?.badge?.text || '#60a5fa',
+              borderColor: badgeElement?.style?.borderColor || 'transparent',
               fontSize: badgeElement?.style?.fontSize || '10px',
               fontWeight: badgeElement?.style?.fontWeight || 'bold',
               textTransform: (badgeElement?.style?.textTransform as any) || 'uppercase',

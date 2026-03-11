@@ -33,15 +33,12 @@ export const HeroMulticolor: React.FC<HeroProps> = ({
   const primaryButtonId = `${section.id}-hero-primary-button`;
   const secondaryButtonId = `${section.id}-hero-secondary-button`;
   const badgeId = `${section.id}-hero-badge`;
-  const imageId = `${section.id}-hero-image`;
-
   // Get elements from section.elements
   const titleElement = section.elements?.find(e => e.id === titleId);
   const subtitleElement = section.elements?.find(e => e.id === subtitleId);
   const primaryButtonElement = section.elements?.find(e => e.id === primaryButtonId);
   const secondaryButtonElement = section.elements?.find(e => e.id === secondaryButtonId);
   const badgeElement = section.elements?.find(e => e.id === badgeId);
-  const imageElement = section.elements?.find(e => e.id === imageId);
   
   // Theme colors
   const styleAny = styles as any;
@@ -150,59 +147,13 @@ export const HeroMulticolor: React.FC<HeroProps> = ({
     };
   };
   
-  const getImageElement = (): WebsiteElement => {
-    if (imageElement) return imageElement;
-    return {
-      id: imageId,
-      type: 'image',
-      content: {
-        imageUrl: content.imageUrl || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
-        alt: 'Hero Background'
-      },
-      style: {}
-    };
-  };
-
-  // Get background image URL
-  const bgImageUrl = content.imageUrl || imageElement?.content?.imageUrl || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
-  
-  // Get overlay from theme or section styles
-  const overlayColor = styles.overlayColor || themeData?.overlay?.color || `rgba(${parseInt(primaryColor.slice(1, 3), 16)}, ${parseInt(primaryColor.slice(3, 5), 16)}, ${parseInt(primaryColor.slice(5, 7), 16)}, 0.8)`;
-  const overlayOpacity = styles.overlayOpacityValue ? parseFloat(styles.overlayOpacityValue) : 0.8;
-  const overlayBlendMode = styles.overlayBlendMode || themeData?.overlay?.blend || 'multiply';
-
   return (
     <section
       className="relative min-h-[80vh] md:min-h-[85vh] flex items-center justify-center py-8 px-4 md:px-16 transition-all duration-300 overflow-hidden"
       style={{
-        backgroundColor: themeData?.surface || styles.backgroundColor || '#0E1214'
+        backgroundColor: 'transparent' // Let SectionRenderer handle the background entirely
       }}
     >
-      {/* Background Image */}
-      {bgImageUrl && (
-        <div className="absolute inset-0 w-full h-full z-0">
-          <ElementsSection
-            isWrapped={false}
-            section={{ ...section, elements: [getImageElement()] }}
-            onElementSelect={onElementSelect}
-            selectedElementId={selectedElementId}
-            onElementUpdate={onElementUpdate || (() => {})}
-            onTextEdit={onTextEdit}
-            buttonClass={buttonClass}
-            readOnly={readOnly}
-            themeColors={themeColors}
-          />
-        </div>
-      )}
-      
-      {/* Background Overlay with Gradient */}
-      <div 
-        className="absolute inset-0 z-[1]"
-        style={{
-          background: `linear-gradient(135deg, ${overlayColor} 0%, ${overlayColor.replace(/[\d.]+\)$/g, '0.7)')} 50%, ${accentColor}CC 100%)`,
-          mixBlendMode: overlayBlendMode as any,
-        }}
-      />
       
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden z-[1] pointer-events-none">

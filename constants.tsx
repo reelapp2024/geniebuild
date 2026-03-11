@@ -2,11 +2,12 @@
 import { WebsiteData, Section, WebsiteElement } from './types';
 
 // Global Element Defaults - Universal baseline styles for all elements
+// NOTE: No color properties here - elements inherit from theme via ElementsSection
 export const ELEMENT_DEFAULTS: Record<string, any> = {
-  button: { backgroundColor: '#E11D48', color: '#FFFFFF', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', textAlign: 'center' },
-  heading: { color: '#F8FAFC', fontWeight: 'bold' ,textAlign: 'center'},
-  text: { color: '#D1D5DB', opacity: 1 ,textAlign: 'center'},
-  icon: { fontSize: '24px', color: '#3b82f6' },
+  button: { padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', textAlign: 'center' },
+  heading: { fontWeight: 'bold', textAlign: 'center'},
+  text: { opacity: 1, textAlign: 'center'},
+  icon: { fontSize: '24px' },
   image: { 
     objectFit: 'cover', 
     width: '100%',
@@ -18,7 +19,7 @@ export const ELEMENT_DEFAULTS: Record<string, any> = {
     boxShadow: 'none',
     filter: 'none'
   },
-  'star-rating': { color: '#F59E0B' }
+  'star-rating': {}
 };
 
 export const PRESET_FONTS = [
@@ -228,13 +229,13 @@ const BASIC_ELEMENTS_LIST: WebsiteElement[] = [
         id: 'basic-head',
         type: 'heading',
         content: { text: 'Basic Building Blocks', htmlTag: 'h1' },
-        style: { fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 1rem 0', color: '#ffffff' }
+        style: { fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 1rem 0' }
     },
     {
         id: 'basic-txt',
         type: 'text',
         content: { text: 'This section demonstrates standard HTML elements styled for your website.' },
-        style: { fontSize: '1rem', lineHeight: '1.6', color: '#cbd5e1', margin: '0 0 2rem 0' }
+        style: { fontSize: '1rem', lineHeight: '1.6', margin: '0 0 2rem 0' }
     },
     {
         id: 'basic-btn',
@@ -246,7 +247,7 @@ const BASIC_ELEMENTS_LIST: WebsiteElement[] = [
         id: 'basic-icon-box',
         type: 'icon-box',
         content: { icon: 'fa-rocket', text: 'Fast Performance', subText: 'Optimized for speed and efficiency.' },
-        style: { accentColor: '#3b82f6', margin: '0 0 1rem 0' }
+        style: { margin: '0 0 1rem 0' }
     },
     {
         id: 'basic-image-box',
@@ -270,7 +271,7 @@ const BASIC_ELEMENTS_LIST: WebsiteElement[] = [
         id: 'basic-quote',
         type: 'blockquote',
         content: { text: 'Simplicity is the ultimate sophistication.', author: 'Leonardo da Vinci' },
-        style: { accentColor: '#f59e0b', margin: '0 0 2rem 0' }
+        style: { margin: '0 0 2rem 0' }
     }
 ];
 
@@ -280,7 +281,7 @@ const ADVANCED_ELEMENTS_LIST: WebsiteElement[] = [
         id: 'adv-head',
         type: 'heading',
         content: { text: 'Advanced Components', htmlTag: 'h2' },
-        style: { fontSize: '2rem', fontWeight: 'bold', margin: '0 0 2rem 0', color: '#ffffff' }
+        style: { fontSize: '2rem', fontWeight: 'bold', margin: '0 0 2rem 0' }
     },
     {
         id: 'adv-1',
@@ -297,19 +298,19 @@ const ADVANCED_ELEMENTS_LIST: WebsiteElement[] = [
         id: 'adv-3',
         type: 'progress-bar',
         content: { text: 'Project Completion', percentage: 75 },
-        style: { accentColor: '#10b981', margin: '0 0 2rem 0' }
+        style: { margin: '0 0 2rem 0' }
     },
     {
         id: 'adv-4',
         type: 'counter',
         content: { targetNumber: 5000, text: 'Happy Users' },
-        style: { accentColor: '#f59e0b', margin: '0 0 2rem 0' }
+        style: { margin: '0 0 2rem 0' }
     },
     {
         id: 'adv-6',
         type: 'alert-box',
         content: { text: 'Important Notice', subText: 'Please review your settings before publishing.', icon: 'fa-circle-exclamation' },
-        style: { backgroundColor: 'rgba(239, 68, 68, 0.1)', accentColor: '#ef4444', margin: '0 0 2rem 0' }
+        style: { margin: '0 0 2rem 0' }
     },
     {
         id: 'adv-7',
@@ -321,13 +322,13 @@ const ADVANCED_ELEMENTS_LIST: WebsiteElement[] = [
             backDesc: 'Flip boxes are great for revealing details.',
             icon: 'fa-gift'
         },
-        style: { accentColor: '#8b5cf6', margin: '0 0 2rem 0' }
+        style: { margin: '0 0 2rem 0' }
     },
     {
         id: 'adv-9',
         type: 'countdown-timer',
         content: { text: 'Launch In', targetDate: new Date(Date.now() + 100000000).toISOString() },
-        style: { accentColor: '#ffffff', margin: '0 0 2rem 0', textAlign: 'left' }
+        style: { margin: '0 0 2rem 0', textAlign: 'left' }
     }
 ];
 
@@ -443,41 +444,34 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     },
     elements: [
       // Basic Elements (13)
-      { id: 'test-heading', type: 'heading', content: { text: 'Sample Heading', htmlTag: 'h2' }, style: { color: '#F8FAFC' } },
-      { id: 'test-text', type: 'text', content: { text: 'This is a sample text element for testing.', textSize: 'base' }, style: { color: '#D1D5DB' } },
-      { id: 'test-button', type: 'button', content: { text: 'Click Me', link: '' }, style: { backgroundColor: '#E11D48', color: '#FFFFFF' } },
+      { id: 'test-heading', type: 'heading', content: { text: 'Sample Heading', htmlTag: 'h2' }, style: {} },
+      { id: 'test-text', type: 'text', content: { text: 'This is a sample text element for testing.', textSize: 'base' }, style: {} },
+      { id: 'test-button', type: 'button', content: { text: 'Click Me', link: '' }, style: {} },
       { id: 'test-image', type: 'image', content: { imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400', imageAlt: 'Sample Image' }, style: { width: '200px', height: '150px' } },
       { id: 'test-video', type: 'video', content: { videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', videoTitle: 'Sample Video' }, style: { width: '100%', maxWidth: '560px' } },
-      { id: 'test-icon', type: 'icon', content: { icon: 'fa-star', iconSize: '24px' }, style: { color: '#F59E0B' } },
-      { id: 'test-icon-box', type: 'icon-box', content: { icon: 'fa-check-circle', title: 'Icon Box', description: 'Sample icon box element' }, style: { backgroundColor: 'transparent' } },
+      { id: 'test-icon', type: 'icon', content: { icon: 'fa-star', iconSize: '24px' }, style: {} },
+      { id: 'test-icon-box', type: 'icon-box', content: { icon: 'fa-check-circle', title: 'Icon Box', description: 'Sample icon box element' }, style: {} },
       { id: 'test-image-box', type: 'image-box', content: { imageUrl: 'http://localhost:1111/files/placeholder.jpg', title: 'Image Box', description: 'Sample image box element' }, style: {} },
-      { id: 'test-list', type: 'list', content: { items: [{ title: 'Item 1' }, { title: 'Item 2' }, { title: 'Item 3' }], listType: 'ul' }, style: { color: '#D1D5DB' } },
-      { id: 'test-star-rating', type: 'star-rating', content: { rating: 4.5, maxRating: 5 }, style: { color: '#F59E0B' } },
+      { id: 'test-list', type: 'list', content: { items: [{ title: 'Item 1' }, { title: 'Item 2' }, { title: 'Item 3' }], listType: 'ul' }, style: {} },
+      { id: 'test-star-rating', type: 'star-rating', content: { rating: 4.5, maxRating: 5 }, style: {} },
       { id: 'test-badge', type: 'badge', content: { text: 'New', variant: 'primary' }, style: {} }, // Use theme badge colors
-      { id: 'test-highlight-text', type: 'highlight-text', content: { text: 'This is highlighted text', highlightColor: '#F59E0B' }, style: { color: '#D1D5DB' } },
-      { id: 'test-blockquote', type: 'blockquote', content: { text: 'This is a sample blockquote for testing purposes.', author: 'Test Author' }, style: { borderColor: '#F59E0B', color: '#D1D5DB' } },
+      { id: 'test-highlight-text', type: 'highlight-text', content: { text: 'This is highlighted text', highlightColor: '#F59E0B' }, style: {} },
+      { id: 'test-blockquote', type: 'blockquote', content: { text: 'This is a sample blockquote for testing purposes.', author: 'Test Author' }, style: {} },
       // Advanced Elements (12)
       { id: 'test-accordion', type: 'accordion', content: { items: [{ title: 'Item 1', content: 'Content 1' }, { title: 'Item 2', content: 'Content 2' }] }, style: {} },
       { id: 'test-toggle', type: 'toggle', content: { label: 'Toggle Switch', checked: false }, style: {} },
       { id: 'test-tabs', type: 'tabs', content: { tabs: [{ label: 'Tab 1', content: 'Content 1' }, { label: 'Tab 2', content: 'Content 2' }] }, style: {} },
-      { id: 'test-progress-bar', type: 'progress-bar', content: { value: 75, max: 100, label: 'Progress' }, style: { backgroundColor: '#F59E0B' } },
-      { id: 'test-counter', type: 'counter', content: { value: 100, label: 'Count', prefix: '', suffix: '+' }, style: { color: '#F8FAFC' } },
+      { id: 'test-progress-bar', type: 'progress-bar', content: { value: 75, max: 100, label: 'Progress' }, style: {} },
+      { id: 'test-counter', type: 'counter', content: { value: 100, label: 'Count', prefix: '', suffix: '+' }, style: {} },
       { id: 'test-testimonial', type: 'testimonial', content: { quote: 'Great service!', author: 'John Doe', role: 'CEO', avatar: 'https://randomuser.me/api/portraits/men/1.jpg' }, style: {} },
       { id: 'test-review-carousel', type: 'review-carousel', content: { reviews: [{ rating: 5, text: 'Excellent!', author: 'Jane' }] }, style: {} },
-      { id: 'test-alert-box', type: 'alert-box', content: { message: 'This is an alert message', type: 'info' }, style: { backgroundColor: '#3B82F6', color: '#FFFFFF' } },
+      { id: 'test-alert-box', type: 'alert-box', content: { message: 'This is an alert message', type: 'info' }, style: {} },
       { id: 'test-pricing-table', type: 'pricing-table', content: { plans: [{ name: 'Basic', price: '$9', features: ['Feature 1', 'Feature 2'] }] }, style: {} },
       { id: 'test-flip-box', type: 'flip-box', content: { frontTitle: 'Front', backTitle: 'Back', frontContent: 'Front content', backContent: 'Back content' }, style: {} },
-      { id: 'test-call-to-action', type: 'call-to-action', content: { text: 'Get Started', subText: 'Start your free trial today' }, style: { backgroundColor: '#E11D48', color: '#FFFFFF' } },
-      { id: 'test-countdown-timer', type: 'countdown-timer', content: { targetDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), text: 'Offer Ends In' }, style: { accentColor: '#F59E0B' } },
+      { id: 'test-call-to-action', type: 'call-to-action', content: { text: 'Get Started', subText: 'Start your free trial today' }, style: {} },
+      { id: 'test-countdown-timer', type: 'countdown-timer', content: { targetDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), text: 'Offer Ends In' }, style: {} },
     ],
     styles: {
-      backgroundColor: '#0E1214',
-      background: { type: 'color', color: '#0E1214' },
-      textColor: '#D1D5DB',
-      titleColor: '#F8FAFC',
-      accentColor: '#F59E0B',
-      buttonBackgroundColor: '#E11D48',
-      buttonTextColor: '#FFFFFF',
       paddingTop: 'py-24',
       paddingBottom: 'py-24',
       paddingX: 'px-6',
@@ -491,12 +485,6 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
       content: { title: 'New Elements Section' },
       elements: [...BASIC_ELEMENTS_LIST.slice(0,3)], 
       styles: {
-          backgroundColor: '#0E1214',
-          background: { type: 'color', color: '#0E1214' },
-          textColor: '#C7CDD6',
-          accentColor: '#F59E0B',
-          buttonBackgroundColor: '#E11D48',
-          buttonTextColor: '#FFFFFF',
           paddingTop: 'pt-16',
           paddingBottom: 'pb-16',
           paddingX: 'px-6',
@@ -514,24 +502,17 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
         imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800'
     },
     styles: {
-        backgroundColor: '#0E1214',
-        background: { type: 'color', color: '#0E1214' },
-        textColor: '#C7CDD6',
-        accentColor: '#F59E0B',
-        buttonBackgroundColor: '#E11D48',
-        buttonTextColor: '#FFFFFF',
         paddingTop: 'pt-16 md:pt-32',
         paddingBottom: 'pb-16 md:pb-32',
         paddingX: 'px-6',
         textAlign: 'center',
         titleSize: 'text-5xl md:text-7xl',
-        titleColor: '#F8FAFC',
         variant: 'center'
     },
     variantOverrides: {
-      'center': { textAlign: 'center', background: { type: 'color', color: '#0E1214' } },
-      'split-left': { textAlign: 'left', background: { type: 'color', color: '#111111' } },
-      'split-right': { textAlign: 'left', background: { type: 'color', color: '#111111' } },
+      'center': { textAlign: 'center' },
+      'split-left': { textAlign: 'left' },
+      'split-right': { textAlign: 'left' },
       'gradient': { 
           textAlign: 'center', 
           background: { 
@@ -548,6 +529,32 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
           },
           backgroundImage: 'linear-gradient(90deg, #1e3a8a 0%, #000000 100%)',
           backgroundColor: 'transparent'
+      },
+      'HeroMulticolor': { 
+          textAlign: 'left', 
+          background: { 
+              type: 'image', 
+              image: {
+                  url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+                  position: 'center',
+                  size: 'cover',
+                  repeat: 'no-repeat',
+                  overlay: { enabled: true, color: '#000000', opacity: 0.6, blendMode: 'multiply' }
+              }
+          }
+      },
+      'HeroMulticolorV1': { 
+          textAlign: 'left', 
+          background: { 
+              type: 'image', 
+              image: {
+                  url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+                  position: 'center',
+                  size: 'cover',
+                  repeat: 'no-repeat',
+                  overlay: { enabled: true, color: '#000000', opacity: 0.6, blendMode: 'multiply' }
+              }
+          }
       }
     }
   },
@@ -562,18 +569,11 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
           ]
       },
       styles: {
-          backgroundColor: '#0E1214',
-          background: { type: 'color', color: '#0E1214' },
-          textColor: '#C7CDD6',
-          accentColor: '#F59E0B',
-          buttonBackgroundColor: '#E11D48',
-          buttonTextColor: '#FFFFFF',
           paddingTop: 'pt-12 md:pt-24',
           paddingBottom: 'pb-12 md:pb-24',
           paddingX: 'px-6',
           textAlign: 'center',
           titleSize: 'text-3xl md:text-5xl',
-          titleColor: '#F8FAFC',
           variant: 'FeaturesGrid'
       }
   },
@@ -588,12 +588,6 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
         ]
     },
     styles: {
-        backgroundColor: '#0E1214',
-        background: { type: 'color', color: '#0E1214' },
-        textColor: '#C7CDD6',
-        accentColor: '#F59E0B',
-        buttonBackgroundColor: '#E11D48',
-        buttonTextColor: '#FFFFFF',
         paddingTop: 'pt-12 md:pt-24',
         paddingBottom: 'pb-12 md:pb-24',
         paddingX: 'px-6',
@@ -614,13 +608,6 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
         ]
     },
     styles: {
-        backgroundColor: '#0E1214',
-        background: { type: 'color', color: '#0E1214' },
-        textColor: '#D1D5DB',
-        titleColor: '#F8FAFC',
-        accentColor: '#F59E0B',
-        buttonBackgroundColor: '#E11D48',
-        buttonTextColor: '#FFFFFF',
         paddingTop: 'py-20',
         paddingBottom: 'py-20',
         textAlign: 'center',
@@ -628,9 +615,9 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     },
     elements: [],
     variantOverrides: {
-      'TestimonialsGrid': { textAlign: 'center', background: { type: 'color', color: '#0E1214' } },
-      'TestimonialsCentered': { textAlign: 'center', background: { type: 'color', color: '#0E1214' }, maxWidth: 'max-w-4xl' },
-      'TestimonialsColumns': { textAlign: 'left', background: { type: 'color', color: '#0E1214' } }
+      'TestimonialsGrid': { textAlign: 'center' },
+      'TestimonialsCentered': { textAlign: 'center', maxWidth: 'max-w-4xl' },
+      'TestimonialsColumns': { textAlign: 'left' }
     }
   },
   faq: {
@@ -640,13 +627,6 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
       subtitle: 'Everything you need to know about our product and billing.',
     },
     styles: {
-      backgroundColor: '#0E1214',
-      background: { type: 'color', color: '#0E1214' },
-      textColor: '#D1D5DB',
-      titleColor: '#F8FAFC',
-      accentColor: '#3b82f6',
-      buttonBackgroundColor: '#E11D48',
-      buttonTextColor: '#FFFFFF',
       variant: 'FAQCentered',
       paddingTop: 'pt-24',
       paddingBottom: 'pb-24',
@@ -654,8 +634,8 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     },
     elements: [],
     variantOverrides: {
-      'FAQCentered': { textAlign: 'center', background: { type: 'color', color: '#0E1214' }, maxWidth: 'max-w-4xl' },
-      'FAQSplit': { textAlign: 'left', background: { type: 'color', color: '#0E1214' } }
+      'FAQCentered': { textAlign: 'center', maxWidth: 'max-w-4xl' },
+      'FAQSplit': { textAlign: 'left' }
     }
   },
   cta: {
@@ -666,12 +646,6 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
           ctaText: 'Get Started Now'
       },
       styles: {
-          backgroundColor: '#0E1214',
-          background: { type: 'color', color: '#0E1214' },
-          textColor: '#C7CDD6',
-          accentColor: '#F59E0B',
-          buttonBackgroundColor: '#E11D48',
-          buttonTextColor: '#FFFFFF',
           paddingTop: 'pt-16 md:pt-32',
           paddingBottom: 'pb-16 md:pb-32',
           paddingX: 'px-6',
@@ -680,8 +654,8 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
           variant: 'center'
       },
       variantOverrides: {
-        'center': { textAlign: 'center', background: { type: 'color', color: '#0E1214' } },
-        'split': { textAlign: 'left', background: { type: 'color', color: '#111111' } }
+        'center': { textAlign: 'center' },
+        'split': { textAlign: 'left' }
       }
   },
   navbar: {
@@ -692,12 +666,6 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
         ctaText: 'Login'
     },
     styles: {
-        backgroundColor: '#0E1214',
-        background: { type: 'color', color: '#0E1214' },
-        textColor: '#C7CDD6',
-        accentColor: '#F59E0B',
-        buttonBackgroundColor: '#FFFFFF',
-        buttonTextColor: '#000000',
         paddingTop: 'py-4 md:py-6',
         paddingBottom: 'py-4 md:py-6',
         paddingX: 'px-6',
@@ -714,12 +682,6 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
         links: [{label: 'Privacy', href:'#'}, {label: 'Terms', href:'#'}]
     },
     styles: {
-        backgroundColor: '#0E1214',
-        background: { type: 'color', color: '#0E1214' },
-        textColor: '#C7CDD6',
-        accentColor: '#F59E0B',
-        buttonBackgroundColor: '#FFFFFF',
-        buttonTextColor: '#000000',
         paddingTop: 'pt-8 md:pt-16',
         paddingBottom: 'pb-8 md:pb-16',
         paddingX: 'px-6',
@@ -736,7 +698,6 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
           ctaText: 'Learn More'
       },
       styles: {
-          backgroundColor: '#0E1214',
           background: { 
             type: 'image', 
             image: { 
@@ -753,10 +714,6 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
               }
             } 
           },
-          textColor: '#C7CDD6',
-          accentColor: '#F59E0B',
-          buttonBackgroundColor: '#E11D48',
-          buttonTextColor: '#FFFFFF',
           paddingTop: 'pt-24 md:pt-40',
           paddingBottom: 'pb-24 md:pb-40',
           paddingX: 'px-6',

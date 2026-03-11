@@ -1865,110 +1865,57 @@ const AppContent: React.FC = () => {
   };
 
   // Reset section styles to theme/section defaults (preserves current variant and content)
-  const resetSectionStyles = async (sectionId: string) => {
-    const { projectId, pageId, token } = getUrlParams();
-    if (!projectId || !pageId) {
-      toast.error('Missing projectId or pageId in URL');
-      return;
-    }
-
+  // Reset section and element styles to dynamic theme defaults
+  const resetSectionStyles = (sectionId: string) => {
     setSiteData(prev => {
       const sections = prev.sections.map(s => {
         if (s.id !== sectionId) return s;
         
-        // CRITICAL: Preserve current variant - DO NOT CHANGE IT
         const currentVariant = s.styles?.variant || getDefaultVariant(s.type);
-        
-        // Get the base template for this section type
         const template = SECTION_TEMPLATES[s.type] || SECTION_TEMPLATES.hero;
-        const templateStyles = (template.styles || {}) as any;
+        const variantOverrides = template.variantOverrides?.[currentVariant] || {};
+        const activeColors = prev.globalStyles.colors;
         
-        // Start with template defaults (but exclude variant to preserve current one)
-        const baseDefaults: any = {
-          ...templateStyles,
-          // Remove variant from template defaults - we'll set it explicitly
-          variant: undefined
+        // 1. Reset section styles to dynamic theme colors
+        const newSectionStyles = {
+            ...template.styles,
+            ...variantOverrides,
+            variant: currentVariant, // Preserve current variant
+            backgroundColor: activeColors.backgroundColor,
+            textColor: activeColors.textColor,
+            titleColor: activeColors.titleColor,
+            subtitleColor: activeColors.subtitleColor,
+            accentColor: activeColors.accentColor,
+            buttonBackgroundColor: activeColors.buttonBackgroundColor,
+            buttonTextColor: activeColors.buttonTextColor,
+            borderColor: activeColors.borderColor,
+            overlayColor: activeColors.overlayColor || 'rgba(0,0,0,0.5)'
         };
-        
-        // Merge template styles with theme data defaults
-        // Priority: Template defaults -> Theme data -> Hardcoded fallbacks
-        const defaultStyles: any = {
-          // Background colors - use theme surface as default
-          backgroundColor: baseDefaults.backgroundColor || themeData?.surface || '#0E1214',
-          background: baseDefaults.background || { 
-            type: 'color', 
-            color: baseDefaults.backgroundColor || themeData?.surface || '#0E1214' 
-          },
-          
-          // Text colors - use theme description as default
-          textColor: baseDefaults.textColor || themeData?.description || '#D1D5DB',
-          
-          // Title colors - use theme heading as default
-          titleColor: baseDefaults.titleColor || themeData?.heading || '#F8FAFC',
-          
-          // Accent colors - use theme accent as default
-          accentColor: baseDefaults.accentColor || themeData?.accent || '#F59E0B',
-          
-          // Button colors - use theme primaryButton as default
-          buttonBackgroundColor: baseDefaults.buttonBackgroundColor || themeData?.primaryButton?.bg || '#E11D48',
-          buttonTextColor: baseDefaults.buttonTextColor || themeData?.primaryButton?.text || '#FFFFFF',
-          
-          // Overlay - use theme overlay as default (if background image exists)
-          overlayColor: baseDefaults.overlayColor || themeData?.overlay?.color || 'rgba(0, 0, 0, 0.5)',
-          overlayBlendMode: baseDefaults.overlayBlendMode || themeData?.overlay?.blend || 'multiply',
-          
-          // Spacing and layout - use template defaults
-          paddingTop: baseDefaults.paddingTop || 'pt-16',
-          paddingBottom: baseDefaults.paddingBottom || 'pb-16',
-          paddingX: baseDefaults.paddingX || 'px-6',
-          textAlign: baseDefaults.textAlign || 'center',
-          titleSize: baseDefaults.titleSize || 'text-4xl',
-          
-          // CRITICAL: Preserve current variant - DO NOT CHANGE
-          variant: currentVariant,
-          
-          // Keep other template style properties (spacing, sizing, etc.)
-          ...Object.fromEntries(
-            Object.entries(baseDefaults).filter(([key]) => 
-              !['variant', 'backgroundColor', 'background', 'textColor', 'titleColor', 
-                'accentColor', 'buttonBackgroundColor', 'buttonTextColor', 
-                'overlayColor', 'overlayBlendMode', 'paddingTop', 'paddingBottom', 
-                'paddingX', 'textAlign', 'titleSize'].includes(key)
-            )
-          )
-        };
-        
-        // Apply variant-specific overrides if they exist (but preserve variant)
-        if (template.variantOverrides && template.variantOverrides[currentVariant]) {
-          const variantOverrides = { ...template.variantOverrides[currentVariant] };
-          // Remove variant from overrides to preserve current one
-          delete variantOverrides.variant;
-          Object.assign(defaultStyles, variantOverrides);
-        }
-        
-        // CRITICAL: Ensure variant is preserved (final check)
-        defaultStyles.variant = currentVariant;
-        
+
+        // 2. Clear variantStyles for the current variant
+        const variantStyles = s.variantStyles || {};
+        variantStyles[currentVariant] = { ...newSectionStyles };
+
+        // 3. Strip hardcoded colors from ALL elements so they inherit the theme seamlessly
+        const newElements = s.elements?.map(el => {
+            const newStyle = { ...el.style };
+            delete newStyle.color;
+            delete newStyle.backgroundColor;
+            delete newStyle.accentColor;
+            delete newStyle.borderColor;
+            return { ...el, style: newStyle };
+        }) || [];
+
         return {
-          ...s,
-          // Only update styles - preserve content and elements
-          styles: defaultStyles
+            ...s,
+            styles: newSectionStyles,
+            variantStyles: variantStyles,
+            elements: newElements
         } as Section;
       });
-      
       return { ...prev, sections };
     });
-    
-    // Auto-save to DB after reset
-    setTimeout(async () => {
-      try {
-        await savePageData();
-        toast.success('Section styles reset to defaults and saved!');
-      } catch (error) {
-        console.error('Error saving reset styles:', error);
-        toast.error('Styles reset but failed to save. Please save manually.');
-      }
-    }, 100);
+    toast.success('Section & elements reset to theme defaults!');
   };
 
   // Helper to update section background (handles nested object)
@@ -2404,9 +2351,10 @@ const AppContent: React.FC = () => {
   const addNewSection = (type: SectionType) => {
     const template = SECTION_TEMPLATES[type] || SECTION_TEMPLATES.hero;
     const defaultVariant = template.styles?.variant || 'center';
-    
-    // Ensure the new section gets its specific variant overrides immediately
     const variantOverrides = template.variantOverrides?.[defaultVariant] || {};
+    
+    // Grab current global theme colors to initialize the new section safely
+    const activeColors = siteData.globalStyles.colors;
     
     const newSection: Section = { 
         ...template, 
@@ -2414,7 +2362,17 @@ const AppContent: React.FC = () => {
         type: template.type || type,
         styles: {
             ...template.styles,
-            ...variantOverrides
+            ...variantOverrides,
+            // Automatically bind to the active theme colors on creation
+            backgroundColor: activeColors.backgroundColor,
+            textColor: activeColors.textColor,
+            titleColor: activeColors.titleColor,
+            subtitleColor: activeColors.subtitleColor,
+            accentColor: activeColors.accentColor,
+            buttonBackgroundColor: activeColors.buttonBackgroundColor,
+            buttonTextColor: activeColors.buttonTextColor,
+            borderColor: activeColors.borderColor,
+            overlayColor: activeColors.overlayColor || 'rgba(0,0,0,0.5)',
         }
     } as Section;
     
@@ -2473,9 +2431,39 @@ const AppContent: React.FC = () => {
               </AccordionGroup>
               {context === 'element' && (
               <AccordionGroup title="Typography" defaultOpen={true}>
+                       {/* Icon Reset Button */}
+                       {elementType === 'icon' && (
+                           <div className="mb-3">
+                               <button
+                                   type="button"
+                                   onClick={(e) => {
+                                       e.preventDefault();
+                                       e.stopPropagation();
+                                       if (onBatchUpdate) onBatchUpdate({ color: '' });
+                                       else onUpdate('color', '');
+                                   }}
+                                   className="w-full px-3 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/40 text-blue-400 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                   title="Reset to default dynamic theme icon color"
+                               >
+                                   <i className="fa-solid fa-rotate-left"></i>
+                                   Default Theme Icon
+                               </button>
+                           </div>
+                       )}
                        {/* Text Color - show for all elements except badge (badge has its own section) */}
                        {elementType !== 'badge' && (
-                           <ColorInput label="Text Color" value={styles.color || styles.textColor} onChange={(v) => onUpdate('color', v)} />
+                           <ColorInput 
+                               label={elementType === 'icon' ? "Icon Color" : "Text Color"} 
+                               value={
+                                   styles.color || 
+                                   styles.textColor || 
+                                   (elementType === 'icon' ? themeColors?.accentColor : 
+                                   (elementType === 'heading' ? themeColors?.titleColor : 
+                                   themeColors?.textColor)) || 
+                                   ''
+                               } 
+                               onChange={(v) => onUpdate('color', v)} 
+                           />
                        )}
                        {(elementType === 'heading' || elementType === 'text') && (
                        <SelectInput
@@ -2495,13 +2483,21 @@ const AppContent: React.FC = () => {
                        />
                    )}
                        {elementType === 'icon' && (
-                           <TextInput 
-                               label="Icon Size (px)" 
-                               value={styles.fontSize || '24px'} 
-                               onChange={(v) => onUpdate('fontSize', v)} 
-                               placeholder="e.g., 24px, 48px, 128px"
-                       />
-                   )}
+                           <div className="mb-4">
+                               <RangeInput
+                                   label="Icon Size"
+                                   value={parseInt((styles.fontSize || '32').toString().replace(/[^0-9]/g, '')) || 32}
+                                   min={16} 
+                                   max={128} 
+                                   step={4} 
+                                   unit="px"
+                                   onChange={(v) => {
+                                       // Update fontSize in style (ElementsSection will use this as fallback if content.iconSize is not set)
+                                       onUpdate('fontSize', `${v}px`);
+                                   }}
+                               />
+                           </div>
+                       )}
                    <SelectInput label="Font Weight" value={styles.fontWeight || '400'} options={[{label: 'Normal', value: '400'}, {label: 'Bold', value: '700'}, {label: 'Black', value: '900'}, {label: 'Light', value: '300'}]} onChange={(v) => onUpdate('fontWeight', v)} />
                    <div className="mt-2">
                         <label className="text-[10px] font-bold text-white/40 capitalize ml-1 mb-1 block">Alignment</label>
@@ -2511,33 +2507,52 @@ const AppContent: React.FC = () => {
               )}
               {context === 'element' && elementType === 'badge' && (
                   <AccordionGroup title="Badge Styles" defaultOpen={true}>
-                      {(() => {
-                          // Get theme badge defaults from themeColors parameter or use fallback
-                          // themeColors is passed from AppContent which has themeData
-                          const themeBadgeBg = themeColors?.badgeBackgroundColor || (typeof themeData !== 'undefined' ? themeData?.badge?.background : undefined) || 'rgba(225,29,72,0.15)';
-                          const themeBadgeText = themeColors?.badgeTextColor || (typeof themeData !== 'undefined' ? themeData?.badge?.text : undefined) || '#F8FAFC';
-                          
-                          // Show theme defaults if element doesn't have explicit colors
-                          const badgeBgValue = styles.backgroundColor || themeBadgeBg;
-                          const badgeTextValue = styles.color || themeBadgeText;
-                          
-                          return (
-                              <>
-                                  {/* Background Color - show theme default if not explicitly set */}
-                                  <ColorInput 
-                                      label="Background Color" 
-                                      value={badgeBgValue} 
-                                      onChange={(v) => onUpdate('backgroundColor', v)} 
-                                  />
-                                  {/* Text Color - show theme default if not explicitly set */}
-                                  <ColorInput 
-                                      label="Text Color" 
-                                      value={badgeTextValue} 
-                                      onChange={(v) => onUpdate('color', v)} 
-                                  />
-                              </>
-                          );
-                      })()}
+                      <div className="mb-3">
+                          <button
+                              type="button"
+                              onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  // Reset badge styles to dynamic theme fallbacks
+                                  if (onBatchUpdate) {
+                                      onBatchUpdate({
+                                          backgroundColor: '',
+                                          color: '',
+                                          borderColor: '',
+                                          padding: undefined,
+                                          borderRadius: undefined
+                                      });
+                                  } else {
+                                      onUpdate('backgroundColor', '');
+                                      onUpdate('color', '');
+                                      onUpdate('borderColor', '');
+                                      onUpdate('padding', undefined);
+                                      onUpdate('borderRadius', undefined);
+                                  }
+                              }}
+                              className="w-full px-3 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/40 text-blue-400 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                              title="Reset to dynamic theme badge styles"
+                          >
+                              <i className="fa-solid fa-rotate-left"></i>
+                              Default Theme Badge
+                          </button>
+                      </div>
+                      <ColorInput 
+                          label="Background Color" 
+                          value={styles.backgroundColor || themeData?.badge?.background || ''} 
+                          onChange={(v) => onUpdate('backgroundColor', v)} 
+                      />
+                      <ColorInput 
+                          label="Text Color" 
+                          value={styles.color || themeData?.badge?.text || ''} 
+                          onChange={(v) => onUpdate('color', v)} 
+                      />
+                      <TextInput 
+                          label="Padding" 
+                          value={typeof styles.padding === 'string' ? styles.padding : ''} 
+                          onChange={(v) => onUpdate('padding', v)} 
+                          placeholder="e.g., 4px 12px" 
+                      />
                       <SelectInput 
                           label="Size" 
                           value={styles.fontSize || '0.75rem'} 
@@ -2595,20 +2610,16 @@ const AppContent: React.FC = () => {
                               onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  // Reset button styles to theme defaults
-                                  const defaultBgColor = themeColors?.buttonBackgroundColor || '#E11D48';
-                                  const defaultTextColor = themeColors?.buttonTextColor || '#FFFFFF';
-                                  // If batch update is available, use it to update all styles at once
+                                  // Reset button styles to dynamic theme fallbacks
                                   if (onBatchUpdate) {
                                       onBatchUpdate({
-                                          backgroundColor: defaultBgColor,
-                                          color: defaultTextColor,
+                                          backgroundColor: '',
+                                          color: '',
                                           padding: undefined
                                       });
                                   } else {
-                                      // Otherwise, update each property individually
-                                      onUpdate('backgroundColor', defaultBgColor);
-                                      onUpdate('color', defaultTextColor);
+                                      onUpdate('backgroundColor', '');
+                                      onUpdate('color', '');
                                       onUpdate('padding', undefined);
                                   }
                               }}
@@ -2698,14 +2709,15 @@ const AppContent: React.FC = () => {
                          />
                          <RangeInput
                            label="Overlay Opacity"
-                           value={styles.background?.overlay?.opacity !== undefined ? styles.background.overlay.opacity : (styles.background?.image?.overlay?.opacity !== undefined ? styles.background.image.overlay.opacity : parseFloat(styles.overlayOpacityValue || '0.5'))}
-                           min={0} max={1} step={0.05}
+                           value={Math.round((styles.background?.overlay?.opacity !== undefined ? styles.background.overlay.opacity : (styles.background?.image?.overlay?.opacity !== undefined ? styles.background.image.overlay.opacity : parseFloat(styles.overlayOpacityValue || '0.5'))) * 100)}
+                           min={0} max={100} step={1} unit="%"
                            onChange={(v) => {
-                             onUpdate('overlayOpacityValue', v.toString());
+                             const decimalVal = v / 100;
+                             onUpdate('overlayOpacityValue', decimalVal.toString());
                              const newBg = { ...(styles.background || {}) };
-                             newBg.overlay = { ...(newBg.overlay || {}), opacity: v };
+                             newBg.overlay = { ...(newBg.overlay || {}), opacity: decimalVal };
                              if (newBg.type === 'image' && newBg.image) {
-                               newBg.image = { ...newBg.image, overlay: { ...(newBg.image.overlay || {}), opacity: v } };
+                               newBg.image = { ...newBg.image, overlay: { ...(newBg.image.overlay || {}), opacity: decimalVal } };
                              }
                              onUpdate('background', newBg);
                            }}
@@ -2897,9 +2909,9 @@ const AppContent: React.FC = () => {
                   />
                   <RangeInput
                     label="Overlay Opacity"
-                    value={parseFloat(styles.overlayOpacity || '0')}
-                    min={0} max={1} step={0.05}
-                    onChange={(v: number) => onUpdate('overlayOpacity', v.toString())}
+                    value={Math.round(parseFloat(styles.overlayOpacity || '0') * 100)}
+                    min={0} max={100} step={1} unit="%"
+                    onChange={(v: number) => onUpdate('overlayOpacity', (v / 100).toString())}
                   />
                 </div>
               )}
@@ -3253,21 +3265,27 @@ const AppContent: React.FC = () => {
                                                          updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, icon: iconValue} });
                                                      }} 
                                                  />
-                                                 <TextInput 
-                                                     label="Icon Size (px)" 
-                                                     value={selectedElement.style?.fontSize || '128px'} 
-                                                     onChange={(v) => {
-                                                         // Preserve existing style properties and update fontSize
-                                                         const currentStyle = selectedElement.style || {};
-                                                         updateElement(selectedSection.id, selectedElement.id, { 
-                                                             style: {
-                                                                 ...currentStyle,
-                                                                 fontSize: v
-                                                             } 
-                                                         });
-                                                     }} 
-                                                     placeholder="e.g., 128px, 64px, 200px"
-                                                 />
+                                                 <div className="mb-4">
+                                                     <RangeInput
+                                                         label="Icon Size"
+                                                         value={parseInt((selectedElement.content.iconSize || selectedElement.style?.fontSize || '32').toString().replace(/[^0-9]/g, '')) || 32}
+                                                         min={16} 
+                                                         max={128} 
+                                                         step={4} 
+                                                         unit="px"
+                                                         onChange={(v) => {
+                                                             // Update both content and style to ensure backward compatibility with how ElementsSection renders it
+                                                             const currentStyle = selectedElement.style || {};
+                                                             updateElement(selectedSection.id, selectedElement.id, { 
+                                                                 content: {...selectedElement.content, iconSize: `${v}px`},
+                                                                 style: {
+                                                                     ...currentStyle,
+                                                                     fontSize: `${v}px`
+                                                                 } 
+                                                             });
+                                                         }}
+                                                     />
+                                                 </div>
                                              </div>
                                          ) : selectedElement.type === 'badge' ? (
                                              <div className="space-y-4">
@@ -3510,24 +3528,22 @@ const AppContent: React.FC = () => {
                                              
                                              {/* Advanced Actions */}
                                              <AccordionGroup title="Advanced Actions" defaultOpen={false}>
-                                                 <div className="space-y-2">
-                                                     <button
-                                                         onClick={() => restoreSectionElements(selectedSection.id)}
-                                                         className="w-full px-3 py-2 bg-orange-600/20 hover:bg-orange-600/30 border border-orange-600/40 text-orange-400 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                                                         title="Restore missing elements from template"
-                                                     >
-                                                         <i className="fa-solid fa-window-restore"></i>
-                                                         Restore Missing Elements
-                                                     </button>
-                                                     <button
-                                                         onClick={() => resetSectionStyles(selectedSection.id)}
-                                                         className="w-full px-3 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/40 text-blue-400 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                                                         title="Reset section styles to theme/section defaults"
-                                                     >
-                                                         <i className="fa-solid fa-rotate-left"></i>
-                                                         Reset Default Section Style
-                                                     </button>
-                                                 </div>
+                                                 <button
+                                                     onClick={() => restoreSectionElements(selectedSection.id)}
+                                                     className="w-full mb-3 px-3 py-2 bg-orange-600/20 hover:bg-orange-600/30 border border-orange-600/40 text-orange-400 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                                     title="Restore missing elements from template"
+                                                 >
+                                                     <i className="fa-solid fa-window-restore"></i>
+                                                     Restore Missing Elements
+                                                 </button>
+                                                 <button
+                                                     onClick={() => resetSectionStyles(selectedSection.id)}
+                                                     className="w-full px-3 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-600/40 text-red-400 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                                     title="Reset all section and element styles to theme defaults"
+                                                 >
+                                                     <i className="fa-solid fa-rotate-left"></i>
+                                                     Reset Section Styles
+                                                 </button>
                                              </AccordionGroup>
                                          </div>
                                      )
@@ -3668,6 +3684,12 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   const urlParams = getUrlParams();
   const projectId = urlParams.projectId || undefined;
+  const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:1111/admin/v1';
+  
+  // Set global API URL for ThemeProvider and other shared packages
+  if (typeof window !== 'undefined') {
+    (window as any).__API_URL__ = apiUrl;
+  }
   
   return (
     <ThemeProvider projectId={projectId} isBuilder={true}>

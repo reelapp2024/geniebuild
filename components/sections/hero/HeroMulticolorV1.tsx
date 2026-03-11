@@ -33,7 +33,6 @@ export const HeroMulticolorV1: React.FC<HeroProps> = ({
   const primaryButtonId = `${section.id}-hero-primary-button`;
   const secondaryButtonId = `${section.id}-hero-secondary-button`;
   const badgeId = `${section.id}-hero-badge`;
-  const imageId = `${section.id}-hero-image`;
   const trustIndicator1Id = `${section.id}-hero-trust-1`;
   const trustIndicator2Id = `${section.id}-hero-trust-2`;
   const trustIndicator3Id = `${section.id}-hero-trust-3`;
@@ -44,7 +43,6 @@ export const HeroMulticolorV1: React.FC<HeroProps> = ({
   const primaryButtonElement = section.elements?.find(e => e.id === primaryButtonId);
   const secondaryButtonElement = section.elements?.find(e => e.id === secondaryButtonId);
   const badgeElement = section.elements?.find(e => e.id === badgeId);
-  const imageElement = section.elements?.find(e => e.id === imageId);
   
   // Theme colors
   const styleAny = styles as any;
@@ -185,50 +183,13 @@ export const HeroMulticolorV1: React.FC<HeroProps> = ({
     };
   };
   
-  const getImageElement = (): WebsiteElement => {
-    if (imageElement) return imageElement;
-    return {
-      id: imageId,
-      type: 'image',
-      content: {
-        imageUrl: content.imageUrl || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
-        alt: 'Hero Background'
-      },
-      style: {}
-    };
-  };
-
-  // Get background image URL
-  const bgImageUrl = content.imageUrl || imageElement?.content?.imageUrl || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
-
   return (
     <section
       className="relative min-h-screen flex items-center justify-center overflow-hidden py-8 sm:py-12 lg:py-16 pb-16 sm:pb-20 lg:pb-24"
       style={{
-        backgroundImage: bgImageUrl ? `url(${bgImageUrl})` : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundColor: colors.surface
+        backgroundColor: 'transparent' // Let SectionRenderer handle the background entirely
       }}
     >
-      {/* Two-layer overlay system (matching website multicolor theme) */}
-      {/* Layer 1: Gradient Overlay */}
-      <div 
-        className="absolute inset-0"
-        style={{
-          background: `linear-gradient(135deg, ${colors.gradient.from}, ${colors.gradient.to})`,
-          mixBlendMode: colors.overlay.blend as any
-        }}
-      ></div>
-      
-      {/* Layer 2: Solid Color Overlay */}
-      <div 
-        className="absolute inset-0"
-        style={{
-          backgroundColor: colors.overlay.color
-        }}
-      ></div>
       
       {/* Animated Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">

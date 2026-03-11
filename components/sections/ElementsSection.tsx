@@ -180,14 +180,10 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
       ...(el.style || {})
     };
 
-    // Merge element style with theme colors (only if element doesn't have explicit colors)
     let mergedStyle = { ...renderStyle };
+    
+    // Only pre-fill buttons globally, let individual case blocks handle their specific semantic colors (title, accent, etc.)
     if (theme) {
-      // Only apply theme colors if element doesn't have explicit colors
-      if (!renderStyle?.color || renderStyle.color === 'transparent' || renderStyle.color === '') {
-        mergedStyle.color = theme.textColor;
-      }
-      // For buttons, use button theme colors
       if ((type === 'button' || type === 'call-to-action') && (!renderStyle?.backgroundColor || renderStyle.backgroundColor === 'transparent' || renderStyle.backgroundColor === '')) {
         mergedStyle.backgroundColor = theme.buttonBackgroundColor;
         if (!renderStyle?.color || renderStyle.color === 'transparent' || renderStyle.color === '') {

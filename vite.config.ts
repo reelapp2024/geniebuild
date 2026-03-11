@@ -12,7 +12,10 @@ export default defineConfig(({ mode }) => {
       plugins: [react()],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        // Force the API URL globally for all shared packages
+        'process.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL || 'http://localhost:1111/admin/v1'),
+        'import.meta.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL || 'http://localhost:1111/admin/v1')
       },
       resolve: {
         alias: {
