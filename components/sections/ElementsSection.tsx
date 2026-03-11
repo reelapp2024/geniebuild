@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Section, WebsiteElement } from '../../types';
 import { useTheme } from '@ui/blocks';
-import { ELEMENT_DEFAULTS } from '../../constants';
+import { ELEMENT_DEFAULTS, PRESET_THEMES } from '../../constants';
 
 interface ElementsSectionProps {
   section: Section;
@@ -656,50 +656,57 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
             
         case 'badge':
-            // CRITICAL: Badges should ALWAYS use current theme badge colors
-            // This ensures badges update when theme changes
-            // Only use element colors if they're explicitly customized to non-theme colors
+            // 1. Get current theme badge colors (these update reactively)
+            const currentThemeBg = themeData?.badge?.background || 'rgba(225,29,72,0.15)';
+            const currentThemeText = themeData?.badge?.text || '#F8FAFC';
             
-            // Get current theme badge colors (these update reactively when theme changes via useTheme hook)
-            const currentThemeBg = themeData?.badge?.background;
-            const currentThemeText = themeData?.badge?.text;
-            
-            // Get element style directly (not merged with ELEMENT_DEFAULTS)
-            // Check both backgroundColor and accentColor (legacy support)
+            // 2. Safely extract element style
             const elementStyle = el.style || {};
-            const elementBg = elementStyle.backgroundColor || elementStyle.accentColor;
-            const elementText = elementStyle.color;
+            const rawBg = elementStyle.backgroundColor || elementStyle.accentColor || '';
+            const rawText = elementStyle.color || '';
+
+            // 3. Helper to clean duplicated color strings (e.g., "#HEX,#HEX" or "rgba(...),rgba(...)")
+            const sanitizeColor = (colorStr: string) => {
+                if (!colorStr) return '';
+                // Fix duplicated rgba: "rgba(255,0,0,0.5),rgba(255,0,0,0.5)"
+                if (colorStr.includes('),rgba')) {
+                    return colorStr.split('),rgba')[0] + ')';
+                }
+                // Fix duplicated hex: "#F8FAFC,#F8FAFC"
+                if (colorStr.includes('#') && colorStr.indexOf('#', 1) !== -1) {
+                    return colorStr.substring(0, colorStr.indexOf('#', 1)).replace(/,$/, '');
+                }
+                return colorStr;
+            };
+
+            const cleanElementBg = sanitizeColor(rawBg);
+            const cleanElementText = sanitizeColor(rawText);
+
+            // 4. Build a list of ALL known preset theme colors to detect remnants of previous themes
+            const knownThemeBgs = PRESET_THEMES.map(t => t.elements.badge?.background).filter(Boolean) as string[];
+            knownThemeBgs.push('#ec4899', '#F59E0B', 'rgba(225,29,72,0.15)', 'transparent');
+
+            const knownThemeTexts = PRESET_THEMES.map(t => t.elements.badge?.text).filter(Boolean) as string[];
+            knownThemeTexts.push('#F8FAFC', '#FFFFFF', '#D1D5DB', 'transparent');
+
+            // 5. Determine if it's a TRUE custom color
+            // It is custom ONLY if it exists AND it does not match ANY of our known theme colors
+            const isCustomBg = cleanElementBg !== '' && 
+                !knownThemeBgs.some(bg => bg.replace(/\s/g, '') === cleanElementBg.replace(/\s/g, ''));
+                               
+            const isCustomText = cleanElementText !== '' && 
+                !knownThemeTexts.some(text => text.replace(/\s/g, '') === cleanElementText.replace(/\s/g, ''));
+
+            // 6. Resolve final colors: Use custom if it exists, otherwise strictly force the current theme
+            const badgeBgColor = isCustomBg ? cleanElementBg : currentThemeBg;
+            const badgeTextColor = isCustomText ? cleanElementText : currentThemeText;
             
-            // Check if element has explicit colors that are NOT theme colors (user customization)
-            // We always prefer theme colors to allow theme updates
-            // Only use element colors if they exist AND don't match current theme
-            // Empty style objects will result in undefined, which will use theme colors
-            const useCustomBg = elementBg && 
-                               elementBg !== '' && 
-                               elementBg !== 'transparent' &&
-                               currentThemeBg &&
-                               elementBg !== currentThemeBg;
-            const useCustomText = elementText && 
-                                 elementText !== '' && 
-                                 elementText !== 'transparent' &&
-                                 currentThemeText &&
-                                 elementText !== currentThemeText;
-            
-            // Always use theme colors unless element has explicit custom non-theme colors
-            // This ensures badges update when theme changes
-            const badgeBgColor = useCustomBg 
-                ? elementBg 
-                : (currentThemeBg || 'rgba(225,29,72,0.15)');
-            const badgeTextColor = useCustomText 
-                ? elementText 
-                : (currentThemeText || '#F8FAFC');
-            
-            // Badge size and padding - use element style or defaults
+            // 7. Badge size and padding
             const badgeFontSize = renderStyle?.fontSize || '0.75rem';
             const badgePadding = renderStyle?.padding || '4px 12px';
             const badgeBorderRadius = renderStyle?.borderRadius || '9999px';
             
-            // Create safe style object excluding colors (they're set explicitly above)
+            // 8. Create safe style object excluding colors
             const badgeSafeStyle = { ...safeStyle };
             delete badgeSafeStyle.backgroundColor;
             delete badgeSafeStyle.color;
