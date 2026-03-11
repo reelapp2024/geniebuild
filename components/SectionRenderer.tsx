@@ -235,12 +235,6 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     gradientOverlay: React.CSSProperties | null, 
     colorOverlay: React.CSSProperties | null 
   } => {
-    // Check if section has background image (overlays only apply to images, like website)
-    const hasBackgroundImage = styles.background?.type === 'image' || !!styles.backgroundImage;
-    
-    if (!hasBackgroundImage) {
-      return { gradientOverlay: null, colorOverlay: null };
-    }
     
     // 1. Primary Source: Unified Background Object
     const bgOverlay = (styles.background?.type === 'image' 
@@ -249,40 +243,56 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     
     // 2. Secondary Source: Legacy Flat Properties
     const legacyColor = styles.overlayColor;
+    const legacyOpacity = styles.overlayOpacityValue !== undefined ? styles.overlayOpacityValue : styles.overlayOpacity;
     const legacyBlend = styles.overlayBlendMode;
     
-    // 3. Determine overlay color (section -> legacy -> theme)
-    // Website ALWAYS applies overlay when background image exists (no enabled check)
-    const overlayColor = bgOverlay?.color || legacyColor || themeData?.overlay?.color;
-    
-    // 4. Determine blend mode (section -> legacy -> theme -> default 'multiply')
-    const blendMode = bgOverlay?.blendMode || legacyBlend || themeData?.overlay?.blend || 'multiply';
-    
-    // Only skip if explicitly disabled or color is transparent
-    if (bgOverlay?.enabled === false || !overlayColor || overlayColor === 'transparent') {
+    // 3. Respect explicit disable flag
+    if (bgOverlay?.enabled === false) {
       return { gradientOverlay: null, colorOverlay: null };
     }
     
+    // 4. Determine overlay color and blend mode (section -> legacy -> theme)
+    const overlayColor = bgOverlay?.color || legacyColor || themeData?.overlay?.color;
+    const blendMode = bgOverlay?.blendMode || legacyBlend || themeData?.overlay?.blend || 'multiply';
+    
+    // Exit if no color is found
+    if (!overlayColor || overlayColor === 'transparent') {
+      return { gradientOverlay: null, colorOverlay: null };
+    }
+    
+    // 5. Calculate correct Opacity (CRITICAL: Restored this logic to support HEX colors + sliders)
+    const rawOpacityStr = bgOverlay?.opacity !== undefined ? bgOverlay.opacity : legacyOpacity;
+    let finalOpacity: number | undefined = undefined;
+    
+    if (rawOpacityStr !== undefined) {
+      const parsedOpacity = typeof rawOpacityStr === 'string' ? parseFloat(rawOpacityStr) : rawOpacityStr;
+      finalOpacity = parsedOpacity > 1 ? parsedOpacity / 100 : parsedOpacity;
+    }
+    
     // Layer 1: Gradient overlay (like website multicolor theme)
-    // Website uses: background: `linear-gradient(135deg, ${colors.gradient.from}, ${colors.gradient.to})`
     const gradientOverlay = themeData?.gradient ? {
       background: `linear-gradient(135deg, ${themeData.gradient.from}, ${themeData.gradient.to})`,
       mixBlendMode: blendMode as any,
-      position: 'absolute',
+      position: 'absolute' as const,
       inset: 0,
       zIndex: 0,
-      pointerEvents: 'none'
+      pointerEvents: 'none' as const
     } : null;
     
-    // Layer 2: Solid color overlay (like website multicolor theme)
-    // Website uses: backgroundColor: colors.overlay.color (already includes opacity in rgba format)
-    const colorOverlay = {
-      backgroundColor: overlayColor, // Already includes opacity in rgba format from theme
-      position: 'absolute',
+    // Layer 2: Solid color overlay
+    const colorOverlay: React.CSSProperties = {
+      backgroundColor: overlayColor,
+      mixBlendMode: blendMode as any, // CRITICAL: Ensure blend mode applies to the color layer
+      position: 'absolute' as const,
       inset: 0,
       zIndex: 0,
-      pointerEvents: 'none'
+      pointerEvents: 'none' as const
     };
+
+    // CRITICAL: Apply explicit opacity if the user set one in the builder
+    if (finalOpacity !== undefined) {
+      colorOverlay.opacity = finalOpacity;
+    }
     
     return { gradientOverlay, colorOverlay };
   };
