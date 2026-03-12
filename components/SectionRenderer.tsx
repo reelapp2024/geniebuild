@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Section, WebsiteElement } from '../types';
 import { SectionRouter } from './sections/SectionRouter';
 import { useTheme } from '@ui/blocks';
+import { PRESET_THEMES } from '../constants';
 
 interface SectionRendererProps {
   section: Section;
@@ -251,20 +252,20 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       return { gradientOverlay: null, colorOverlay: null };
     }
     
-    // 4. Determine overlay color and blend mode (section -> legacy -> theme)
-    const overlayColor = bgOverlay?.color || legacyColor || themeData?.overlay?.color;
-    const blendMode = bgOverlay?.blendMode || legacyBlend || themeData?.overlay?.blend || 'multiply';
+    // 4. Determine overlay color and blend mode (section -> legacy -> theme -> fallback)
+    let overlayColor = bgOverlay?.color || legacyColor || themeData?.overlay?.color;
+    const blendMode = bgOverlay?.blendMode || legacyBlend || themeData?.overlay?.blend || PRESET_THEMES[0].elements.overlay.blend;
     
-    // Exit if no color is found
-    if (!overlayColor || overlayColor === 'transparent') {
-      return { gradientOverlay: null, colorOverlay: null };
+    // Auto-fix broken transparent colors from old database saves to default theme
+    if (!overlayColor || overlayColor === 'transparent' || overlayColor.replace(/\s/g, '') === 'rgba(0,0,0,0)' || overlayColor.includes(', 0)')) {
+        overlayColor = PRESET_THEMES[0].elements.overlay.color;
     }
     
-    // 5. Calculate correct Opacity (CRITICAL: Restored this logic to support HEX colors + sliders)
-    const rawOpacityStr = bgOverlay?.opacity !== undefined ? bgOverlay.opacity : legacyOpacity;
-    let finalOpacity: number | undefined = undefined;
+    // 5. Calculate correct Opacity (Fallback to default theme if completely missing)
+    const rawOpacityStr = bgOverlay?.opacity !== undefined ? bgOverlay.opacity : (legacyOpacity !== undefined ? legacyOpacity : (themeData?.overlay as any)?.opacity);
+    let finalOpacity: number | undefined = PRESET_THEMES[0].elements.overlay.opacity; 
     
-    if (rawOpacityStr !== undefined) {
+    if (rawOpacityStr !== undefined && rawOpacityStr !== '') {
       const parsedOpacity = typeof rawOpacityStr === 'string' ? parseFloat(rawOpacityStr) : rawOpacityStr;
       finalOpacity = parsedOpacity > 1 ? parsedOpacity / 100 : parsedOpacity;
     }

@@ -1018,30 +1018,30 @@ const AppContent: React.FC = () => {
   
   // Helper to get theme overlay defaults (accessible throughout AppContent)
   const getThemeOverlayDefaults = () => {
-    if (themeData?.overlay) {
-      const themeOverlay = themeData.overlay;
-      let overlayOpacity = 0.5;
-      if (themeOverlay.color) {
-        const rgbaMatch = themeOverlay.color.match(/rgba?\([^)]+\)/);
+    let overlayColor = themeData?.overlay?.color || PRESET_THEMES[0].elements.overlay.color;
+    let overlayOpacity = (themeData?.overlay as any)?.opacity ?? PRESET_THEMES[0].elements.overlay.opacity;
+    let blendMode = themeData?.overlay?.blend || PRESET_THEMES[0].elements.overlay.blend;
+
+    // Detect broken transparent/empty colors from old DB saves and force fallback to Crimson Jet
+    if (!overlayColor || overlayColor === 'transparent' || overlayColor.replace(/\s/g, '') === 'rgba(0,0,0,0)' || overlayColor.includes(', 0)')) {
+        overlayColor = PRESET_THEMES[0].elements.overlay.color;
+        overlayOpacity = PRESET_THEMES[0].elements.overlay.opacity;
+        blendMode = PRESET_THEMES[0].elements.overlay.blend;
+    } else if (typeof overlayColor === 'string' && overlayColor.includes('rgba')) {
+        const rgbaMatch = overlayColor.match(/rgba?\([^)]+\)/);
         if (rgbaMatch) {
-          const rgbaValues = rgbaMatch[0].match(/[\d.]+/g);
-          if (rgbaValues && rgbaValues.length >= 4) {
-            overlayOpacity = parseFloat(rgbaValues[3]);
-          }
+            const rgbaValues = rgbaMatch[0].match(/[\d.]+/g);
+            if (rgbaValues && rgbaValues.length >= 4) {
+                overlayOpacity = parseFloat(rgbaValues[3]);
+            }
         }
-      }
-      return {
-        enabled: true,
-        color: themeOverlay.color || '#000000',
-        opacity: overlayOpacity,
-        blendMode: (themeOverlay.blend as any) || 'multiply'
-      };
     }
+
     return {
-      enabled: true,
-      color: '#000000',
-      opacity: 0.5,
-      blendMode: 'normal' as const
+        enabled: true,
+        color: overlayColor,
+        opacity: overlayOpacity,
+        blendMode: blendMode as any
     };
   };
   const [siteData, setSiteData] = useState<WebsiteData>(INITIAL_TEMPLATE);
