@@ -1122,17 +1122,19 @@ const AppContent: React.FC = () => {
 
   // Apply theme from themeData or fallback to default (Crimson Jet)
   useEffect(() => {
+    // If we have theme data from API, apply it.
     if (themeData && Object.keys(themeData).length > 0) {
       // Only apply theme if it has the expected structure (has elements or has surface/heading properties)
       const hasValidStructure = (themeData as any).elements || ((themeData as any).surface && (themeData as any).heading);
       if (hasValidStructure) {
         applyTheme(themeData as any);
       }
-    } else if (!siteData.globalStyles.colors?.backgroundColor || siteData.globalStyles.colors.backgroundColor === INITIAL_TEMPLATE.globalStyles.colors.backgroundColor) {
-      // Fallback to Crimson Jet if no theme is selected yet or still using initial template defaults
+    } 
+    // If no theme is applied to siteData yet, force fallback to Crimson Jet (PRESET_THEMES[0])
+    else if (!siteData.globalStyles.colors?.backgroundColor) {
       applyTheme(PRESET_THEMES[0]);
     }
-  }, [themeData]);
+  }, [themeData, siteData.globalStyles.colors?.backgroundColor]);
 
   const loadPageData = async (projectId: string, pageId: string) => {
     try {
@@ -1792,13 +1794,18 @@ const AppContent: React.FC = () => {
             const template = SECTION_TEMPLATES[s.type] || SECTION_TEMPLATES.hero;
             const defaultStyles = template?.styles || {};
             const overrides = template?.variantOverrides?.[newVariant] || {};
+            const activeThemeColors = siteData.globalStyles.colors;
             
             // Merge: defaults -> variant overrides -> saved variant styles -> keep variant field
             const updatedStyles = {
               ...defaultStyles,
               ...overrides,
               ...nextVariantStyles,
-              variant: newVariant // Always set the variant
+              variant: newVariant,
+              // Force active theme overlay if the variant doesn't have a custom one saved
+              overlayColor: nextVariantStyles.overlayColor || overrides.overlayColor || activeThemeColors.overlayColor,
+              overlayOpacityValue: nextVariantStyles.overlayOpacityValue || overrides.overlayOpacityValue || activeThemeColors.overlayOpacityValue || "0.75",
+              overlayBlendMode: nextVariantStyles.overlayBlendMode || overrides.overlayBlendMode || activeThemeColors.overlayBlendMode || 'normal'
             };
             
             return {
@@ -2004,13 +2011,18 @@ const AppContent: React.FC = () => {
           const template = SECTION_TEMPLATES[sectionType] || SECTION_TEMPLATES.hero;
           const defaultStyles = template?.styles || {};
           const overrides = template?.variantOverrides?.[nextVariant] || {};
+          const activeThemeColors = siteData.globalStyles.colors;
           
           // Merge: defaults -> variant overrides -> saved variant styles -> keep variant field
           const mergedStyles = {
             ...defaultStyles,
             ...overrides,
             ...nextVariantStyles,
-            variant: nextVariant // Always set the variant
+            variant: nextVariant,
+            // Force active theme overlay if the variant doesn't have a custom one saved
+            overlayColor: nextVariantStyles.overlayColor || overrides.overlayColor || activeThemeColors.overlayColor,
+            overlayOpacityValue: nextVariantStyles.overlayOpacityValue || overrides.overlayOpacityValue || activeThemeColors.overlayOpacityValue || "0.75",
+            overlayBlendMode: nextVariantStyles.overlayBlendMode || overrides.overlayBlendMode || activeThemeColors.overlayBlendMode || 'normal'
           };
           
           return {
@@ -2219,6 +2231,7 @@ const AppContent: React.FC = () => {
       const newGlobalStyles = {
           ...siteData.globalStyles,
           colors: {
+              ...siteData.globalStyles.colors,
               backgroundColor: colors.surface || siteData.globalStyles.colors.backgroundColor,
               textColor: colors.description || siteData.globalStyles.colors.textColor,
               titleColor: colors.heading || siteData.globalStyles.colors.titleColor,
@@ -2228,7 +2241,9 @@ const AppContent: React.FC = () => {
               buttonTextColor: colors.primaryButton?.text || siteData.globalStyles.colors.buttonTextColor,
               linkColor: colors.ring || siteData.globalStyles.colors.linkColor,
               borderColor: colors.ring || siteData.globalStyles.colors.borderColor,
-              overlayColor: baseHex
+              overlayColor: baseHex, // This is now a HEX from constants.tsx
+              overlayOpacityValue: defaultOpacity.toString(),
+              overlayBlendMode: overlay.blend || 'normal'
           }
       };
       
@@ -2447,7 +2462,10 @@ const AppContent: React.FC = () => {
             buttonBackgroundColor: activeColors.buttonBackgroundColor,
             buttonTextColor: activeColors.buttonTextColor,
             borderColor: activeColors.borderColor,
-            overlayColor: activeColors.overlayColor || 'rgba(0,0,0,0.5)',
+            // Ensure we use the HEX from theme and a solid default opacity
+            overlayColor: activeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color,
+            overlayOpacityValue: activeColors.overlayOpacityValue || PRESET_THEMES[0].elements.overlay.opacity.toString(),
+            overlayBlendMode: activeColors.overlayBlendMode || 'normal',
         }
     } as Section;
     
