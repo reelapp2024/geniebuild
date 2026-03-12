@@ -565,7 +565,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
                   position: 'center',
                   size: 'cover',
                   repeat: 'no-repeat',
-                  overlay: { enabled: true, color: '#0E1214', opacity: 0.6, blendMode: 'multiply' }
+                  overlay: { enabled: true } // Removed hardcoded values so it seamlessly inherits active theme overlay
               }
           }
       }
