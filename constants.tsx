@@ -55,7 +55,7 @@ export const PRESET_THEMES = [
     "name": "Crimson Jet",
     "elements": {
       "heading": "#F8FAFC", "description": "#C7CDD6", "surface": "#0E1214",
-      "overlay": { "color": "rgba(45, 10, 15, 0.75)", "blend": "normal" }, 
+      "overlay": { "color": "#2D0A0F", "opacity": 0.75, "blend": "normal" }, 
       "primaryButton": { "bg": "#E11D48", "text": "#FFFFFF", "hover": "#BE123C" },
       "secondaryButton": { "bg": "transparent", "text": "#F8FAFC", "border": "#F43F5E", "hover": "rgba(244,63,94,0.10)" },
       "accent": "#F59E0B", "gradient": { "from": "#0E1214", "to": "#1F2937" },
@@ -68,7 +68,7 @@ export const PRESET_THEMES = [
     "name": "Indigo Sand",
     "elements": {
       "heading": "#F8FAFC", "description": "#BCC6DD", "surface": "#0F1222",
-      "overlay": { "color": "rgba(15, 15, 45, 0.75)", "blend": "normal" }, 
+      "overlay": { "color": "#0F0F2D", "opacity": 0.75, "blend": "normal" }, 
       "primaryButton": { "bg": "#4F46E5", "text": "#FFFFFF", "hover": "#4338CA" },
       "secondaryButton": { "bg": "transparent", "text": "#E5E7EB", "border": "#818CF8", "hover": "rgba(129,140,248,0.12)" },
       "accent": "#EAB308", "gradient": { "from": "#0F1222", "to": "#111827" },
@@ -81,7 +81,7 @@ export const PRESET_THEMES = [
     "name": "Saffron Charcoal",
     "elements": {
       "heading": "#FFFFFF", "description": "#E5E7EB", "surface": "#121212",
-      "overlay": { "color": "rgba(45, 25, 10, 0.75)", "blend": "normal" },
+      "overlay": { "color": "#2D190A", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#FDB022", "text": "#1A1306", "hover": "#DC8D05" },
       "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#FACC15", "hover": "rgba(250,204,21,0.14)" },
       "accent": "#38BDF8", "gradient": { "from": "#0B0B0B", "to": "#1A1A1A" },
@@ -94,7 +94,7 @@ export const PRESET_THEMES = [
     "name": "Mint Slate",
     "elements": {
       "heading": "#FFFFFF", "description": "#D3DEDA", "surface": "#0B1412",
-      "overlay": { "color": "rgba(10, 40, 25, 0.75)", "blend": "normal" },
+      "overlay": { "color": "#0A2819", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#22C55E", "text": "#022C22", "hover": "#16A34A" }, 
       "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#34D399", "hover": "rgba(52,211,153,0.16)" },
       "accent": "#60A5FA", "gradient": { "from": "#0B1412", "to": "#0F1A18" },
@@ -107,7 +107,7 @@ export const PRESET_THEMES = [
     "name": "Marine Teal",
     "elements": {
       "heading": "#FFFFFF", "description": "#BDD0DB", "surface": "#0B1720",
-      "overlay": { "color": "rgba(10, 40, 40, 0.75)", "blend": "normal" },
+      "overlay": { "color": "#0A2828", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#0EA5A4", "text": "#FFFFFF", "hover": "#0C7E7D" },
       "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#22D3EE", "hover": "rgba(34,211,238,0.16)" },
       "accent": "#A7F3D0", "gradient": { "from": "#0B1720", "to": "#0F2430" },
@@ -120,7 +120,7 @@ export const PRESET_THEMES = [
     "name": "Royal Plum Noir",
     "elements": {
       "heading": "#FFFFFF", "description": "#D8CCE6", "surface": "#120C18",
-      "overlay": { "color": "rgba(35, 10, 50, 0.75)", "blend": "normal" },
+      "overlay": { "color": "#230A32", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#A855F7", "text": "#FFFFFF", "hover": "#7E22CE" },
       "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#C084FC", "hover": "rgba(192,132,252,0.14)" },
       "accent": "#F59E0B", "gradient": { "from": "#0F0A16", "to": "#1A1230" },
@@ -133,7 +133,7 @@ export const PRESET_THEMES = [
     "name": "Electric Cobalt",
     "elements": {
       "heading": "#F8FAFC", "description": "#B8C7D9", "surface": "#0A1220",
-      "overlay": { "color": "rgba(10, 20, 55, 0.75)", "blend": "normal" },
+      "overlay": { "color": "#0A1437", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#2563EB", "text": "#FFFFFF", "hover": "#1E40AF" },
       "secondaryButton": { "bg": "transparent", "text": "#F8FAFC", "border": "#38BDF8", "hover": "rgba(56,189,248,0.14)" },
       "accent": "#22D3EE", "gradient": { "from": "#0A1220", "to": "#0F172A" },
@@ -146,7 +146,7 @@ export const PRESET_THEMES = [
     "name": "Copper Forest",
     "elements": {
       "heading": "#FFFFFF", "description": "#C9D6CF", "surface": "#0D1512",
-      "overlay": { "color": "rgba(40, 20, 10, 0.75)", "blend": "normal" },
+      "overlay": { "color": "#28140A", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#D97706", "text": "#0E0A04", "hover": "#B45309" },
       "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#F59E0B", "hover": "rgba(245,158,11,0.14)" },
       "accent": "#34D399", "gradient": { "from": "#0D1512", "to": "#12201B" },
@@ -159,7 +159,7 @@ export const PRESET_THEMES = [
     "name": "Ruby Night",
     "elements": {
       "heading": "#FFFFFF", "description": "#E2C9CF", "surface": "#140A0D",
-      "overlay": { "color": "rgba(45, 10, 20, 0.75)", "blend": "normal" },
+      "overlay": { "color": "#2D0A14", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#DC2626", "text": "#FFFFFF", "hover": "#991B1B" },
       "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#F87171", "hover": "rgba(248,113,113,0.14)" },
       "accent": "#FB923C", "gradient": { "from": "#140A0D", "to": "#1F0E13" },
@@ -172,7 +172,7 @@ export const PRESET_THEMES = [
     "name": "Citrus Navy",
     "elements": {
       "heading": "#FFFFFF", "description": "#C9D3E6", "surface": "#0A1224",
-      "overlay": { "color": "rgba(10, 15, 45, 0.75)", "blend": "normal" },
+      "overlay": { "color": "#0A0F2D", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#F59E0B", "text": "#1A1306", "hover": "#D97706" },
       "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#FBBF24", "hover": "rgba(251,191,36,0.16)" },
       "accent": "#10B981", "gradient": { "from": "#0A1224", "to": "#0C1A33" },

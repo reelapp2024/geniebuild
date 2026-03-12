@@ -1120,6 +1120,20 @@ const AppContent: React.FC = () => {
     }
   }, []);
 
+  // Apply theme from themeData or fallback to default (Crimson Jet)
+  useEffect(() => {
+    if (themeData && Object.keys(themeData).length > 0) {
+      // Only apply theme if it has the expected structure (has elements or has surface/heading properties)
+      const hasValidStructure = (themeData as any).elements || ((themeData as any).surface && (themeData as any).heading);
+      if (hasValidStructure) {
+        applyTheme(themeData as any);
+      }
+    } else if (!siteData.globalStyles.colors?.backgroundColor || siteData.globalStyles.colors.backgroundColor === INITIAL_TEMPLATE.globalStyles.colors.backgroundColor) {
+      // Fallback to Crimson Jet if no theme is selected yet or still using initial template defaults
+      applyTheme(PRESET_THEMES[0]);
+    }
+  }, [themeData]);
+
   const loadPageData = async (projectId: string, pageId: string) => {
     try {
       setLoadingPageData(true);
@@ -1762,6 +1776,38 @@ const AppContent: React.FC = () => {
         if (s.id === id) {
           const currentVariant = s.styles?.variant || getDefaultVariant(s.type);
           
+          // If changing variant, apply variantOverrides
+          if (key === 'variant') {
+            const newVariant = value;
+            const variantStyles = s.variantStyles || {};
+            
+            // Save current styles to current variant
+            variantStyles[currentVariant] = {
+              ...variantStyles[currentVariant],
+              ...s.styles
+            };
+            
+            // Load styles for new variant (or use defaults if not saved)
+            const nextVariantStyles = variantStyles[newVariant] || {};
+            const template = SECTION_TEMPLATES[s.type] || SECTION_TEMPLATES.hero;
+            const defaultStyles = template?.styles || {};
+            const overrides = template?.variantOverrides?.[newVariant] || {};
+            
+            // Merge: defaults -> variant overrides -> saved variant styles -> keep variant field
+            const updatedStyles = {
+              ...defaultStyles,
+              ...overrides,
+              ...nextVariantStyles,
+              variant: newVariant // Always set the variant
+            };
+            
+            return {
+              ...s,
+              styles: updatedStyles,
+              variantStyles: variantStyles
+            } as Section;
+          }
+          
           // Update current styles
           const updatedStyles = {
               ...s.styles,
@@ -1957,10 +2003,12 @@ const AppContent: React.FC = () => {
           const nextVariantStyles = variantStyles[nextVariant] || {};
           const template = SECTION_TEMPLATES[sectionType] || SECTION_TEMPLATES.hero;
           const defaultStyles = template?.styles || {};
+          const overrides = template?.variantOverrides?.[nextVariant] || {};
           
-          // Merge: defaults -> saved variant styles -> keep variant field
+          // Merge: defaults -> variant overrides -> saved variant styles -> keep variant field
           const mergedStyles = {
             ...defaultStyles,
+            ...overrides,
             ...nextVariantStyles,
             variant: nextVariant // Always set the variant
           };
@@ -2160,33 +2208,27 @@ const AppContent: React.FC = () => {
   };
 
   const applyTheme = (theme: typeof PRESET_THEMES[0], presetId?: string | null) => {
-      const colors = theme.elements;
+      // Handle both PRESET_THEMES format (theme.elements) and themeData format (flat structure)
+      const colors = (theme as any).elements || theme;
       
-      // Extract exact RGB and Opacity from theme's RGBA string for perfect slider binding
-      let baseRgb = colors.overlay.color;
-      let defaultOpacity = 0.6;
-      const rgbaMatch = colors.overlay.color.match(/rgba?\(([^)]+)\)/);
-      if (rgbaMatch) {
-          const vals = rgbaMatch[1].split(',').map(v => v.trim());
-          if (vals.length >= 3) {
-              baseRgb = `rgb(${vals[0]}, ${vals[1]}, ${vals[2]})`;
-              if (vals.length >= 4) defaultOpacity = parseFloat(vals[3]);
-          }
-      }
+      // Safely extract overlay color and opacity with fallbacks
+      const overlay = colors.overlay || { color: '#2D0A0F', opacity: 0.75, blend: 'normal' };
+      const baseHex = overlay.color || '#2D0A0F';
+      const defaultOpacity = (overlay as any).opacity ?? 0.75;
 
       const newGlobalStyles = {
           ...siteData.globalStyles,
           colors: {
-              backgroundColor: colors.surface,
-              textColor: colors.description,
-              titleColor: colors.heading,
-              subtitleColor: colors.description,
-              accentColor: colors.accent,
-              buttonBackgroundColor: colors.primaryButton.bg,
-              buttonTextColor: colors.primaryButton.text,
-              linkColor: colors.ring,
-              borderColor: colors.ring,
-              overlayColor: baseRgb
+              backgroundColor: colors.surface || siteData.globalStyles.colors.backgroundColor,
+              textColor: colors.description || siteData.globalStyles.colors.textColor,
+              titleColor: colors.heading || siteData.globalStyles.colors.titleColor,
+              subtitleColor: colors.description || siteData.globalStyles.colors.subtitleColor,
+              accentColor: colors.accent || siteData.globalStyles.colors.accentColor,
+              buttonBackgroundColor: colors.primaryButton?.bg || colors.primaryButton || siteData.globalStyles.colors.buttonBackgroundColor,
+              buttonTextColor: colors.primaryButton?.text || siteData.globalStyles.colors.buttonTextColor,
+              linkColor: colors.ring || siteData.globalStyles.colors.linkColor,
+              borderColor: colors.ring || siteData.globalStyles.colors.borderColor,
+              overlayColor: baseHex
           }
       };
       
@@ -2196,7 +2238,7 @@ const AppContent: React.FC = () => {
               ...currentBg,
               overlay: {
                   enabled: true,
-                  color: baseRgb,
+                  color: baseHex,
                   opacity: defaultOpacity,
                   blendMode: colors.overlay.blend || 'multiply'
               }
@@ -2209,19 +2251,19 @@ const AppContent: React.FC = () => {
               ...section,
               styles: {
                   ...section.styles,
-                  backgroundColor: colors.surface,
-                  textColor: colors.description,
-                  titleColor: colors.heading,
-                  subtitleColor: colors.description,
-                  accentColor: colors.accent,
-                  buttonBackgroundColor: colors.primaryButton.bg,
-                  buttonTextColor: colors.primaryButton.text,
-                  borderColor: colors.ring,
+                  backgroundColor: colors.surface || section.styles.backgroundColor,
+                  textColor: colors.description || section.styles.textColor,
+                  titleColor: colors.heading || section.styles.titleColor,
+                  subtitleColor: colors.description || section.styles.subtitleColor,
+                  accentColor: colors.accent || section.styles.accentColor,
+                  buttonBackgroundColor: colors.primaryButton?.bg || section.styles.buttonBackgroundColor,
+                  buttonTextColor: colors.primaryButton?.text || section.styles.buttonTextColor,
+                  borderColor: colors.ring || section.styles.borderColor,
                   background: updatedBg,
                   // Update legacy flat props to match precisely so sliders don't jump
-                  overlayColor: baseRgb,
+                  overlayColor: baseHex,
                   overlayOpacityValue: defaultOpacity.toString(), 
-                  overlayBlendMode: colors.overlay.blend || 'multiply'
+                  overlayBlendMode: overlay.blend || 'multiply'
               }
           };
       });

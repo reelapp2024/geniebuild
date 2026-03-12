@@ -54,24 +54,54 @@ export const HeroCrimsonJet: React.FC<HeroProps> = ({
     overlay: styles.overlayColor || themeData?.elements?.overlay?.color || 'rgba(14, 18, 20, 0.60)'
   }), [themeData, styles, secondaryButton]);
 
-  React.useEffect(() => {
-    console.log('HeroCrimsonJet themeData:', themeData);
-    console.log('HeroCrimsonJet theme:', theme);
-  }, [themeData, theme]);
+  const styleAny = styles as any;
+  const themeColors = {
+    ...styles,
+    titleColor: theme.heading,
+    textColor: theme.description,
+    subtitleColor: styles.subtitleColor || theme.description,
+    buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
+    buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
+    buttonAlign: styleAny.buttonAlign || styles.textAlign,
+    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily,
+    titleFontWeight: styleAny.titleFontWeight || styleAny.fontWeight || '800',
+    titleFontSize: styleAny.titleSize || styleAny.fontSize,
+    titleAlign: styleAny.titleAlign || styles.textAlign,
+    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily,
+    subtitleFontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight,
+    subtitleFontSize: styleAny.subtitleSize || styleAny.fontSize,
+    subtitleAlign: styleAny.subtitleAlign || styles.textAlign,
+    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily,
+    fontWeight: styleAny.fontWeight,
+    fontSize: styleAny.fontSize,
+    textAlign: styles.textAlign,
+    fontFamily: styleAny.fontFamily,
+  };
 
-  const elements = [
-    { id: `${section.id}-title`, type: 'heading', content: { text: content.title || 'Experience the Power of Crimson Jet.', htmlTag: 'h1' }, style: { color: theme.heading, fontSize: '4rem', fontWeight: '800' } },
-    { id: `${section.id}-desc`, type: 'text', content: { text: content.subtitle || 'Unleash performance with our latest technology. Designed for speed, built for excellence.' }, style: { color: theme.description, fontSize: '1.25rem' } },
-    { id: `${section.id}-btn1`, type: 'button', content: { text: content.ctaText || 'Get Started', link: content.ctaHref || '' }, style: { backgroundColor: theme.primaryButton, color: theme.primaryButtonText, borderRadius: '0.5rem', padding: '0.75rem 2rem' } },
-    { id: `${section.id}-btn2`, type: 'button', content: { text: content.secondaryCtaText || 'Learn More', link: '' }, style: { backgroundColor: theme.secondaryButton, color: theme.secondaryButtonText, borderStyle: 'solid', borderWidth: '2px', borderColor: theme.secondaryButtonBorder, borderRadius: '0.5rem', padding: '0.75rem 2rem' } }
-  ] as WebsiteElement[];
+  const getTitleElement = (): WebsiteElement => {
+    if (section.elements?.find(e => e.id === `${section.id}-title`)) return section.elements.find(e => e.id === `${section.id}-title`)!;
+    return { id: `${section.id}-title`, type: 'heading', content: { text: content.title || 'Experience the Power of Crimson Jet.', htmlTag: 'h1' }, style: {} };
+  };
 
-  const titleElement = section.elements?.find(e => e.id === `${section.id}-title`) || elements[0];
-  const descElement = section.elements?.find(e => e.id === `${section.id}-desc`) || elements[1];
-  const btn1Element = section.elements?.find(e => e.id === `${section.id}-btn1`) || elements[2];
-  const btn2Element = section.elements?.find(e => e.id === `${section.id}-btn2`) || elements[3];
+  const getDescElement = (): WebsiteElement => {
+    if (section.elements?.find(e => e.id === `${section.id}-desc`)) return section.elements.find(e => e.id === `${section.id}-desc`)!;
+    return { id: `${section.id}-desc`, type: 'text', content: { text: content.subtitle || 'Unleash performance with our latest technology. Designed for speed, built for excellence.', textSize: 'xl' }, style: {} };
+  };
 
-  const themeColors = { ...styles, titleColor: theme.heading, textColor: theme.description };
+  const getBtn1Element = (): WebsiteElement => {
+    if (section.elements?.find(e => e.id === `${section.id}-btn1`)) return section.elements.find(e => e.id === `${section.id}-btn1`)!;
+    return { id: `${section.id}-btn1`, type: 'button', content: { text: content.ctaText || 'Get Started', link: content.ctaHref || '' }, style: { borderRadius: '0.5rem', padding: '0.75rem 2rem' } };
+  };
+
+  const getBtn2Element = (): WebsiteElement => {
+    if (section.elements?.find(e => e.id === `${section.id}-btn2`)) return section.elements.find(e => e.id === `${section.id}-btn2`)!;
+    return { id: `${section.id}-btn2`, type: 'button', content: { text: content.secondaryCtaText || 'Learn More', link: '' }, style: { borderStyle: 'solid', borderWidth: '2px', borderRadius: '0.5rem', padding: '0.75rem 2rem' } };
+  };
+
+  const titleElement = getTitleElement();
+  const descElement = getDescElement();
+  const btn1Element = getBtn1Element();
+  const btn2Element = getBtn2Element();
 
   return (
     <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'transparent' }}>
