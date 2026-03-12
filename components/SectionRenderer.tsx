@@ -269,15 +269,8 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       finalOpacity = parsedOpacity > 1 ? parsedOpacity / 100 : parsedOpacity;
     }
     
-    // Layer 1: Gradient overlay (like website multicolor theme)
-    const gradientOverlay = themeData?.gradient ? {
-      background: `linear-gradient(135deg, ${themeData.gradient.from}, ${themeData.gradient.to})`,
-      mixBlendMode: blendMode as any,
-      position: 'absolute' as const,
-      inset: 0,
-      zIndex: 0,
-      pointerEvents: 'none' as const
-    } : null;
+    // Layer 1: Gradient overlay (Removed: Was causing a double-dimming bug by forcing 100% opacity gradients over all images)
+    const gradientOverlay = null;
     
     // Layer 2: Solid color overlay
     let finalBackgroundColor = overlayColor;
