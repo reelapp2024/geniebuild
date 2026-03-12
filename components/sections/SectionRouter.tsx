@@ -25,6 +25,7 @@ import { HeroGradient } from './hero/HeroGradient';
 import { HeroGeometric } from './hero/HeroGeometric';
 import { HeroMulticolor } from './hero/HeroMulticolor';
 import { HeroMulticolorV1 } from './hero/HeroMulticolorV1';
+import { HeroCrimsonJet } from './hero/HeroCrimsonJet';
 // Navbar variants
 import { NavbarSimple } from './navbar/NavbarSimple';
 import { NavbarCentered } from './navbar/NavbarCentered';
@@ -128,6 +129,8 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return <HeroMulticolor {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroMulticolorV1':
           return <HeroMulticolorV1 {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+        case 'HeroCrimsonJet':
+          return <HeroCrimsonJet {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         default:
           return <HeroCenter {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
       }
