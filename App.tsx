@@ -2161,6 +2161,19 @@ const AppContent: React.FC = () => {
 
   const applyTheme = (theme: typeof PRESET_THEMES[0], presetId?: string | null) => {
       const colors = theme.elements;
+      
+      // Extract exact RGB and Opacity from theme's RGBA string for perfect slider binding
+      let baseRgb = colors.overlay.color;
+      let defaultOpacity = 0.6;
+      const rgbaMatch = colors.overlay.color.match(/rgba?\(([^)]+)\)/);
+      if (rgbaMatch) {
+          const vals = rgbaMatch[1].split(',').map(v => v.trim());
+          if (vals.length >= 3) {
+              baseRgb = `rgb(${vals[0]}, ${vals[1]}, ${vals[2]})`;
+              if (vals.length >= 4) defaultOpacity = parseFloat(vals[3]);
+          }
+      }
+
       const newGlobalStyles = {
           ...siteData.globalStyles,
           colors: {
@@ -2173,26 +2186,46 @@ const AppContent: React.FC = () => {
               buttonTextColor: colors.primaryButton.text,
               linkColor: colors.ring,
               borderColor: colors.ring,
-              overlayColor: colors.overlay.color
+              overlayColor: baseRgb
           }
       };
-      const newSections = siteData.sections.map(section => ({
-          ...section,
-          styles: {
-              ...section.styles,
-              backgroundColor: colors.surface,
-              textColor: colors.description,
-              titleColor: colors.heading,
-              subtitleColor: colors.description,
-              accentColor: colors.accent,
-              buttonBackgroundColor: colors.primaryButton.bg,
-              buttonTextColor: colors.primaryButton.text,
-              borderColor: colors.ring,
-              overlayColor: colors.overlay.color,
-              overlayOpacityValue: '1', 
-              overlayBlendMode: colors.overlay.blend || 'normal'
+      
+      const newSections = siteData.sections.map(section => {
+          const currentBg = section.styles.background || { type: section.styles.backgroundImage ? 'image' : 'color' };
+          const updatedBg = {
+              ...currentBg,
+              overlay: {
+                  enabled: true,
+                  color: baseRgb,
+                  opacity: defaultOpacity,
+                  blendMode: colors.overlay.blend || 'multiply'
+              }
+          };
+          if (updatedBg.type === 'image' && updatedBg.image) {
+              updatedBg.image = { ...updatedBg.image, overlay: { ...updatedBg.overlay } };
           }
-      }));
+
+          return {
+              ...section,
+              styles: {
+                  ...section.styles,
+                  backgroundColor: colors.surface,
+                  textColor: colors.description,
+                  titleColor: colors.heading,
+                  subtitleColor: colors.description,
+                  accentColor: colors.accent,
+                  buttonBackgroundColor: colors.primaryButton.bg,
+                  buttonTextColor: colors.primaryButton.text,
+                  borderColor: colors.ring,
+                  background: updatedBg,
+                  // Update legacy flat props to match precisely so sliders don't jump
+                  overlayColor: baseRgb,
+                  overlayOpacityValue: defaultOpacity.toString(), 
+                  overlayBlendMode: colors.overlay.blend || 'multiply'
+              }
+          };
+      });
+      
       setSiteData(prev => ({
           ...prev,
           globalStyles: newGlobalStyles,

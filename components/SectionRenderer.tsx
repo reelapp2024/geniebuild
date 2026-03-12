@@ -280,8 +280,14 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     } : null;
     
     // Layer 2: Solid color overlay
+    let finalBackgroundColor = overlayColor;
+    // Strip rgba alpha if we are explicitly controlling it via CSS opacity to avoid double-dimming
+    if (finalOpacity !== undefined && finalBackgroundColor.includes('rgba')) {
+      finalBackgroundColor = finalBackgroundColor.replace(/rgba\((.*?),\s*[\d.]+\)/, 'rgb($1)');
+    }
+
     const colorOverlay: React.CSSProperties = {
-      backgroundColor: overlayColor,
+      backgroundColor: finalBackgroundColor,
       mixBlendMode: blendMode as any, // CRITICAL: Ensure blend mode applies to the color layer
       position: 'absolute' as const,
       inset: 0,
