@@ -555,6 +555,19 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
                   overlay: { enabled: true, color: '#000000', opacity: 0.6, blendMode: 'multiply' }
               }
           }
+      },
+      'HeroCrimsonJet': { 
+          textAlign: 'center', 
+          background: { 
+              type: 'image', 
+              image: {
+                  url: 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80', 
+                  position: 'center',
+                  size: 'cover',
+                  repeat: 'no-repeat',
+                  overlay: { enabled: true, color: '#0E1214', opacity: 0.6, blendMode: 'multiply' }
+              }
+          }
       }
     }
   },

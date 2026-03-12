@@ -68,14 +68,7 @@ export const HeroCrimsonJet: React.FC<HeroProps> = ({
   ] as WebsiteElement[];
 
   return (
-    <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
-      <div 
-        className="absolute -inset-4 bg-cover bg-center cursor-pointer z-0"
-        style={{ backgroundImage: `url(${styles.backgroundImage || 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'})` }}
-        onClick={onImageClick}
-      />
-      <div className="absolute -inset-4 z-0" style={{ backgroundColor: theme.overlay }} />
-      
+    <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'transparent' }}>
       <div className="relative z-10 text-center max-w-4xl px-6 space-y-6">
         <h1 
           className="text-6xl font-extrabold" 
