@@ -713,7 +713,6 @@ const BackgroundControl = ({
 }) => {
   const { themeData } = useTheme();
   
-  // Get theme overlay defaults
   // Get theme overlay defaults dynamically based on API theme or Crimson Jet fallback
   const getThemeOverlayDefaults = () => {
     const activeThemeColor = (themeData as any)?.elements?.overlay?.color || (themeData as any)?.overlay?.color;
