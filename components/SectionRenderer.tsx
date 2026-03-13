@@ -247,15 +247,15 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     const legacyOpacity = styles.overlayOpacityValue !== undefined ? styles.overlayOpacityValue : styles.overlayOpacity;
     const legacyBlend = styles.overlayBlendMode;
     
-    // 3. Respect explicit disable flag
-    if (bgOverlay?.enabled === false) {
-      return { gradientOverlay: null, colorOverlay: null };
-    }
-    
-    // 4. Determine overlay color and blend mode (section -> legacy -> theme -> fallback)
+    // 3. Determine original color to check for ghost states FIRST
     const originalColor = bgOverlay?.color || legacyColor;
     let overlayColor = originalColor;
     const isGhostColor = !originalColor || originalColor === 'transparent' || originalColor === '#000000' || originalColor.replace(/\s/g, '') === 'rgba(0,0,0,0)' || originalColor.includes(', 0)');
+    
+    // 4. Exit early if explicitly disabled, BUT ONLY if it's a valid user color (Resurrect broken ghost saves)
+    if (bgOverlay && bgOverlay.enabled === false && !isGhostColor) {
+      return { gradientOverlay: null, colorOverlay: null };
+    }
     
     // Auto-fix broken transparent colors OR legacy pure black (#000000) from old database saves
     if (isGhostColor) {

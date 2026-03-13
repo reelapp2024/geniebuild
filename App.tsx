@@ -1113,16 +1113,31 @@ const AppContent: React.FC = () => {
     if (themeData && Object.keys(themeData).length > 0) {
       const hasValidStructure = (themeData as any).elements || ((themeData as any).surface && (themeData as any).heading);
       if (hasValidStructure) {
-        applyTheme(themeData as any);
+        // Apply API theme, pass name so UI highlights it
+        const themeName = (themeData as any).name || PRESET_THEMES[0].name;
+        const themeIndex = PRESET_THEMES.findIndex(t => t.name === themeName);
+        applyTheme(themeData as any, themeIndex >= 0 ? themeIndex.toString() : '0');
         hasAppliedInitialTheme.current = true;
       }
     } 
-    // If the API explicitly returns no theme (and we haven't already fallen back), use Crimson Jet once
+    // If the API explicitly returns no theme, fallback to Crimson Jet and highlight it
     else if (themeData !== undefined && !hasAppliedInitialTheme.current) {
-      applyTheme(PRESET_THEMES[0]);
+      applyTheme(PRESET_THEMES[0], '0');
       hasAppliedInitialTheme.current = true;
     }
-  }, [themeData]);
+  }, [themeData]); 
+
+  // Standalone Safety: If running on localhost without API wrapper, themeData stays undefined forever. 
+  // Force fallback to Crimson Jet after 500ms so the builder is never broken.
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!hasAppliedInitialTheme.current) {
+        applyTheme(PRESET_THEMES[0], '0');
+        hasAppliedInitialTheme.current = true;
+      }
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, []);
 
   const loadPageData = async (projectId: string, pageId: string) => {
     try {
