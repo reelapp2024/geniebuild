@@ -1798,17 +1798,32 @@ const AppContent: React.FC = () => {
             const defaultStyles = template?.styles || {};
             const overrides = template?.variantOverrides?.[newVariant] || {};
             const activeThemeColors = siteData.globalStyles.colors;
+            const deepOverlay = {
+                enabled: true,
+                color: nextVariantStyles.overlayColor || overrides.overlayColor || activeThemeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color,
+                opacity: nextVariantStyles.overlayOpacityValue || overrides.overlayOpacityValue || activeThemeColors.overlayOpacityValue || "0.75",
+                blendMode: nextVariantStyles.overlayBlendMode || overrides.overlayBlendMode || activeThemeColors.overlayBlendMode || 'normal'
+            };
+
+            const currentBg = nextVariantStyles.background || overrides.background || defaultStyles.background;
+            let updatedBg = currentBg ? { ...currentBg } : undefined;
             
-            // Merge: defaults -> variant overrides -> saved variant styles -> keep variant field
+            if (updatedBg) {
+                updatedBg.overlay = { ...updatedBg.overlay, ...deepOverlay };
+                if (updatedBg.type === 'image' && updatedBg.image) {
+                    updatedBg.image = { ...updatedBg.image, overlay: { ...updatedBg.image.overlay, ...deepOverlay } };
+                }
+            }
+
             const updatedStyles = {
               ...defaultStyles,
               ...overrides,
               ...nextVariantStyles,
               variant: newVariant,
-              // Force active theme overlay if the variant doesn't have a custom one saved
-              overlayColor: nextVariantStyles.overlayColor || overrides.overlayColor || activeThemeColors.overlayColor,
-              overlayOpacityValue: nextVariantStyles.overlayOpacityValue || overrides.overlayOpacityValue || activeThemeColors.overlayOpacityValue || "0.75",
-              overlayBlendMode: nextVariantStyles.overlayBlendMode || overrides.overlayBlendMode || activeThemeColors.overlayBlendMode || 'normal'
+              background: updatedBg,
+              overlayColor: deepOverlay.color,
+              overlayOpacityValue: deepOverlay.opacity.toString(),
+              overlayBlendMode: deepOverlay.blendMode
             };
             
             return {
@@ -2015,17 +2030,32 @@ const AppContent: React.FC = () => {
           const defaultStyles = template?.styles || {};
           const overrides = template?.variantOverrides?.[nextVariant] || {};
           const activeThemeColors = siteData.globalStyles.colors;
+          const deepOverlay = {
+              enabled: true,
+              color: nextVariantStyles.overlayColor || overrides.overlayColor || activeThemeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color,
+              opacity: nextVariantStyles.overlayOpacityValue || overrides.overlayOpacityValue || activeThemeColors.overlayOpacityValue || "0.75",
+              blendMode: nextVariantStyles.overlayBlendMode || overrides.overlayBlendMode || activeThemeColors.overlayBlendMode || 'normal'
+          };
+
+          const currentBg = nextVariantStyles.background || overrides.background || defaultStyles.background;
+          let updatedBg = currentBg ? { ...currentBg } : undefined;
           
-          // Merge: defaults -> variant overrides -> saved variant styles -> keep variant field
+          if (updatedBg) {
+              updatedBg.overlay = { ...updatedBg.overlay, ...deepOverlay };
+              if (updatedBg.type === 'image' && updatedBg.image) {
+                  updatedBg.image = { ...updatedBg.image, overlay: { ...updatedBg.image.overlay, ...deepOverlay } };
+              }
+          }
+
           const mergedStyles = {
             ...defaultStyles,
             ...overrides,
             ...nextVariantStyles,
             variant: nextVariant,
-            // Force active theme overlay if the variant doesn't have a custom one saved
-            overlayColor: nextVariantStyles.overlayColor || overrides.overlayColor || activeThemeColors.overlayColor,
-            overlayOpacityValue: nextVariantStyles.overlayOpacityValue || overrides.overlayOpacityValue || activeThemeColors.overlayOpacityValue || "0.75",
-            overlayBlendMode: nextVariantStyles.overlayBlendMode || overrides.overlayBlendMode || activeThemeColors.overlayBlendMode || 'normal'
+            background: updatedBg,
+            overlayColor: deepOverlay.color,
+            overlayOpacityValue: deepOverlay.opacity.toString(),
+            overlayBlendMode: deepOverlay.blendMode
           };
           
           return {
@@ -2461,7 +2491,6 @@ const AppContent: React.FC = () => {
             buttonBackgroundColor: activeColors.buttonBackgroundColor,
             buttonTextColor: activeColors.buttonTextColor,
             borderColor: activeColors.borderColor,
-            // Ensure we use the HEX from theme and a solid default opacity
             overlayColor: activeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color,
             overlayOpacityValue: activeColors.overlayOpacityValue || PRESET_THEMES[0].elements.overlay.opacity.toString(),
             overlayBlendMode: activeColors.overlayBlendMode || 'normal',
@@ -2469,6 +2498,20 @@ const AppContent: React.FC = () => {
             enableGeometry: defaultVariant === 'HeroGeometric' || (variantOverrides.variant || template.styles?.variant) === 'HeroGeometric',
         }
     } as Section;
+
+    // Deeply inject background overlays into new section before saving
+    const deepOverlay = {
+        enabled: true,
+        color: newSection.styles.overlayColor,
+        opacity: newSection.styles.overlayOpacityValue,
+        blendMode: newSection.styles.overlayBlendMode
+    };
+    if (newSection.styles.background) {
+        newSection.styles.background.overlay = { ...newSection.styles.background.overlay, ...deepOverlay };
+        if (newSection.styles.background.type === 'image' && newSection.styles.background.image) {
+            newSection.styles.background.image.overlay = { ...newSection.styles.background.image.overlay, ...deepOverlay };
+        }
+    }
     
     setSiteData(prev => {
         const sections = [...prev.sections];
