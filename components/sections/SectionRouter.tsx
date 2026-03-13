@@ -19,12 +19,6 @@ import { getHeadingSizeClass } from '../../utils/headingSizeUtils';
 // Import all variant components
 // Hero variants
 import { HeroCenter } from './hero/HeroCenter';
-import { HeroSplitLeft } from './hero/HeroSplitLeft';
-import { HeroSplitRight } from './hero/HeroSplitRight';
-import { HeroGradient } from './hero/HeroGradient';
-import { HeroGeometric } from './hero/HeroGeometric';
-import { HeroMulticolor } from './hero/HeroMulticolor';
-import { HeroMulticolorV1 } from './hero/HeroMulticolorV1';
 import { HeroCrimsonJet } from './hero/HeroCrimsonJet';
 // Navbar variants
 import { NavbarSimple } from './navbar/NavbarSimple';
@@ -116,19 +110,8 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
     case 'hero':
       switch (variant) {
         case 'HeroCenter':
+        case 'center':
           return <HeroCenter {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
-        case 'HeroSplitLeft':
-          return <HeroSplitLeft {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
-        case 'HeroSplitRight':
-          return <HeroSplitRight {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
-        case 'HeroGradient':
-          return <HeroGradient {...baseProps} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
-        case 'HeroGeometric':
-          return <HeroGeometric {...baseProps} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
-        case 'HeroMulticolor':
-          return <HeroMulticolor {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
-        case 'HeroMulticolorV1':
-          return <HeroMulticolorV1 {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroCrimsonJet':
           return <HeroCrimsonJet {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         default:

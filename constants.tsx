@@ -471,51 +471,6 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     },
     variantOverrides: {
       'center': { textAlign: 'center' },
-      'split-left': { textAlign: 'left' },
-      'split-right': { textAlign: 'left' },
-      'gradient': { 
-          textAlign: 'center', 
-          background: { 
-              type: 'gradient', 
-              gradient: { 
-                  type: 'linear', 
-                  direction: 90, 
-                  stops: [
-                      { color: '#1e3a8a', position: 0 }, 
-                      { color: '#000000', position: 100 }
-                  ] 
-              },
-              overlay: { enabled: false, color: '#000000', opacity: 0.5, blendMode: 'normal' }
-          },
-          backgroundImage: 'linear-gradient(90deg, #1e3a8a 0%, #000000 100%)',
-          backgroundColor: 'transparent'
-      },
-      'HeroMulticolor': { 
-          textAlign: 'left', 
-          background: { 
-              type: 'image', 
-              image: {
-                  url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
-                  position: 'center',
-                  size: 'cover',
-                  repeat: 'no-repeat',
-                  overlay: { enabled: true, color: '#000000', opacity: 0.6, blendMode: 'multiply' }
-              }
-          }
-      },
-      'HeroMulticolorV1': { 
-          textAlign: 'left', 
-          background: { 
-              type: 'image', 
-              image: {
-                  url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
-                  position: 'center',
-                  size: 'cover',
-                  repeat: 'no-repeat',
-                  overlay: { enabled: true, color: '#000000', opacity: 0.6, blendMode: 'multiply' }
-              }
-          }
-      },
       'HeroCrimsonJet': { 
           textAlign: 'center', 
           background: { 
@@ -525,7 +480,7 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
                   position: 'center',
                   size: 'cover',
                   repeat: 'no-repeat',
-                  overlay: { enabled: true } // Removed hardcoded values so it seamlessly inherits active theme overlay
+                  overlay: { enabled: true }
               }
           }
       }

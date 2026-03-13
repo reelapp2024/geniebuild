@@ -252,8 +252,14 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     let overlayColor = originalColor;
     const isGhostColor = !originalColor || originalColor === 'transparent' || originalColor === '#000000' || originalColor.replace(/\s/g, '') === 'rgba(0,0,0,0)' || originalColor.includes(', 0)');
     
-    // 4. Exit early if explicitly disabled, BUT ONLY if it's a valid user color (Resurrect broken ghost saves)
-    if (bgOverlay && bgOverlay.enabled === false && !isGhostColor) {
+    const activeThemeColor = (themeData as any)?.elements?.overlay?.color || (themeData as any)?.overlay?.color || PRESET_THEMES[0].elements.overlay.color;
+    
+    // If the saved DB color exactly matches the theme, it's a legacy theme save. We treat it like a ghost color to ensure it stays fully synced and visually enabled.
+    const isThemeMatch = originalColor && originalColor.toLowerCase() === activeThemeColor.toLowerCase();
+    const requiresResurrection = isGhostColor || isThemeMatch;
+
+    // 4. Exit early if explicitly disabled, BUT ONLY if it is a truly custom user override (Resurrect broken saves)
+    if (bgOverlay && bgOverlay.enabled === false && !requiresResurrection) {
       return { gradientOverlay: null, colorOverlay: null };
     }
     

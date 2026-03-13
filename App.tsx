@@ -1116,13 +1116,13 @@ const AppContent: React.FC = () => {
         // Apply API theme, pass name so UI highlights it
         const themeName = (themeData as any).name || PRESET_THEMES[0].name;
         const themeIndex = PRESET_THEMES.findIndex(t => t.name === themeName);
-        applyTheme(themeData as any, themeIndex >= 0 ? themeIndex.toString() : '0');
+        applyTheme(themeData as any, themeIndex >= 0 ? themeIndex.toString() : '0', true);
         hasAppliedInitialTheme.current = true;
       }
     } 
     // If the API explicitly returns no theme, fallback to Crimson Jet and highlight it
     else if (themeData !== undefined && !hasAppliedInitialTheme.current) {
-      applyTheme(PRESET_THEMES[0], '0');
+      applyTheme(PRESET_THEMES[0], '0', true);
       hasAppliedInitialTheme.current = true;
     }
   }, [themeData]); 
@@ -1132,7 +1132,7 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!hasAppliedInitialTheme.current) {
-        applyTheme(PRESET_THEMES[0], '0');
+        applyTheme(PRESET_THEMES[0], '0', true);
         hasAppliedInitialTheme.current = true;
       }
     }, 500);
@@ -1947,21 +1947,31 @@ const AppContent: React.FC = () => {
         const variantOverrides = template.variantOverrides?.[currentVariant] || {};
         const activeColors = prev.globalStyles.colors;
         
-        // 1. Reset section styles to dynamic theme colors
+        // 1. Reset section styles to an empty shell so they dynamically inherit from the active global theme engine
         const newSectionStyles = {
             ...template.styles,
             ...variantOverrides,
             variant: currentVariant, // Preserve current variant
-            backgroundColor: activeColors.backgroundColor,
-            textColor: activeColors.textColor,
-            titleColor: activeColors.titleColor,
-            subtitleColor: activeColors.subtitleColor,
-            accentColor: activeColors.accentColor,
-            buttonBackgroundColor: activeColors.buttonBackgroundColor,
-            buttonTextColor: activeColors.buttonTextColor,
-            borderColor: activeColors.borderColor,
-            overlayColor: activeColors.overlayColor || 'rgba(0,0,0,0.5)'
         };
+        
+        // Strip all hardcoded colors so the renderer dynamically falls back to the live CSS variables
+        delete newSectionStyles.backgroundColor;
+        delete newSectionStyles.textColor;
+        delete newSectionStyles.titleColor;
+        delete newSectionStyles.subtitleColor;
+        delete newSectionStyles.accentColor;
+        delete newSectionStyles.buttonBackgroundColor;
+        delete newSectionStyles.buttonTextColor;
+        delete newSectionStyles.borderColor;
+        delete newSectionStyles.overlayColor;
+        delete newSectionStyles.overlayOpacityValue;
+        delete newSectionStyles.overlayBlendMode;
+        if (newSectionStyles.background) {
+            delete newSectionStyles.background.overlay;
+            if (newSectionStyles.background.image) {
+                delete newSectionStyles.background.image.overlay;
+            }
+        }
 
         // 2. Clear variantStyles for the current variant
         const variantStyles = s.variantStyles || {};
@@ -2252,7 +2262,7 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const applyTheme = (theme: typeof PRESET_THEMES[0], presetId?: string | null) => {
+  const applyTheme = (theme: typeof PRESET_THEMES[0], presetId?: string | null, isInit: boolean = false) => {
       // Safely extract colors, supporting both preset arrays and direct API objects
       const colors = (theme as any).elements || theme;
       
@@ -2279,7 +2289,9 @@ const AppContent: React.FC = () => {
               }
           };
           
-          const newSections = prev.sections.map(section => {
+          // CRITICAL: Do not forcefully overwrite user-customized DB sections on page load! 
+          // Only map and overwrite them when the user actively clicks a global theme in the sidebar (isInit = false).
+          const newSections = isInit ? prev.sections : prev.sections.map(section => {
               const currentBg = section.styles.background || { type: section.styles.backgroundImage ? 'image' : 'color' };
               const updatedBg = {
                   ...currentBg,
