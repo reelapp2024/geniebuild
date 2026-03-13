@@ -806,7 +806,8 @@ const BackgroundControl = ({
   };
 
   // Extract enableGeometry from value (it's passed separately in the merged value)
-  const enableGeometry = (value as any)?.enableGeometry !== undefined ? (value as any).enableGeometry : true;
+  // Default to false for all sections except HeroGeometric variant
+  const enableGeometry = (value as any)?.enableGeometry !== undefined ? (value as any).enableGeometry : (value as any)?.variant === 'HeroGeometric';
   
   return (
     <div className="space-y-4">
@@ -1120,21 +1121,25 @@ const AppContent: React.FC = () => {
     }
   }, []);
 
-  // Apply theme from themeData or fallback to default (Crimson Jet)
+  // Track if we have applied the initial theme to prevent overriding manual user clicks
+  const hasAppliedInitialTheme = useRef(false);
+
+  // Apply theme from API or fallback to default (Crimson Jet)
   useEffect(() => {
     // If we have theme data from API, apply it.
     if (themeData && Object.keys(themeData).length > 0) {
-      // Only apply theme if it has the expected structure (has elements or has surface/heading properties)
       const hasValidStructure = (themeData as any).elements || ((themeData as any).surface && (themeData as any).heading);
       if (hasValidStructure) {
         applyTheme(themeData as any);
+        hasAppliedInitialTheme.current = true;
       }
     } 
-    // If no theme is applied to siteData yet, force fallback to Crimson Jet (PRESET_THEMES[0])
-    else if (!siteData.globalStyles.colors?.backgroundColor) {
+    // If the API explicitly returns no theme (and we haven't already fallen back), use Crimson Jet once
+    else if (themeData !== undefined && !hasAppliedInitialTheme.current) {
       applyTheme(PRESET_THEMES[0]);
+      hasAppliedInitialTheme.current = true;
     }
-  }, [themeData, siteData.globalStyles.colors?.backgroundColor]);
+  }, [themeData]);
 
   const loadPageData = async (projectId: string, pageId: string) => {
     try {
@@ -2228,66 +2233,62 @@ const AppContent: React.FC = () => {
       const baseHex = overlay.color || '#2D0A0F';
       const defaultOpacity = (overlay as any).opacity ?? 0.75;
 
-      const newGlobalStyles = {
-          ...siteData.globalStyles,
-          colors: {
-              ...siteData.globalStyles.colors,
-              backgroundColor: colors.surface || siteData.globalStyles.colors.backgroundColor,
-              textColor: colors.description || siteData.globalStyles.colors.textColor,
-              titleColor: colors.heading || siteData.globalStyles.colors.titleColor,
-              subtitleColor: colors.description || siteData.globalStyles.colors.subtitleColor,
-              accentColor: colors.accent || siteData.globalStyles.colors.accentColor,
-              buttonBackgroundColor: colors.primaryButton?.bg || colors.primaryButton || siteData.globalStyles.colors.buttonBackgroundColor,
-              buttonTextColor: colors.primaryButton?.text || siteData.globalStyles.colors.buttonTextColor,
-              linkColor: colors.ring || siteData.globalStyles.colors.linkColor,
-              borderColor: colors.ring || siteData.globalStyles.colors.borderColor,
-              overlayColor: baseHex, // This is now a HEX from constants.tsx
-              overlayOpacityValue: defaultOpacity.toString(),
-              overlayBlendMode: overlay.blend || 'normal'
-          }
-      };
-      
-      const newSections = siteData.sections.map(section => {
-          const currentBg = section.styles.background || { type: section.styles.backgroundImage ? 'image' : 'color' };
-          const updatedBg = {
-              ...currentBg,
-              overlay: {
-                  enabled: true,
-                  color: baseHex,
-                  opacity: defaultOpacity,
-                  blendMode: colors.overlay.blend || 'multiply'
-              }
-          };
-          if (updatedBg.type === 'image' && updatedBg.image) {
-              updatedBg.image = { ...updatedBg.image, overlay: { ...updatedBg.overlay } };
-          }
-
-          return {
-              ...section,
-              styles: {
-                  ...section.styles,
-                  backgroundColor: colors.surface || section.styles.backgroundColor,
-                  textColor: colors.description || section.styles.textColor,
-                  titleColor: colors.heading || section.styles.titleColor,
-                  subtitleColor: colors.description || section.styles.subtitleColor,
-                  accentColor: colors.accent || section.styles.accentColor,
-                  buttonBackgroundColor: colors.primaryButton?.bg || section.styles.buttonBackgroundColor,
-                  buttonTextColor: colors.primaryButton?.text || section.styles.buttonTextColor,
-                  borderColor: colors.ring || section.styles.borderColor,
-                  background: updatedBg,
-                  // Update legacy flat props to match precisely so sliders don't jump
+      setSiteData(prev => {
+          const newGlobalStyles = {
+              ...prev.globalStyles,
+              colors: {
+                  ...prev.globalStyles.colors,
+                  backgroundColor: colors.surface,
+                  textColor: colors.description,
+                  titleColor: colors.heading,
+                  accentColor: colors.accent,
+                  buttonBackgroundColor: colors.primaryButton?.bg || colors.primaryButton,
+                  buttonTextColor: colors.primaryButton?.text,
+                  borderColor: colors.ring,
                   overlayColor: baseHex,
-                  overlayOpacityValue: defaultOpacity.toString(), 
-                  overlayBlendMode: overlay.blend || 'multiply'
+                  overlayOpacityValue: defaultOpacity.toString(),
+                  overlayBlendMode: overlay.blend || 'normal'
               }
           };
+          
+          const newSections = prev.sections.map(section => {
+              const currentBg = section.styles.background || { type: section.styles.backgroundImage ? 'image' : 'color' };
+              const updatedBg = {
+                  ...currentBg,
+                  overlay: {
+                      enabled: true,
+                      color: baseHex,
+                      opacity: defaultOpacity,
+                      blendMode: overlay.blend || 'multiply'
+                  }
+              };
+              if (updatedBg.type === 'image' && updatedBg.image) {
+                  updatedBg.image = { ...updatedBg.image, overlay: { ...updatedBg.overlay } };
+              }
+
+              return {
+                  ...section,
+                  styles: {
+                      ...section.styles,
+                      backgroundColor: colors.surface,
+                      textColor: colors.description,
+                      titleColor: colors.heading,
+                      subtitleColor: colors.description,
+                      accentColor: colors.accent,
+                      buttonBackgroundColor: colors.primaryButton?.bg,
+                      buttonTextColor: colors.primaryButton?.text,
+                      borderColor: colors.ring,
+                      background: updatedBg,
+                      overlayColor: baseHex,
+                      overlayOpacityValue: defaultOpacity.toString(), 
+                      overlayBlendMode: overlay.blend || 'multiply'
+                  }
+              };
+          });
+
+          return { ...prev, globalStyles: newGlobalStyles, sections: newSections };
       });
       
-      setSiteData(prev => ({
-          ...prev,
-          globalStyles: newGlobalStyles,
-          sections: newSections
-      }));
       // Update selected preset ID
       if (presetId !== undefined) {
         setSelectedPresetId(presetId);
@@ -2466,6 +2467,8 @@ const AppContent: React.FC = () => {
             overlayColor: activeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color,
             overlayOpacityValue: activeColors.overlayOpacityValue || PRESET_THEMES[0].elements.overlay.opacity.toString(),
             overlayBlendMode: activeColors.overlayBlendMode || 'normal',
+            // Enable geometry only for HeroGeometric variant, default to false for all others
+            enableGeometry: defaultVariant === 'HeroGeometric' || (variantOverrides.variant || template.styles?.variant) === 'HeroGeometric',
         }
     } as Section;
     
@@ -2712,7 +2715,8 @@ const AppContent: React.FC = () => {
                                }
                              } : undefined
                            }), 
-                           enableGeometry: styles.enableGeometry 
+                           enableGeometry: styles.enableGeometry,
+                           variant: styles.variant
                          }} 
                          onChange={(v) => {
                            const { enableGeometry, ...backgroundObj } = v;
