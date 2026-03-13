@@ -253,10 +253,12 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     }
     
     // 4. Determine overlay color and blend mode (section -> legacy -> theme -> fallback)
-    let overlayColor = bgOverlay?.color || legacyColor;
+    const originalColor = bgOverlay?.color || legacyColor;
+    let overlayColor = originalColor;
+    const isGhostColor = !originalColor || originalColor === 'transparent' || originalColor === '#000000' || originalColor.replace(/\s/g, '') === 'rgba(0,0,0,0)' || originalColor.includes(', 0)');
     
-    // Auto-fix broken transparent colors from old database saves
-    if (!overlayColor || overlayColor === 'transparent' || overlayColor.replace(/\s/g, '') === 'rgba(0,0,0,0)' || overlayColor.includes(', 0)')) {
+    // Auto-fix broken transparent colors OR legacy pure black (#000000) from old database saves
+    if (isGhostColor) {
         // Attempt to use Active Theme first, then strictly fallback to Crimson Jet
         const activeThemeColor = (themeData as any)?.elements?.overlay?.color || (themeData as any)?.overlay?.color;
         overlayColor = activeThemeColor || PRESET_THEMES[0].elements.overlay.color;
@@ -264,10 +266,15 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     
     const blendMode = bgOverlay?.blendMode || legacyBlend || themeData?.overlay?.blend || PRESET_THEMES[0].elements.overlay.blend;
     
-    // 5. Calculate correct Opacity (Fallback to default theme if completely missing)
-    const rawOpacityStr = bgOverlay?.opacity !== undefined ? bgOverlay.opacity : (legacyOpacity !== undefined ? legacyOpacity : (themeData?.overlay as any)?.opacity);
+    // 5. Calculate correct Opacity
+    let rawOpacityStr = bgOverlay?.opacity !== undefined ? bgOverlay.opacity : (legacyOpacity !== undefined ? legacyOpacity : (themeData?.overlay as any)?.opacity);
     let finalOpacity: number | undefined = PRESET_THEMES[0].elements.overlay.opacity; 
     
+    // If we intercepted a broken color, we MUST intercept the opacity as well to prevent legacy 0.5 from overriding the theme's perfect glass opacity
+    if (isGhostColor) {
+        rawOpacityStr = (themeData as any)?.elements?.overlay?.opacity ?? (themeData as any)?.overlay?.opacity ?? PRESET_THEMES[0].elements.overlay.opacity;
+    }
+
     if (rawOpacityStr !== undefined && rawOpacityStr !== '') {
       const parsedOpacity = typeof rawOpacityStr === 'string' ? parseFloat(rawOpacityStr) : rawOpacityStr;
       finalOpacity = parsedOpacity > 1 ? parsedOpacity / 100 : parsedOpacity;

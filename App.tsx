@@ -714,33 +714,17 @@ const BackgroundControl = ({
   const { themeData } = useTheme();
   
   // Get theme overlay defaults
+  // Get theme overlay defaults dynamically based on API theme or Crimson Jet fallback
   const getThemeOverlayDefaults = () => {
-    if (themeData?.overlay) {
-      const themeOverlay = themeData.overlay;
-      // Extract opacity from rgba if present
-      let overlayOpacity = 0.5;
-      if (themeOverlay.color) {
-        const rgbaMatch = themeOverlay.color.match(/rgba?\([^)]+\)/);
-        if (rgbaMatch) {
-          const rgbaValues = rgbaMatch[0].match(/[\d.]+/g);
-          if (rgbaValues && rgbaValues.length >= 4) {
-            overlayOpacity = parseFloat(rgbaValues[3]);
-          }
-        }
-      }
-      return {
-        enabled: true,
-        color: themeOverlay.color || '#000000',
-        opacity: overlayOpacity,
-        blendMode: (themeOverlay.blend as any) || 'multiply'
-      };
-    }
-    // Default overlay settings (enabled by default)
+    const activeThemeColor = (themeData as any)?.elements?.overlay?.color || (themeData as any)?.overlay?.color;
+    const activeThemeOpacity = (themeData as any)?.elements?.overlay?.opacity ?? (themeData as any)?.overlay?.opacity;
+    const activeThemeBlend = (themeData as any)?.elements?.overlay?.blend || (themeData as any)?.overlay?.blend;
+
     return {
       enabled: true,
-      color: '#000000',
-      opacity: 0.5,
-      blendMode: 'normal' as const
+      color: activeThemeColor || PRESET_THEMES[0].elements.overlay.color,
+      opacity: activeThemeOpacity ?? PRESET_THEMES[0].elements.overlay.opacity,
+      blendMode: activeThemeBlend || PRESET_THEMES[0].elements.overlay.blend
     };
   };
   
@@ -1017,7 +1001,7 @@ const ButtonGroup = ({ options, value, onChange }: { options: {icon: string, val
 const AppContent: React.FC = () => {
   const { themeData } = useTheme();
   
-  // Helper to get theme overlay defaults (accessible throughout AppContent)
+  // Get theme overlay defaults dynamically based on API theme or Crimson Jet fallback
   const getThemeOverlayDefaults = () => {
     let overlayColor = themeData?.overlay?.color || PRESET_THEMES[0].elements.overlay.color;
     let overlayOpacity = (themeData?.overlay as any)?.opacity ?? PRESET_THEMES[0].elements.overlay.opacity;
@@ -2755,10 +2739,10 @@ const AppContent: React.FC = () => {
                        <div className="space-y-4 pt-4 border-t border-white/10">
                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Background Overlay</h4>
                          {(() => {
-                             // Visually intercept ghost colors so the UI matches the actual rendering engine
+                             // Visually intercept ghost colors and legacy #000000 so the UI matches the actual rendering engine
                              const themeDefaults = getThemeOverlayDefaults();
                              let uiOverlayColor = styles.background?.overlay?.color || styles.background?.image?.overlay?.color || styles.overlayColor;
-                             if (!uiOverlayColor || uiOverlayColor === 'transparent' || uiOverlayColor.replace(/\s/g, '') === 'rgba(0,0,0,0)' || uiOverlayColor.includes(', 0)')) {
+                             if (!uiOverlayColor || uiOverlayColor === 'transparent' || uiOverlayColor === '#000000' || uiOverlayColor.replace(/\s/g, '') === 'rgba(0,0,0,0)' || uiOverlayColor.includes(', 0)')) {
                                  uiOverlayColor = themeDefaults.color;
                              }
                              return (
