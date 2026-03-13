@@ -253,13 +253,16 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     }
     
     // 4. Determine overlay color and blend mode (section -> legacy -> theme -> fallback)
-    let overlayColor = bgOverlay?.color || legacyColor || themeData?.overlay?.color;
-    const blendMode = bgOverlay?.blendMode || legacyBlend || themeData?.overlay?.blend || PRESET_THEMES[0].elements.overlay.blend;
+    let overlayColor = bgOverlay?.color || legacyColor;
     
-    // Auto-fix broken transparent colors from old database saves to default theme
+    // Auto-fix broken transparent colors from old database saves
     if (!overlayColor || overlayColor === 'transparent' || overlayColor.replace(/\s/g, '') === 'rgba(0,0,0,0)' || overlayColor.includes(', 0)')) {
-        overlayColor = PRESET_THEMES[0].elements.overlay.color;
+        // Attempt to use Active Theme first, then strictly fallback to Crimson Jet
+        const activeThemeColor = (themeData as any)?.elements?.overlay?.color || (themeData as any)?.overlay?.color;
+        overlayColor = activeThemeColor || PRESET_THEMES[0].elements.overlay.color;
     }
+    
+    const blendMode = bgOverlay?.blendMode || legacyBlend || themeData?.overlay?.blend || PRESET_THEMES[0].elements.overlay.blend;
     
     // 5. Calculate correct Opacity (Fallback to default theme if completely missing)
     const rawOpacityStr = bgOverlay?.opacity !== undefined ? bgOverlay.opacity : (legacyOpacity !== undefined ? legacyOpacity : (themeData?.overlay as any)?.opacity);

@@ -2225,13 +2225,13 @@ const AppContent: React.FC = () => {
   };
 
   const applyTheme = (theme: typeof PRESET_THEMES[0], presetId?: string | null) => {
-      // Handle both PRESET_THEMES format (theme.elements) and themeData format (flat structure)
+      // Safely extract colors, supporting both preset arrays and direct API objects
       const colors = (theme as any).elements || theme;
       
-      // Safely extract overlay color and opacity with fallbacks
-      const overlay = colors.overlay || { color: '#2D0A0F', opacity: 0.75, blend: 'normal' };
-      const baseHex = overlay.color || '#2D0A0F';
-      const defaultOpacity = (overlay as any).opacity ?? 0.75;
+      // Strict fallback to Crimson Jet if the API theme is missing overlay definitions
+      const baseHex = colors.overlay?.color || PRESET_THEMES[0].elements.overlay.color;
+      const defaultOpacity = colors.overlay?.opacity ?? PRESET_THEMES[0].elements.overlay.opacity;
+      const blendMode = colors.overlay?.blend || PRESET_THEMES[0].elements.overlay.blend;
 
       setSiteData(prev => {
           const newGlobalStyles = {
@@ -2247,7 +2247,7 @@ const AppContent: React.FC = () => {
                   borderColor: colors.ring,
                   overlayColor: baseHex,
                   overlayOpacityValue: defaultOpacity.toString(),
-                  overlayBlendMode: overlay.blend || 'normal'
+                  overlayBlendMode: blendMode
               }
           };
           
@@ -2259,7 +2259,7 @@ const AppContent: React.FC = () => {
                       enabled: true,
                       color: baseHex,
                       opacity: defaultOpacity,
-                      blendMode: overlay.blend || 'multiply'
+                      blendMode: blendMode
                   }
               };
               if (updatedBg.type === 'image' && updatedBg.image) {
@@ -2281,7 +2281,7 @@ const AppContent: React.FC = () => {
                       background: updatedBg,
                       overlayColor: baseHex,
                       overlayOpacityValue: defaultOpacity.toString(), 
-                      overlayBlendMode: overlay.blend || 'multiply'
+                      overlayBlendMode: blendMode
                   }
               };
           });
@@ -2754,19 +2754,29 @@ const AppContent: React.FC = () => {
                        {/* --- EXPLICIT SECTION OVERLAY CONTROLS --- */}
                        <div className="space-y-4 pt-4 border-t border-white/10">
                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Background Overlay</h4>
-                         <ColorInput
-                           label="Overlay Color"
-                           value={styles.background?.overlay?.color || styles.background?.image?.overlay?.color || styles.overlayColor || 'transparent'}
-                           onChange={(v) => {
-                             onUpdate('overlayColor', v);
-                             const newBg = { ...(styles.background || {}) };
-                             newBg.overlay = { ...(newBg.overlay || {}), color: v, enabled: v !== 'transparent' };
-                             if (newBg.type === 'image' && newBg.image) {
-                               newBg.image = { ...newBg.image, overlay: { ...(newBg.image.overlay || {}), color: v, enabled: v !== 'transparent' } };
+                         {(() => {
+                             // Visually intercept ghost colors so the UI matches the actual rendering engine
+                             const themeDefaults = getThemeOverlayDefaults();
+                             let uiOverlayColor = styles.background?.overlay?.color || styles.background?.image?.overlay?.color || styles.overlayColor;
+                             if (!uiOverlayColor || uiOverlayColor === 'transparent' || uiOverlayColor.replace(/\s/g, '') === 'rgba(0,0,0,0)' || uiOverlayColor.includes(', 0)')) {
+                                 uiOverlayColor = themeDefaults.color;
                              }
-                             onUpdate('background', newBg);
-                           }}
-                         />
+                             return (
+                                 <ColorInput
+                                     label="Overlay Color"
+                                     value={uiOverlayColor}
+                                     onChange={(v) => {
+                                         onUpdate('overlayColor', v);
+                                         const newBg = { ...(styles.background || {}) };
+                                         newBg.overlay = { ...(newBg.overlay || {}), color: v, enabled: v !== 'transparent' };
+                                         if (newBg.type === 'image' && newBg.image) {
+                                             newBg.image = { ...newBg.image, overlay: { ...(newBg.image.overlay || {}), color: v, enabled: v !== 'transparent' } };
+                                         }
+                                         onUpdate('background', newBg);
+                                     }}
+                                 />
+                             );
+                         })()}
                          <RangeInput
                            label="Overlay Opacity"
                            value={Math.round((styles.background?.overlay?.opacity !== undefined ? styles.background.overlay.opacity : (styles.background?.image?.overlay?.opacity !== undefined ? styles.background.image.overlay.opacity : parseFloat(styles.overlayOpacityValue || '0.5'))) * 100)}
