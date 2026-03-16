@@ -1805,9 +1805,10 @@ const AppContent: React.FC = () => {
             const defaultStyles = template?.styles || {};
             const overrides = template?.variantOverrides?.[newVariant] || {};
                 const activeThemeColors = siteData.globalStyles.colors as any;
-                const activeGlobalTheme = selectedPresetId !== null 
-                    ? (PRESET_THEMES[parseInt(selectedPresetId)]?.elements || PRESET_THEMES[0].elements) 
-                    : ((themeData as any)?.elements || themeData || PRESET_THEMES[0].elements);
+                const activeGlobalTheme = (() => {
+                    try { return JSON.parse(localStorage.getItem('activeBuilderTheme') || 'null') || PRESET_THEMES[0].elements; } 
+                    catch { return PRESET_THEMES[0].elements; }
+                })();
                 const isLight = (nextVariantStyles as any).themeMode === 'light' || (overrides as any).themeMode === 'light';
                 
                 const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : activeThemeColors.backgroundColor;
@@ -1984,11 +1985,12 @@ const AppContent: React.FC = () => {
             variant: currentVariant, // Preserve current variant
         };
         
-        // Force the TRUE active theme colors back into the state to avoid stale API fallbacks
+        // Force the TRUE active theme colors back into the state using Local Storage (No Stale Closures!)
         const activeThemeColors = prev.globalStyles.colors as any;
-        const activeGlobalTheme = selectedPresetId !== null 
-            ? (PRESET_THEMES[parseInt(selectedPresetId)]?.elements || PRESET_THEMES[0].elements) 
-            : ((themeData as any)?.elements || themeData || PRESET_THEMES[0].elements);
+        const activeGlobalTheme = (() => {
+            try { return JSON.parse(localStorage.getItem('activeBuilderTheme') || 'null') || PRESET_THEMES[0].elements; } 
+            catch { return PRESET_THEMES[0].elements; }
+        })();
         const isLight = (newSectionStyles as any).themeMode === 'light';
         
         const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : activeThemeColors.backgroundColor;
@@ -2091,9 +2093,10 @@ const AppContent: React.FC = () => {
           const defaultStyles = template?.styles || {};
           const overrides = template?.variantOverrides?.[nextVariant] || {};
           const activeThemeColors = siteData.globalStyles.colors as any;
-          const activeGlobalTheme = selectedPresetId !== null 
-              ? (PRESET_THEMES[parseInt(selectedPresetId)]?.elements || PRESET_THEMES[0].elements) 
-              : ((themeData as any)?.elements || themeData || PRESET_THEMES[0].elements);
+          const activeGlobalTheme = (() => {
+              try { return JSON.parse(localStorage.getItem('activeBuilderTheme') || 'null') || PRESET_THEMES[0].elements; } 
+              catch { return PRESET_THEMES[0].elements; }
+          })();
           const isLight = (nextVariantStyles as any).themeMode === 'light' || (overrides as any).themeMode === 'light';
           
           const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : activeThemeColors.backgroundColor;
@@ -2340,6 +2343,9 @@ const AppContent: React.FC = () => {
       // Safely extract colors, supporting both preset arrays and direct API objects
       const colors = (theme as any).elements || theme;
       
+      // SINGLE SOURCE OF TRUTH: Save to local storage instantly so all closures read fresh data
+      try { localStorage.setItem('activeBuilderTheme', JSON.stringify(colors)); } catch(e) {}
+      
       // Strict fallback to Crimson Jet if the API theme is missing overlay definitions
       const baseHex = colors.overlay?.color || PRESET_THEMES[0].elements.overlay.color;
       const defaultOpacity = colors.overlay?.opacity ?? PRESET_THEMES[0].elements.overlay.opacity;
@@ -2570,9 +2576,10 @@ const AppContent: React.FC = () => {
     
     // Grab current global theme colors to initialize the new section safely
     const activeColors = siteData.globalStyles.colors as any;
-    const activeGlobalTheme = selectedPresetId !== null 
-        ? (PRESET_THEMES[parseInt(selectedPresetId)]?.elements || PRESET_THEMES[0].elements) 
-        : ((themeData as any)?.elements || themeData || PRESET_THEMES[0].elements);
+    const activeGlobalTheme = (() => {
+        try { return JSON.parse(localStorage.getItem('activeBuilderTheme') || 'null') || PRESET_THEMES[0].elements; } 
+        catch { return PRESET_THEMES[0].elements; }
+    })();
     const isLight = (variantOverrides as any)?.themeMode === 'light' || (template.styles as any)?.themeMode === 'light';
     
     const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : activeColors.backgroundColor;
