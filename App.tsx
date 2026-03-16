@@ -1804,10 +1804,7 @@ const AppContent: React.FC = () => {
             const template = SECTION_TEMPLATES[s.type] || SECTION_TEMPLATES.hero;
             const defaultStyles = template?.styles || {};
             const overrides = template?.variantOverrides?.[newVariant] || {};
-                const activeGlobalTheme = (() => {
-                    try { return JSON.parse(localStorage.getItem('activeBuilderTheme') || 'null') || PRESET_THEMES[0].elements; } 
-                    catch { return PRESET_THEMES[0].elements; }
-                })();
+                const activeGlobalTheme = getActiveGlobalTheme();
                 const isLight = (nextVariantStyles as any).themeMode === 'light' || (overrides as any).themeMode === 'light';
 
                 const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : ((activeGlobalTheme as any).surface || '#0E1214');
@@ -1989,10 +1986,7 @@ const AppContent: React.FC = () => {
         };
         
         // Force the TRUE active theme colors back into the state using strictly Local Storage (No Stale Closures!)
-        const activeGlobalTheme = (() => {
-            try { return JSON.parse(localStorage.getItem('activeBuilderTheme') || 'null') || PRESET_THEMES[0].elements; } 
-            catch { return PRESET_THEMES[0].elements; }
-        })();
+        const activeGlobalTheme = getActiveGlobalTheme();
         const isLight = (newSectionStyles as any).themeMode === 'light';
 
         const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : ((activeGlobalTheme as any).surface || '#0E1214');
@@ -2098,10 +2092,7 @@ const AppContent: React.FC = () => {
           const template = SECTION_TEMPLATES[sectionType] || SECTION_TEMPLATES.hero;
           const defaultStyles = template?.styles || {};
           const overrides = template?.variantOverrides?.[nextVariant] || {};
-          const activeGlobalTheme = (() => {
-              try { return JSON.parse(localStorage.getItem('activeBuilderTheme') || 'null') || PRESET_THEMES[0].elements; } 
-              catch { return PRESET_THEMES[0].elements; }
-          })();
+          const activeGlobalTheme = getActiveGlobalTheme();
           const isLight = (nextVariantStyles as any).themeMode === 'light' || (overrides as any).themeMode === 'light';
 
           const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : ((activeGlobalTheme as any).surface || '#0E1214');
@@ -2153,11 +2144,22 @@ const AppContent: React.FC = () => {
             buttonTextColor:       (overrides as any).buttonTextColor       || activeBtnText,
             borderColor:           (overrides as any).borderColor           || activeBorder
           };
+
+          // BUG 3 FIX: Strip hardcoded inline colors from elements so they perfectly inherit the new variant's theme
+          const updatedElements = s.elements?.map(el => {
+              const newStyle = { ...el.style };
+              delete newStyle.color;
+              delete newStyle.backgroundColor;
+              delete newStyle.accentColor;
+              delete newStyle.borderColor;
+              return { ...el, style: newStyle };
+          }) || [];
           
           return {
             ...s,
             styles: mergedStyles,
-            variantStyles: variantStyles
+            variantStyles: variantStyles,
+            elements: updatedElements
           } as Section;
         }
         return s;
@@ -2275,7 +2277,18 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const saveThemeSettings = async () => {
+  const getActiveGlobalTheme = () => {
+      try {
+          const savedThemeName = localStorage.getItem('activeBuilderThemeName');
+          if (savedThemeName) {
+              const preset = PRESET_THEMES.find(t => t.name.toLowerCase() === savedThemeName.toLowerCase());
+              if (preset) return preset.elements;
+          }
+      } catch(e) {}
+      return PRESET_THEMES[0].elements;
+  };
+
+  const saveThemeSettings = async (overrideThemeName?: string) => {
     try {
       setSavingTheme(true);
       const { projectId, token } = getUrlParams();
@@ -2296,8 +2309,8 @@ const AppContent: React.FC = () => {
       // Determine theme name from selected preset or use 'custom'
       // If selectedPresetId is set, find the theme name from PRESET_THEMES
       // Otherwise, check if custom colors are being used
-      let themeName = 'custom';
-      if (selectedPresetId !== null && selectedPresetId !== undefined) {
+      let themeName = overrideThemeName || 'custom';
+      if (!overrideThemeName && selectedPresetId !== null && selectedPresetId !== undefined) {
         const selectedTheme = PRESET_THEMES[parseInt(selectedPresetId)];
         if (selectedTheme) {
           themeName = selectedTheme.name.toLowerCase().replace(/\s+/g, '-');
@@ -2349,11 +2362,12 @@ const AppContent: React.FC = () => {
   };
 
   const applyTheme = (theme: typeof PRESET_THEMES[0], presetId?: string | null, isInit: boolean = false) => {
+      // SINGLE SOURCE OF TRUTH: Save theme NAME to local storage so all closures map to full fresh objects
+      const themeName = (theme as any).name || PRESET_THEMES[0].name;
+      try { localStorage.setItem('activeBuilderThemeName', themeName); } catch(e) {}
+
       // Safely extract colors, supporting both preset arrays and direct API objects
       const colors = (theme as any).elements || theme;
-      
-      // SINGLE SOURCE OF TRUTH: Save to local storage instantly so all closures read fresh data
-      try { localStorage.setItem('activeBuilderTheme', JSON.stringify(colors)); } catch(e) {}
       
       // Strict fallback to Crimson Jet if the API theme is missing overlay definitions
       const baseHex = colors.overlay?.color || PRESET_THEMES[0].elements.overlay.color;
@@ -2583,10 +2597,7 @@ const AppContent: React.FC = () => {
     const defaultVariant = template.styles?.variant || 'center';
     const variantOverrides = template.variantOverrides?.[defaultVariant] || {};
     
-    const activeGlobalTheme = (() => {
-        try { return JSON.parse(localStorage.getItem('activeBuilderTheme') || 'null') || PRESET_THEMES[0].elements; } 
-        catch { return PRESET_THEMES[0].elements; }
-    })();
+    const activeGlobalTheme = getActiveGlobalTheme();
     const isLight = (variantOverrides as any)?.themeMode === 'light' || (template.styles as any)?.themeMode === 'light';
     
     const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : ((activeGlobalTheme as any).surface || '#0E1214');
@@ -3275,7 +3286,11 @@ const AppContent: React.FC = () => {
                              {globalTab === 'themes' && (
                                  <div className="space-y-4">
                                      {PRESET_THEMES.map((theme, idx) => (
-                                         <button key={idx} onClick={() => applyTheme(theme, idx.toString())} className={`group flex flex-col gap-2 p-3 rounded-xl border transition-all ${selectedPresetId === idx.toString() ? 'border-blue-500 bg-blue-500/10' : 'border-white/10 hover:border-white/30 bg-[#111] hover:bg-[#1a1a1a]'}`}>
+                                         <button key={idx} onClick={() => {
+                                             applyTheme(theme, idx.toString());
+                                             // Auto-sync local storage choice to the database instantly
+                                             saveThemeSettings(theme.name.toLowerCase().replace(/\s+/g, '-'));
+                                         }} className={`group flex flex-col gap-2 p-3 rounded-xl border transition-all ${selectedPresetId === idx.toString() ? 'border-blue-500 bg-blue-500/10' : 'border-white/10 hover:border-white/30 bg-[#111] hover:bg-[#1a1a1a]'}`}>
                                              <div className="flex items-center justify-between w-full">
                                                  <span className="font-bold text-xs uppercase tracking-wider text-white/80">{theme.name}</span>
                                                  <div className="flex gap-1">
@@ -3330,7 +3345,7 @@ const AppContent: React.FC = () => {
                          </div>
                          <div className="p-4 border-t border-white/10 bg-[#080808]">
                              <button 
-                                 onClick={saveThemeSettings}
+                                 onClick={() => saveThemeSettings()}
                                  disabled={savingTheme}
                                  className={`w-full px-4 py-2 rounded text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
                                      savingTheme 
