@@ -35,7 +35,6 @@ import { FeaturesCards } from './features/FeaturesCards';
 // CTA variants
 import { CTACenter } from './cta/CTACenter';
 import { CTASplit } from './cta/CTASplit';
-import { CTAMulticolor } from './cta/CTAMulticolor';
 
 // Footer variants
 import { FooterColumns } from './footer/FooterColumns';
@@ -56,11 +55,9 @@ import { BannerBottomLeft } from './image-banner/BannerBottomLeft';
 import { TestimonialsGrid } from './testimonials/TestimonialsGrid';
 import { TestimonialsCentered } from './testimonials/TestimonialsCentered';
 import { TestimonialsColumns } from './testimonials/TestimonialsColumns';
-import { TestimonialsMulticolor } from './testimonials/TestimonialsMulticolor';
 // FAQ variants
 import { FAQCentered } from './faq/FAQCentered';
 import { FAQSplit } from './faq/FAQSplit';
-import { FAQMulticolor } from './faq/FAQMulticolor';
 
 import { ElementsSection } from './ElementsSection';
 import { AllElementsTest } from './allelementsTest/AllElementsTest';
@@ -169,8 +166,6 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
       switch (variant) {
         case 'CTASplit':
           return <CTASplit {...baseProps} onElementUpdate={props.onElementUpdate} />;
-        case 'CTAMulticolor':
-          return <CTAMulticolor {...baseProps} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'CTACenter':
         default:
           return <CTACenter {...baseProps} onElementUpdate={props.onElementUpdate} />;
@@ -238,18 +233,6 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
               selectedElementId={props.selectedElementId}
             />
           );
-        case 'TestimonialsMulticolor':
-          return (
-            <TestimonialsMulticolor
-              {...baseProps}
-              onItemEdit={props.onItemEdit}
-              onRemoveItem={props.onRemoveItem}
-              onAddItem={props.onAddItem}
-              onElementUpdate={props.onElementUpdate}
-              onElementSelect={props.onElementSelect}
-              selectedElementId={props.selectedElementId}
-            />
-          );
         case 'TestimonialsGrid':
         default:
           return (
@@ -266,15 +249,6 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
       }
    case 'faq':
       switch (variant) {
-        case 'FAQMulticolor':
-          return (
-            <FAQMulticolor
-              {...baseProps}
-              onElementUpdate={props.onElementUpdate}
-              onElementSelect={props.onElementSelect}
-              selectedElementId={props.selectedElementId}
-            />
-          );
         case 'FAQSplit':
           return (
             <FAQSplit

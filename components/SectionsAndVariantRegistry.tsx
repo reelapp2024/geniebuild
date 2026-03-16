@@ -41,7 +41,7 @@ export const SECTIONS_REGISTRY: SectionConfig[] = [
   },
   {
     sectionType: 'cta',
-    variants: ['CTACenter', 'CTASplit', 'CTAMulticolor'],
+    variants: ['CTACenter', 'CTASplit'],
     defaultVariant: 'CTACenter'
   },
   {
@@ -56,12 +56,12 @@ export const SECTIONS_REGISTRY: SectionConfig[] = [
   },
   {
     sectionType: 'testimonials',
-    variants: ['TestimonialsGrid', 'TestimonialsCentered', 'TestimonialsColumns', 'TestimonialsMulticolor'],
+    variants: ['TestimonialsGrid', 'TestimonialsCentered', 'TestimonialsColumns'],
     defaultVariant: 'TestimonialsGrid'
   },
   {
     sectionType: 'faq',
-    variants: ['FAQCentered', 'FAQSplit', 'FAQMulticolor'],
+    variants: ['FAQCentered', 'FAQSplit'],
     defaultVariant: 'FAQCentered'
   },
  

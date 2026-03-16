@@ -1107,25 +1107,31 @@ const AppContent: React.FC = () => {
   // Track if we have applied the initial theme to prevent overriding manual user clicks
   const hasAppliedInitialTheme = useRef(false);
 
-  // Apply theme from API or fallback to default (Crimson Jet)
+  // Apply theme from Local Storage (Preferred) or API fallback
   useEffect(() => {
-    // If we have theme data from API, apply it.
-    if (themeData && Object.keys(themeData).length > 0) {
-      // Safely check for theme name, case-insensitive
-      const themeName = (themeData as any).name || '';
-      const themeIndex = PRESET_THEMES.findIndex(t => t.name.toLowerCase() === themeName.toLowerCase());
-      
-      const hasValidStructure = (themeData as any).elements || ((themeData as any).surface && (themeData as any).heading);
-      
-      if (themeIndex >= 0) {
-        // If it matches a preset name, ALWAYS use the perfect local preset object so we don't miss light palettes
-        applyTheme(PRESET_THEMES[themeIndex], themeIndex.toString(), true);
-        hasAppliedInitialTheme.current = true;
-      } else if (hasValidStructure) {
-        // If it's a completely custom theme from API, pass it but DO NOT force it to preset '0'
+    // GUARD: Stop variant refreshes from re-triggering the API theme load and destroying your choice
+    if (hasAppliedInitialTheme.current) return;
+
+    // 1. Check Local Storage First
+    const savedThemeName = localStorage.getItem('activeBuilderThemeName');
+    const apiThemeName = themeData ? (themeData as any).name : null;
+    
+    const targetThemeName = savedThemeName || apiThemeName;
+    
+    if (targetThemeName) {
+        const themeIndex = PRESET_THEMES.findIndex(t => t.name.toLowerCase() === targetThemeName.toLowerCase());
+        if (themeIndex >= 0) {
+            applyTheme(PRESET_THEMES[themeIndex], themeIndex.toString(), true);
+            hasAppliedInitialTheme.current = true;
+            return;
+        }
+    }
+    
+    // 2. Fallback to API Custom Theme
+    const hasValidStructure = themeData && ((themeData as any).elements || ((themeData as any).surface && (themeData as any).heading));
+    if (hasValidStructure) {
         applyTheme(themeData as any, null, true);
         hasAppliedInitialTheme.current = true;
-      }
     } 
     // If the API explicitly returns no theme, fallback to Crimson Jet and highlight it
     else if (themeData !== undefined && !hasAppliedInitialTheme.current) {
@@ -1134,12 +1140,19 @@ const AppContent: React.FC = () => {
     }
   }, [themeData]); 
 
-  // Standalone Safety: If running on localhost without API wrapper, themeData stays undefined forever. 
-  // Force fallback to Crimson Jet after 500ms so the builder is never broken.
+  // Standalone Safety: If running on localhost without API wrapper
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!hasAppliedInitialTheme.current) {
-        applyTheme(PRESET_THEMES[0], '0', true);
+        // PRIORITIZE LOCAL STORAGE OVER CRIMSON JET FALLBACK
+        const savedThemeName = localStorage.getItem('activeBuilderThemeName');
+        const themeIndex = savedThemeName ? PRESET_THEMES.findIndex(t => t.name.toLowerCase() === savedThemeName.toLowerCase()) : -1;
+        
+        if (themeIndex >= 0) {
+            applyTheme(PRESET_THEMES[themeIndex], themeIndex.toString(), true);
+        } else {
+            applyTheme(PRESET_THEMES[0], '0', true);
+        }
         hasAppliedInitialTheme.current = true;
       }
     }, 500);
@@ -2435,7 +2448,16 @@ const AppContent: React.FC = () => {
                       overlayColor: activeOverlayHex,
                       overlayOpacityValue: activeOverlayOpacity.toString(), 
                       overlayBlendMode: blendMode
-                  }
+                  },
+                  // BUG 3 FIX: Strip inline element colors so the new global theme instantly applies everywhere
+                  elements: section.elements?.map(el => {
+                      const newStyle = { ...el.style };
+                      delete newStyle.color;
+                      delete newStyle.backgroundColor;
+                      delete newStyle.accentColor;
+                      delete newStyle.borderColor;
+                      return { ...el, style: newStyle };
+                  }) || []
               };
           });
 
