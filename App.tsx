@@ -1798,7 +1798,9 @@ const AppContent: React.FC = () => {
             const defaultStyles = template?.styles || {};
             const overrides = template?.variantOverrides?.[newVariant] || {};
                 const activeThemeColors = siteData.globalStyles.colors as any;
-                const activeGlobalTheme = (themeData as any)?.elements || themeData || PRESET_THEMES[0].elements;
+                const activeGlobalTheme = selectedPresetId !== null 
+                    ? (PRESET_THEMES[parseInt(selectedPresetId)]?.elements || PRESET_THEMES[0].elements) 
+                    : ((themeData as any)?.elements || themeData || PRESET_THEMES[0].elements);
                 const isLight = (nextVariantStyles as any).themeMode === 'light' || (overrides as any).themeMode === 'light';
                 
                 const activeSurface = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.surface : activeThemeColors.backgroundColor;
@@ -1971,22 +1973,43 @@ const AppContent: React.FC = () => {
             variant: currentVariant, // Preserve current variant
         };
         
-        // Strip all hardcoded colors so the renderer dynamically falls back to the live CSS variables
-        delete newSectionStyles.backgroundColor;
-        delete newSectionStyles.textColor;
-        delete newSectionStyles.titleColor;
-        delete newSectionStyles.subtitleColor;
-        delete newSectionStyles.accentColor;
-        delete newSectionStyles.buttonBackgroundColor;
-        delete newSectionStyles.buttonTextColor;
-        delete newSectionStyles.borderColor;
-        delete newSectionStyles.overlayColor;
-        delete newSectionStyles.overlayOpacityValue;
-        delete newSectionStyles.overlayBlendMode;
+        // Force the TRUE active theme colors back into the state to avoid stale API fallbacks
+        const activeThemeColors = prev.globalStyles.colors as any;
+        const activeGlobalTheme = selectedPresetId !== null 
+            ? (PRESET_THEMES[parseInt(selectedPresetId)]?.elements || PRESET_THEMES[0].elements) 
+            : ((themeData as any)?.elements || themeData || PRESET_THEMES[0].elements);
+        const isLight = (newSectionStyles as any).themeMode === 'light';
+        
+        const activeSurface = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.surface : activeThemeColors.backgroundColor;
+        const activeHeading = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.heading : activeThemeColors.titleColor;
+        const activeDesc    = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.description : activeThemeColors.textColor;
+        const activeOverlayHex = isLight && (activeGlobalTheme as any).light
+          ? (activeGlobalTheme as any).light.overlay.color
+          : (activeThemeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color);
+        const activeOverlayOpacity = isLight && (activeGlobalTheme as any).light
+          ? (activeGlobalTheme as any).light.overlay.opacity.toString()
+          : (activeThemeColors.overlayOpacityValue || '0.75');
+
+        newSectionStyles.backgroundColor = activeSurface;
+        newSectionStyles.titleColor = activeHeading;
+        newSectionStyles.textColor = activeDesc;
+        newSectionStyles.subtitleColor = activeDesc;
+        newSectionStyles.buttonBackgroundColor = activeThemeColors.buttonBackgroundColor;
+        newSectionStyles.buttonTextColor = activeThemeColors.buttonTextColor;
+        newSectionStyles.borderColor = activeThemeColors.borderColor;
+        newSectionStyles.overlayColor = activeOverlayHex;
+        newSectionStyles.overlayOpacityValue = activeOverlayOpacity;
+        newSectionStyles.overlayBlendMode = activeThemeColors.overlayBlendMode || 'normal';
+
         if (newSectionStyles.background) {
-            delete newSectionStyles.background.overlay;
-            if (newSectionStyles.background.image) {
-                delete newSectionStyles.background.image.overlay;
+            (newSectionStyles.background as any).overlay = {
+                enabled: true,
+                color: activeOverlayHex,
+                opacity: parseFloat(activeOverlayOpacity),
+                blendMode: (activeThemeColors.overlayBlendMode || 'normal') as any
+            };
+            if (newSectionStyles.background.type === 'image' && newSectionStyles.background.image) {
+                (newSectionStyles.background.image as any).overlay = { ...(newSectionStyles.background as any).overlay };
             }
         }
 
@@ -2057,7 +2080,9 @@ const AppContent: React.FC = () => {
           const defaultStyles = template?.styles || {};
           const overrides = template?.variantOverrides?.[nextVariant] || {};
           const activeThemeColors = siteData.globalStyles.colors as any;
-          const activeGlobalTheme = (themeData as any)?.elements || themeData || PRESET_THEMES[0].elements;
+          const activeGlobalTheme = selectedPresetId !== null 
+              ? (PRESET_THEMES[parseInt(selectedPresetId)]?.elements || PRESET_THEMES[0].elements) 
+              : ((themeData as any)?.elements || themeData || PRESET_THEMES[0].elements);
           const isLight = (nextVariantStyles as any).themeMode === 'light' || (overrides as any).themeMode === 'light';
           
           const activeSurface = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.surface : activeThemeColors.backgroundColor;
@@ -2530,7 +2555,9 @@ const AppContent: React.FC = () => {
     
     // Grab current global theme colors to initialize the new section safely
     const activeColors = siteData.globalStyles.colors as any;
-    const activeGlobalTheme = (themeData as any)?.elements || themeData || PRESET_THEMES[0].elements;
+    const activeGlobalTheme = selectedPresetId !== null 
+        ? (PRESET_THEMES[parseInt(selectedPresetId)]?.elements || PRESET_THEMES[0].elements) 
+        : ((themeData as any)?.elements || themeData || PRESET_THEMES[0].elements);
     const isLight = (variantOverrides as any)?.themeMode === 'light' || (template.styles as any)?.themeMode === 'light';
     
     const activeSurface = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.surface : activeColors.backgroundColor;
@@ -2567,13 +2594,13 @@ const AppContent: React.FC = () => {
     const deepOverlay = {
         enabled: true,
         color: newSection.styles.overlayColor,
-        opacity: newSection.styles.overlayOpacityValue,
-        blendMode: newSection.styles.overlayBlendMode
+        opacity: parseFloat(newSection.styles.overlayOpacityValue || '0.75'),
+        blendMode: (newSection.styles.overlayBlendMode || 'normal') as any
     };
     if (newSection.styles.background) {
-        newSection.styles.background.overlay = { ...newSection.styles.background.overlay, ...deepOverlay };
+        (newSection.styles.background as any).overlay = { ...(newSection.styles.background as any).overlay, ...deepOverlay };
         if (newSection.styles.background.type === 'image' && newSection.styles.background.image) {
-            newSection.styles.background.image.overlay = { ...newSection.styles.background.image.overlay, ...deepOverlay };
+            (newSection.styles.background.image as any).overlay = { ...(newSection.styles.background.image as any).overlay, ...deepOverlay };
         }
     }
     
