@@ -120,6 +120,25 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
   
   const isCustomColor = (value?: string) => value && (value.startsWith('#') || value.startsWith('rgb') || value.startsWith('hsl'));
 
+  // 1. Resolve Colors - Fallback to global theme (Respecting Light/Dark mode requests)
+  const isLight = styles.themeMode === 'light';
+  const activeGlobalTheme = (themeData as any)?.elements || themeData || PRESET_THEMES[0].elements;
+  
+  const defaultBg = isLight && activeGlobalTheme.light ? activeGlobalTheme.light.surface : (themeData?.surface || '#0E1214');
+  const defaultTitle = isLight && activeGlobalTheme.light ? activeGlobalTheme.light.heading : (themeData?.heading || '#F8FAFC');
+  const defaultText = isLight && activeGlobalTheme.light ? activeGlobalTheme.light.description : (themeData?.description || '#C7CDD6');
+
+  const themeColors = {
+      backgroundColor: styles.backgroundColor || defaultBg,
+      textColor: styles.textColor || defaultText,
+      titleColor: styles.titleColor || defaultTitle,
+      subtitleColor: styles.subtitleColor || defaultText,
+      accentColor: styles.accentColor || themeData?.accent || '#F59E0B',
+      buttonBackgroundColor: styles.buttonBackgroundColor || themeData?.primaryButton?.bg || '#E11D48',
+      buttonTextColor: styles.buttonTextColor || themeData?.primaryButton?.text || '#FFFFFF',
+      borderColor: styles.borderColor || themeData?.ring || '#F43F5E',
+  };
+
   const getBackgroundStyles = (): React.CSSProperties => {
     const bgStyles: React.CSSProperties = {};
     

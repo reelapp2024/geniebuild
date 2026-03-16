@@ -414,6 +414,7 @@ export interface Section {
     enableGeometry?: boolean;
     
     variant?: string;
+    themeMode?: 'light' | 'dark';
 
     // Typography & Colors
     textColor: string; 

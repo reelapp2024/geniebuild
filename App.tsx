@@ -2293,12 +2293,22 @@ const AppContent: React.FC = () => {
           // Only map and overwrite them when the user actively clicks a global theme in the sidebar (isInit = false).
           const newSections = isInit ? prev.sections : prev.sections.map(section => {
               const currentBg = section.styles.background || { type: section.styles.backgroundImage ? 'image' : 'color' };
+              
+              // DUAL-PALETTE ENGINE: Check if this specific section requests the Light Mode palette
+              const isLight = section.styles.themeMode === 'light';
+              
+              const activeSurface = isLight && colors.light ? colors.light.surface : colors.surface;
+              const activeHeading = isLight && colors.light ? colors.light.heading : colors.heading;
+              const activeDesc = isLight && colors.light ? colors.light.description : colors.description;
+              const activeOverlayHex = isLight && colors.light ? colors.light.overlay.color : baseHex;
+              const activeOverlayOpacity = isLight && colors.light ? colors.light.overlay.opacity : defaultOpacity;
+
               const updatedBg = {
                   ...currentBg,
                   overlay: {
                       enabled: true,
-                      color: baseHex,
-                      opacity: defaultOpacity,
+                      color: activeOverlayHex,
+                      opacity: activeOverlayOpacity,
                       blendMode: blendMode
                   }
               };
@@ -2310,17 +2320,17 @@ const AppContent: React.FC = () => {
                   ...section,
                   styles: {
                       ...section.styles,
-                      backgroundColor: colors.surface,
-                      textColor: colors.description,
-                      titleColor: colors.heading,
-                      subtitleColor: colors.description,
+                      backgroundColor: activeSurface,
+                      textColor: activeDesc,
+                      titleColor: activeHeading,
+                      subtitleColor: activeDesc,
                       accentColor: colors.accent,
                       buttonBackgroundColor: colors.primaryButton?.bg,
                       buttonTextColor: colors.primaryButton?.text,
                       borderColor: colors.ring,
                       background: updatedBg,
-                      overlayColor: baseHex,
-                      overlayOpacityValue: defaultOpacity.toString(), 
+                      overlayColor: activeOverlayHex,
+                      overlayOpacityValue: activeOverlayOpacity.toString(), 
                       overlayBlendMode: blendMode
                   }
               };
