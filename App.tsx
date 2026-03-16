@@ -1797,34 +1797,51 @@ const AppContent: React.FC = () => {
             const template = SECTION_TEMPLATES[s.type] || SECTION_TEMPLATES.hero;
             const defaultStyles = template?.styles || {};
             const overrides = template?.variantOverrides?.[newVariant] || {};
-            const activeThemeColors = siteData.globalStyles.colors;
-            const deepOverlay = {
-                enabled: true,
-                color: nextVariantStyles.overlayColor || overrides.overlayColor || activeThemeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color,
-                opacity: nextVariantStyles.overlayOpacityValue || overrides.overlayOpacityValue || activeThemeColors.overlayOpacityValue || "0.75",
-                blendMode: nextVariantStyles.overlayBlendMode || overrides.overlayBlendMode || activeThemeColors.overlayBlendMode || 'normal'
-            };
+                const activeThemeColors = siteData.globalStyles.colors as any;
+                const activeGlobalTheme = (themeData as any)?.elements || themeData || PRESET_THEMES[0].elements;
+                const isLight = (nextVariantStyles as any).themeMode === 'light' || (overrides as any).themeMode === 'light';
+                
+                const activeSurface = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.surface : activeThemeColors.backgroundColor;
+                const activeHeading = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.heading : activeThemeColors.titleColor;
+                const activeDesc = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.description : activeThemeColors.textColor;
+                const activeOverlayHex = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.overlay.color : (activeThemeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color);
+                const activeOverlayOpacity = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.overlay.opacity.toString() : (activeThemeColors.overlayOpacityValue || "0.75");
 
-            const currentBg = nextVariantStyles.background || overrides.background || defaultStyles.background;
-            let updatedBg = currentBg ? { ...currentBg } : undefined;
-            
-            if (updatedBg) {
-                updatedBg.overlay = { ...updatedBg.overlay, ...deepOverlay };
-                if (updatedBg.type === 'image' && updatedBg.image) {
-                    updatedBg.image = { ...updatedBg.image, overlay: { ...updatedBg.image.overlay, ...deepOverlay } };
+                const deepOverlay = {
+                    enabled: true,
+                    color: (overrides as any).overlayColor || activeOverlayHex,
+                    opacity: (overrides as any).overlayOpacityValue || activeOverlayOpacity,
+                    blendMode: (overrides as any).overlayBlendMode || activeThemeColors.overlayBlendMode || 'normal'
+                };
+
+                const currentBg = nextVariantStyles.background || overrides.background || defaultStyles.background;
+                let updatedBg = currentBg ? { ...currentBg } : undefined;
+                
+                if (updatedBg) {
+                    updatedBg.overlay = { ...updatedBg.overlay, ...deepOverlay };
+                    if (updatedBg.type === 'image' && updatedBg.image) {
+                        updatedBg.image = { ...updatedBg.image, overlay: { ...updatedBg.image.overlay, ...deepOverlay } };
+                    }
                 }
-            }
 
-            const updatedStyles = {
-              ...defaultStyles,
-              ...overrides,
-              ...nextVariantStyles,
-              variant: newVariant,
-              background: updatedBg,
-              overlayColor: deepOverlay.color,
-              overlayOpacityValue: deepOverlay.opacity.toString(),
-              overlayBlendMode: deepOverlay.blendMode
-            };
+                const updatedStyles = {
+                  ...defaultStyles,
+                  ...nextVariantStyles,
+                  ...overrides,
+                  variant: newVariant,
+                  background: updatedBg,
+                  overlayColor: deepOverlay.color,
+                  overlayOpacityValue: deepOverlay.opacity.toString(),
+                  overlayBlendMode: deepOverlay.blendMode,
+                  // Force active theme colors
+                  backgroundColor: (overrides as any).backgroundColor || activeSurface,
+                  titleColor: (overrides as any).titleColor || activeHeading,
+                  textColor: (overrides as any).textColor || activeDesc,
+                  subtitleColor: (overrides as any).subtitleColor || activeDesc,
+                  buttonBackgroundColor: (overrides as any).buttonBackgroundColor || activeThemeColors.buttonBackgroundColor,
+                  buttonTextColor: (overrides as any).buttonTextColor || activeThemeColors.buttonTextColor,
+                  borderColor: (overrides as any).borderColor || activeThemeColors.borderColor
+                };
             
             return {
               ...s,
@@ -2039,12 +2056,21 @@ const AppContent: React.FC = () => {
           const template = SECTION_TEMPLATES[sectionType] || SECTION_TEMPLATES.hero;
           const defaultStyles = template?.styles || {};
           const overrides = template?.variantOverrides?.[nextVariant] || {};
-          const activeThemeColors = siteData.globalStyles.colors;
+          const activeThemeColors = siteData.globalStyles.colors as any;
+          const activeGlobalTheme = (themeData as any)?.elements || themeData || PRESET_THEMES[0].elements;
+          const isLight = (nextVariantStyles as any).themeMode === 'light' || (overrides as any).themeMode === 'light';
+          
+          const activeSurface = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.surface : activeThemeColors.backgroundColor;
+          const activeHeading = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.heading : activeThemeColors.titleColor;
+          const activeDesc = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.description : activeThemeColors.textColor;
+          const activeOverlayHex = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.overlay.color : (activeThemeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color);
+          const activeOverlayOpacity = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.overlay.opacity.toString() : (activeThemeColors.overlayOpacityValue || "0.75");
+
           const deepOverlay = {
               enabled: true,
-              color: nextVariantStyles.overlayColor || overrides.overlayColor || activeThemeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color,
-              opacity: nextVariantStyles.overlayOpacityValue || overrides.overlayOpacityValue || activeThemeColors.overlayOpacityValue || "0.75",
-              blendMode: nextVariantStyles.overlayBlendMode || overrides.overlayBlendMode || activeThemeColors.overlayBlendMode || 'normal'
+              color: (overrides as any).overlayColor || activeOverlayHex,
+              opacity: (overrides as any).overlayOpacityValue || activeOverlayOpacity,
+              blendMode: (overrides as any).overlayBlendMode || activeThemeColors.overlayBlendMode || 'normal'
           };
 
           const currentBg = nextVariantStyles.background || overrides.background || defaultStyles.background;
@@ -2059,13 +2085,21 @@ const AppContent: React.FC = () => {
 
           const mergedStyles = {
             ...defaultStyles,
-            ...overrides,
-            ...nextVariantStyles,
+            ...nextVariantStyles, // Keeps layout padding
+            ...overrides,         // Enforces variant structure
             variant: nextVariant,
             background: updatedBg,
             overlayColor: deepOverlay.color,
             overlayOpacityValue: deepOverlay.opacity.toString(),
-            overlayBlendMode: deepOverlay.blendMode
+            overlayBlendMode: deepOverlay.blendMode,
+            // FORCE Active Theme Colors to purge stale state across variants
+            backgroundColor: (overrides as any).backgroundColor || activeSurface,
+            titleColor: (overrides as any).titleColor || activeHeading,
+            textColor: (overrides as any).textColor || activeDesc,
+            subtitleColor: (overrides as any).subtitleColor || activeDesc,
+            buttonBackgroundColor: (overrides as any).buttonBackgroundColor || activeThemeColors.buttonBackgroundColor,
+            buttonTextColor: (overrides as any).buttonTextColor || activeThemeColors.buttonTextColor,
+            borderColor: (overrides as any).borderColor || activeThemeColors.borderColor
           };
           
           return {
@@ -2495,7 +2529,15 @@ const AppContent: React.FC = () => {
     const variantOverrides = template.variantOverrides?.[defaultVariant] || {};
     
     // Grab current global theme colors to initialize the new section safely
-    const activeColors = siteData.globalStyles.colors;
+    const activeColors = siteData.globalStyles.colors as any;
+    const activeGlobalTheme = (themeData as any)?.elements || themeData || PRESET_THEMES[0].elements;
+    const isLight = (variantOverrides as any)?.themeMode === 'light' || (template.styles as any)?.themeMode === 'light';
+    
+    const activeSurface = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.surface : activeColors.backgroundColor;
+    const activeHeading = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.heading : activeColors.titleColor;
+    const activeDesc = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.description : activeColors.textColor;
+    const activeOverlayHex = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.overlay.color : (activeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color);
+    const activeOverlayOpacity = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.overlay.opacity.toString() : (activeColors.overlayOpacityValue || PRESET_THEMES[0].elements.overlay.opacity.toString());
     
     const newSection: Section = { 
         ...template, 
@@ -2504,20 +2546,20 @@ const AppContent: React.FC = () => {
         styles: {
             ...template.styles,
             ...variantOverrides,
-            // Automatically bind to the active theme colors on creation
-            backgroundColor: activeColors.backgroundColor,
-            textColor: activeColors.textColor,
-            titleColor: activeColors.titleColor,
-            subtitleColor: activeColors.subtitleColor,
+            variant: defaultVariant,
+            backgroundColor: (variantOverrides as any)?.backgroundColor || activeSurface,
+            textColor: (variantOverrides as any)?.textColor || activeDesc,
+            titleColor: (variantOverrides as any)?.titleColor || activeHeading,
+            subtitleColor: (variantOverrides as any)?.subtitleColor || activeDesc,
             accentColor: activeColors.accentColor,
-            buttonBackgroundColor: activeColors.buttonBackgroundColor,
-            buttonTextColor: activeColors.buttonTextColor,
-            borderColor: activeColors.borderColor,
-            overlayColor: activeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color,
-            overlayOpacityValue: activeColors.overlayOpacityValue || PRESET_THEMES[0].elements.overlay.opacity.toString(),
-            overlayBlendMode: activeColors.overlayBlendMode || 'normal',
+            buttonBackgroundColor: (variantOverrides as any)?.buttonBackgroundColor || activeColors.buttonBackgroundColor,
+            buttonTextColor: (variantOverrides as any)?.buttonTextColor || activeColors.buttonTextColor,
+            borderColor: (variantOverrides as any)?.borderColor || activeColors.borderColor,
+            overlayColor: (variantOverrides as any)?.overlayColor || activeOverlayHex,
+            overlayOpacityValue: (variantOverrides as any)?.overlayOpacityValue || activeOverlayOpacity,
+            overlayBlendMode: (variantOverrides as any)?.overlayBlendMode || activeColors.overlayBlendMode || 'normal',
             // Enable geometry only for HeroGeometric variant, default to false for all others
-            enableGeometry: defaultVariant === 'HeroGeometric' || (variantOverrides.variant || template.styles?.variant) === 'HeroGeometric',
+            enableGeometry: defaultVariant === 'HeroGeometric' || ((variantOverrides as any).variant || template.styles?.variant) === 'HeroGeometric',
         }
     } as Section;
 
