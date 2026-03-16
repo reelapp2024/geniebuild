@@ -19,6 +19,7 @@ import { getHeadingSizeClass } from '../../utils/headingSizeUtils';
 // Import all variant components
 // Hero variants
 import { HeroCenter } from './hero/HeroCenter';
+import { HeroLight } from './hero/HeroLight';
 import { HeroCrimsonJet } from './hero/HeroCrimsonJet';
 // Navbar variants
 import { NavbarSimple } from './navbar/NavbarSimple';
@@ -109,11 +110,12 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
   switch (sectionType) {
     case 'hero':
       switch (variant) {
-        case 'HeroCenter':
-        case 'center':
-          return <HeroCenter {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
         case 'HeroCrimsonJet':
           return <HeroCrimsonJet {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+        case 'HeroLight':
+          return <HeroLight {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
+        case 'HeroCenter':
+        case 'center':
         default:
           return <HeroCenter {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
       }

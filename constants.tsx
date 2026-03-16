@@ -511,10 +511,13 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     },
     variantOverrides: {
       'center': { textAlign: 'center' },
-      'HeroCenterLight': {
+      'HeroLight': {
           textAlign: 'center',
-          themeMode: 'light', // The Engine will automatically flip all colors to light mode!
-          background: { type: 'color' } // Remove the image for a clean minimalist look
+          themeMode: 'light', // This triggers our Dual-Palette Engine automatically!
+          background: { 
+              type: 'color', 
+              overlay: { enabled: false } // No glass effect needed for a clean white background
+          }
       },
       'HeroCrimsonJet': { 
           textAlign: 'center', 
