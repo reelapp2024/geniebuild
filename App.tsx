@@ -1111,12 +1111,19 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     // If we have theme data from API, apply it.
     if (themeData && Object.keys(themeData).length > 0) {
+      // Safely check for theme name, case-insensitive
+      const themeName = (themeData as any).name || '';
+      const themeIndex = PRESET_THEMES.findIndex(t => t.name.toLowerCase() === themeName.toLowerCase());
+      
       const hasValidStructure = (themeData as any).elements || ((themeData as any).surface && (themeData as any).heading);
-      if (hasValidStructure) {
-        // Apply API theme, pass name so UI highlights it
-        const themeName = (themeData as any).name || PRESET_THEMES[0].name;
-        const themeIndex = PRESET_THEMES.findIndex(t => t.name === themeName);
-        applyTheme(themeData as any, themeIndex >= 0 ? themeIndex.toString() : '0', true);
+      
+      if (themeIndex >= 0) {
+        // If it matches a preset name, ALWAYS use the perfect local preset object so we don't miss light palettes
+        applyTheme(PRESET_THEMES[themeIndex], themeIndex.toString(), true);
+        hasAppliedInitialTheme.current = true;
+      } else if (hasValidStructure) {
+        // If it's a completely custom theme from API, pass it but DO NOT force it to preset '0'
+        applyTheme(themeData as any, null, true);
         hasAppliedInitialTheme.current = true;
       }
     } 
@@ -1803,11 +1810,15 @@ const AppContent: React.FC = () => {
                     : ((themeData as any)?.elements || themeData || PRESET_THEMES[0].elements);
                 const isLight = (nextVariantStyles as any).themeMode === 'light' || (overrides as any).themeMode === 'light';
                 
-                const activeSurface = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.surface : activeThemeColors.backgroundColor;
-                const activeHeading = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.heading : activeThemeColors.titleColor;
-                const activeDesc = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.description : activeThemeColors.textColor;
-                const activeOverlayHex = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.overlay.color : (activeThemeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color);
-                const activeOverlayOpacity = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.overlay.opacity.toString() : (activeThemeColors.overlayOpacityValue || "0.75");
+                const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : activeThemeColors.backgroundColor;
+                const activeHeading = isLight ? ((activeGlobalTheme as any).light?.heading || '#111827') : activeThemeColors.titleColor;
+                const activeDesc = isLight ? ((activeGlobalTheme as any).light?.description || '#4B5563') : activeThemeColors.textColor;
+                const activeOverlayHex = isLight 
+                  ? ((activeGlobalTheme as any).light?.overlay?.color || '#FFFFFF')
+                  : (activeThemeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color);
+                const activeOverlayOpacity = isLight 
+                  ? ((activeGlobalTheme as any).light?.overlay?.opacity?.toString() || '0.90')
+                  : (activeThemeColors.overlayOpacityValue || "0.75");
 
                 const deepOverlay = {
                     enabled: true,
@@ -1980,14 +1991,14 @@ const AppContent: React.FC = () => {
             : ((themeData as any)?.elements || themeData || PRESET_THEMES[0].elements);
         const isLight = (newSectionStyles as any).themeMode === 'light';
         
-        const activeSurface = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.surface : activeThemeColors.backgroundColor;
-        const activeHeading = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.heading : activeThemeColors.titleColor;
-        const activeDesc    = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.description : activeThemeColors.textColor;
-        const activeOverlayHex = isLight && (activeGlobalTheme as any).light
-          ? (activeGlobalTheme as any).light.overlay.color
+        const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : activeThemeColors.backgroundColor;
+        const activeHeading = isLight ? ((activeGlobalTheme as any).light?.heading || '#111827') : activeThemeColors.titleColor;
+        const activeDesc    = isLight ? ((activeGlobalTheme as any).light?.description || '#4B5563') : activeThemeColors.textColor;
+        const activeOverlayHex = isLight 
+          ? ((activeGlobalTheme as any).light?.overlay?.color || '#FFFFFF')
           : (activeThemeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color);
-        const activeOverlayOpacity = isLight && (activeGlobalTheme as any).light
-          ? (activeGlobalTheme as any).light.overlay.opacity.toString()
+        const activeOverlayOpacity = isLight 
+          ? ((activeGlobalTheme as any).light?.overlay?.opacity?.toString() || '0.90')
           : (activeThemeColors.overlayOpacityValue || '0.75');
 
         newSectionStyles.backgroundColor = activeSurface;
@@ -2085,11 +2096,15 @@ const AppContent: React.FC = () => {
               : ((themeData as any)?.elements || themeData || PRESET_THEMES[0].elements);
           const isLight = (nextVariantStyles as any).themeMode === 'light' || (overrides as any).themeMode === 'light';
           
-          const activeSurface = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.surface : activeThemeColors.backgroundColor;
-          const activeHeading = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.heading : activeThemeColors.titleColor;
-          const activeDesc = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.description : activeThemeColors.textColor;
-          const activeOverlayHex = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.overlay.color : (activeThemeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color);
-          const activeOverlayOpacity = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.overlay.opacity.toString() : (activeThemeColors.overlayOpacityValue || "0.75");
+          const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : activeThemeColors.backgroundColor;
+          const activeHeading = isLight ? ((activeGlobalTheme as any).light?.heading || '#111827') : activeThemeColors.titleColor;
+          const activeDesc = isLight ? ((activeGlobalTheme as any).light?.description || '#4B5563') : activeThemeColors.textColor;
+          const activeOverlayHex = isLight 
+            ? ((activeGlobalTheme as any).light?.overlay?.color || '#FFFFFF')
+            : (activeThemeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color);
+          const activeOverlayOpacity = isLight 
+            ? ((activeGlobalTheme as any).light?.overlay?.opacity?.toString() || '0.90')
+            : (activeThemeColors.overlayOpacityValue || "0.75");
 
           const deepOverlay = {
               enabled: true,
@@ -2356,11 +2371,11 @@ const AppContent: React.FC = () => {
               // DUAL-PALETTE ENGINE: Check if this specific section requests the Light Mode palette
               const isLight = section.styles.themeMode === 'light';
               
-              const activeSurface = isLight && colors.light ? colors.light.surface : colors.surface;
-              const activeHeading = isLight && colors.light ? colors.light.heading : colors.heading;
-              const activeDesc = isLight && colors.light ? colors.light.description : colors.description;
-              const activeOverlayHex = isLight && colors.light ? colors.light.overlay.color : baseHex;
-              const activeOverlayOpacity = isLight && colors.light ? colors.light.overlay.opacity : defaultOpacity;
+              const activeSurface = isLight ? (colors.light?.surface || '#FFFFFF') : colors.surface;
+              const activeHeading = isLight ? (colors.light?.heading || '#111827') : colors.heading;
+              const activeDesc = isLight ? (colors.light?.description || '#4B5563') : colors.description;
+              const activeOverlayHex = isLight ? (colors.light?.overlay?.color || '#FFFFFF') : baseHex;
+              const activeOverlayOpacity = isLight ? (colors.light?.overlay?.opacity || 0.90) : defaultOpacity;
 
               const updatedBg = {
                   ...currentBg,
@@ -2560,11 +2575,15 @@ const AppContent: React.FC = () => {
         : ((themeData as any)?.elements || themeData || PRESET_THEMES[0].elements);
     const isLight = (variantOverrides as any)?.themeMode === 'light' || (template.styles as any)?.themeMode === 'light';
     
-    const activeSurface = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.surface : activeColors.backgroundColor;
-    const activeHeading = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.heading : activeColors.titleColor;
-    const activeDesc = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.description : activeColors.textColor;
-    const activeOverlayHex = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.overlay.color : (activeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color);
-    const activeOverlayOpacity = isLight && (activeGlobalTheme as any).light ? (activeGlobalTheme as any).light.overlay.opacity.toString() : (activeColors.overlayOpacityValue || PRESET_THEMES[0].elements.overlay.opacity.toString());
+    const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : activeColors.backgroundColor;
+    const activeHeading = isLight ? ((activeGlobalTheme as any).light?.heading || '#111827') : activeColors.titleColor;
+    const activeDesc = isLight ? ((activeGlobalTheme as any).light?.description || '#4B5563') : activeColors.textColor;
+    const activeOverlayHex = isLight 
+      ? ((activeGlobalTheme as any).light?.overlay?.color || '#FFFFFF')
+      : (activeColors.overlayColor || PRESET_THEMES[0].elements.overlay.color);
+    const activeOverlayOpacity = isLight 
+      ? ((activeGlobalTheme as any).light?.overlay?.opacity?.toString() || '0.90')
+      : (activeColors.overlayOpacityValue || PRESET_THEMES[0].elements.overlay.opacity.toString());
     
     const newSection: Section = { 
         ...template, 
