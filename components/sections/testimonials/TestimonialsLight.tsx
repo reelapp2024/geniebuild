@@ -182,8 +182,15 @@ export const TestimonialsLight: React.FC<TestimonialsLightProps> = ({
               key={item.id} 
               onClick={(e) => {
                   e.stopPropagation(); // Prevent the section background from being selected
-                  if (!readOnly && onElementSelect) {
-                      onElementSelect(cardId, cardElement as WebsiteElement);
+                  if (!readOnly) {
+                      // CRITICAL FIX: Save the virtual card to the global section state on first click!
+                      if (!section.elements?.find(el => el.id === cardId) && onElementUpdate) {
+                          onElementUpdate(cardId, cardElement);
+                      }
+                      // Then safely select it
+                      if (onElementSelect) {
+                          onElementSelect(cardId, cardElement as WebsiteElement);
+                      }
                   }
               }}
               className={`relative group/item shadow-sm transition-all duration-300 hover:shadow-md cursor-pointer ${
