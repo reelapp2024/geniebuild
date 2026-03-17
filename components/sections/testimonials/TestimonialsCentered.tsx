@@ -45,6 +45,15 @@ export const TestimonialsCentered: React.FC<TestimonialsCenteredProps> = ({
   
   // Theme colors for ElementsSection
   const styleAny = styles as any;
+  const colorToHex = (val: string | undefined): string | undefined => {
+    if (!val || typeof val !== 'string' || val.startsWith('#')) return val;
+    const m = val.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*[\d.]+)?\s*\)/);
+    if (!m) return val;
+    const r = Math.max(0, Math.min(255, parseInt(m[1], 10)));
+    const g = Math.max(0, Math.min(255, parseInt(m[2], 10)));
+    const b = Math.max(0, Math.min(255, parseInt(m[3], 10)));
+    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+  };
   const themeColors = {
     ...styles,
     titleFontWeight: styleAny.titleFontWeight || styleAny.fontWeight,
@@ -102,7 +111,7 @@ export const TestimonialsCentered: React.FC<TestimonialsCenteredProps> = ({
   };
 
   // Safely catch live data from DB whether it's named items, testimonials, or reviews
-  const activeItems = content.testimonials || content.reviews || content.items;
+  const activeItems = (content as any).testimonials || (content as any).reviews || content.items;
   const items = Array.isArray(activeItems) && activeItems.length > 0
     ? activeItems
     : [
@@ -169,9 +178,17 @@ export const TestimonialsCentered: React.FC<TestimonialsCenteredProps> = ({
               paddingBottom: '2rem',
               borderBottomWidth: '1px',
               borderBottomStyle: 'solid',
-              borderBottomColor: 'rgba(255,255,255,0.1)',
+              borderBottomColor: (styleAny.cardBorderColor || (styles as any).borderColor || '#2D2D2D') as string,
+              backgroundColor: (styleAny.cardBackgroundColor || styles.overlayColor || '#0E1214') as string,
+              borderColor: (styleAny.cardBorderColor || (styles as any).borderColor || '#2D2D2D') as string,
             }
           };
+          const cardStyle = {
+            ...(cardElement.style || {}),
+            backgroundColor: colorToHex(cardElement.style?.backgroundColor) || styleAny.cardBackgroundColor || styles.overlayColor || '#0E1214',
+            borderColor: colorToHex(cardElement.style?.borderColor) || styleAny.cardBorderColor || (styles as any).borderColor || '#2D2D2D',
+            borderBottomColor: colorToHex((cardElement.style as Record<string, string>)?.borderBottomColor) || styleAny.cardBorderColor || (styles as any).borderColor || '#2D2D2D',
+          } as React.CSSProperties;
 
           return (
             <div 
@@ -180,7 +197,7 @@ export const TestimonialsCentered: React.FC<TestimonialsCenteredProps> = ({
                 e.preventDefault();
                 e.stopPropagation();
                 if (!readOnly) {
-                  const hydratedCard: WebsiteElement = { ...cardElement, id: cardId, type: 'card' };
+                  const hydratedCard: WebsiteElement = { ...cardElement, id: cardId, type: 'card', style: { ...cardElement.style, ...cardStyle } as any };
                   if (onElementUpdate && !section.elements?.find(el => el.id === cardId)) {
                     onElementUpdate(cardId, hydratedCard);
                   }
@@ -194,7 +211,7 @@ export const TestimonialsCentered: React.FC<TestimonialsCenteredProps> = ({
                   ? 'border-blue-500 ring-4 ring-blue-500/20 z-20'
                   : 'hover:border-blue-500/30'
               }`}
-              style={cardElement.style}
+              style={cardStyle}
             >
               {isSelected && !readOnly && (
                 <button 

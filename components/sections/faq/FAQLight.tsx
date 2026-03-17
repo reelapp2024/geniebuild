@@ -85,7 +85,7 @@ export const FAQLight: React.FC<FAQLightProps> = ({
         )}
       </div>
 
-      {/* ACCORDION SECTION - Clean border-b design */}
+      {/* ACCORDION SECTION - Theme colors from start (same as section/card) */}
       <div className="w-full" style={{ backgroundColor: 'transparent' }}>
         <ElementsSection 
           isWrapped={false} 
@@ -96,14 +96,19 @@ export const FAQLight: React.FC<FAQLightProps> = ({
                 ...item,
                 style: {
                   ...item.style,
-                  borderBottom: `1px solid ${(styles.borderColor || '#E5E7EB')}20`,
+                  borderBottom: `1px solid ${(styles.borderColor || styleAny.cardBorderColor || '#E5E7EB')}20`,
                   paddingTop: '1.5rem',
                   paddingBottom: '1.5rem',
                 }
               }))
             }, { 
               accentColor: styles.accentColor || '#3b82f6',
-              backgroundColor: 'transparent'
+              backgroundColor: styleAny.accordionBackgroundColor || styleAny.cardBackgroundColor || styles.overlayColor || '#FFFFFF',
+              borderColor: styleAny.accordionBorderColor || styleAny.cardBorderColor || styles.borderColor || '#E5E7EB',
+              titleColor: styleAny.accordionQuestionColor || styles.titleColor || '#111827',
+              color: styleAny.accordionAnswerColor || styles.textColor || '#4B5563',
+              borderRadius: '12px',
+              padding: '20px',
             })] 
           }} 
           onElementSelect={onElementSelect} 

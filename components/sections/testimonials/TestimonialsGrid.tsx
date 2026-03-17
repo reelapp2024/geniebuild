@@ -45,6 +45,15 @@ export const TestimonialsGrid: React.FC<TestimonialsGridProps> = ({
   
   // Theme colors for ElementsSection - pass complete section.styles for unified styling
   const styleAny = styles as any;
+  const colorToHex = (val: string | undefined): string | undefined => {
+    if (!val || typeof val !== 'string' || val.startsWith('#')) return val;
+    const m = val.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*[\d.]+)?\s*\)/);
+    if (!m) return val;
+    const r = Math.max(0, Math.min(255, parseInt(m[1], 10)));
+    const g = Math.max(0, Math.min(255, parseInt(m[2], 10)));
+    const b = Math.max(0, Math.min(255, parseInt(m[3], 10)));
+    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+  };
   const themeColors = {
     ...styles,
     titleFontWeight: styleAny.titleFontWeight || styleAny.fontWeight,
@@ -166,12 +175,17 @@ export const TestimonialsGrid: React.FC<TestimonialsGridProps> = ({
             content: {},
             style: {
               padding: '2rem',
-              backgroundColor: 'rgba(255,255,255,0.05)',
+              backgroundColor: styleAny.cardBackgroundColor || styles.overlayColor || '#0E1214',
+              borderColor: styleAny.cardBorderColor || styles.borderColor || '#2D2D2D',
               borderRadius: '1rem',
               borderWidth: '1px',
               borderStyle: 'solid',
-              borderColor: 'rgba(255,255,255,0.05)',
             }
+          };
+          const cardStyle = {
+            ...cardElement.style,
+            backgroundColor: colorToHex(cardElement.style?.backgroundColor) || styleAny.cardBackgroundColor || styles.overlayColor || '#0E1214',
+            borderColor: colorToHex(cardElement.style?.borderColor) || styleAny.cardBorderColor || styles.borderColor || '#2D2D2D',
           };
 
           return (
@@ -181,7 +195,7 @@ export const TestimonialsGrid: React.FC<TestimonialsGridProps> = ({
                 e.preventDefault();
                 e.stopPropagation();
                 if (!readOnly) {
-                  const hydratedCard: WebsiteElement = { ...cardElement, id: cardId, type: 'card' };
+                  const hydratedCard: WebsiteElement = { ...cardElement, id: cardId, type: 'card', style: { ...cardElement.style, ...cardStyle } };
                   if (onElementUpdate && !section.elements?.find(el => el.id === cardId)) {
                     onElementUpdate(cardId, hydratedCard);
                   }
@@ -195,7 +209,7 @@ export const TestimonialsGrid: React.FC<TestimonialsGridProps> = ({
                   ? 'border-blue-500 ring-4 ring-blue-500/20 z-20'
                   : 'border-transparent hover:border-blue-500/30'
               }`}
-              style={cardElement.style}
+              style={cardStyle}
             >
               {isSelected && !readOnly && (
                 <button 

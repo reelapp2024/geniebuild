@@ -19,6 +19,10 @@ interface ElementsSectionProps {
     textColor?: string;
     accordionQuestionColor?: string;
     accordionAnswerColor?: string;
+    accordionBackgroundColor?: string;
+    accordionBorderColor?: string;
+    cardBackgroundColor?: string;
+    cardBorderColor?: string;
     accentColor?: string;
     buttonBackgroundColor?: string;
     buttonTextColor?: string;
@@ -92,8 +96,21 @@ const CountdownTimer = ({ targetDate, style }: { targetDate: string, style: any 
     );
 };
 
+/** Convert rgb/rgba to hex so card/accordion and all elements use # colors per theme */
+const colorToHex = (val: string | undefined): string | undefined => {
+  if (!val || typeof val !== 'string' || val.startsWith('#')) return val;
+  const m = val.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*[\d.]+)?\s*\)/);
+  if (!m) return val;
+  const r = Math.max(0, Math.min(255, parseInt(m[1], 10)));
+  const g = Math.max(0, Math.min(255, parseInt(m[2], 10)));
+  const b = Math.max(0, Math.min(255, parseInt(m[3], 10)));
+  return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+};
+
 const getSafeStyle = (style: any): React.CSSProperties => {
   const css: any = { ...style };
+  if (css.backgroundColor) css.backgroundColor = colorToHex(css.backgroundColor) || css.backgroundColor;
+  if (css.borderColor) css.borderColor = colorToHex(css.borderColor) || css.borderColor;
   
   // Explicitly handle 'margin' object from state
   if (typeof style.margin === 'object' && style.margin !== null) {
@@ -136,11 +153,17 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
   
   // Get theme colors from section styles or passed prop
   // Simplified: Only core colors, let ELEMENT_DEFAULTS handle the rest
+  const sectionStyles = (section.styles || {}) as Record<string, unknown>;
   const theme = themeColors || {
     titleColor: section.styles?.titleColor || themeData?.heading || '#F8FAFC',
     textColor: section.styles?.textColor || themeData?.description || '#D1D5DB',
-    accordionQuestionColor: (section.styles as Record<string, string>)?.accordionQuestionColor || (themeData as any)?.accordion?.questionColor || themeData?.heading || '#F8FAFC',
-    accordionAnswerColor: (section.styles as Record<string, string>)?.accordionAnswerColor || (themeData as any)?.accordion?.answerColor || themeData?.description || '#D1D5DB',
+    backgroundColor: (sectionStyles?.backgroundColor as string) || (themeData as any)?.surface || '',
+    accordionQuestionColor: (sectionStyles?.accordionQuestionColor as string) || (themeData as any)?.accordion?.questionColor || themeData?.heading || '#F8FAFC',
+    accordionAnswerColor: (sectionStyles?.accordionAnswerColor as string) || (themeData as any)?.accordion?.answerColor || themeData?.description || '#D1D5DB',
+    cardBackgroundColor: (sectionStyles?.cardBackgroundColor as string) || (themeData as any)?.light?.surface || '#FFFFFF',
+    cardBorderColor: (sectionStyles?.cardBorderColor as string) || (themeData as any)?.light?.overlay?.color || '#E5E7EB',
+    accordionBackgroundColor: (sectionStyles?.accordionBackgroundColor as string) || (sectionStyles?.cardBackgroundColor as string) || (themeData as any)?.light?.surface || '#FFFFFF',
+    accordionBorderColor: (sectionStyles?.accordionBorderColor as string) || (sectionStyles?.cardBorderColor as string) || (themeData as any)?.light?.overlay?.color || '#E5E7EB',
     accentColor: section.styles?.accentColor || themeData?.accent || '#3b82f6',
     buttonBackgroundColor: section.styles?.buttonBackgroundColor || themeData?.primaryButton?.bg || '#E11D48',
     buttonTextColor: section.styles?.buttonTextColor || themeData?.primaryButton?.text || '#FFFFFF',
@@ -658,7 +681,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
         case 'badge':
             // 1. Get LIVE theme badge colors (Bypassing stale ThemeProvider context)
             const getLiveBadgeColors = () => {
-                const liveSurface = theme?.backgroundColor || '';
+                const liveSurface = (theme as Record<string, string>)?.backgroundColor || (sectionStyles?.backgroundColor as string) || '';
                 const preset = PRESET_THEMES.find(t => t.elements.surface.toLowerCase() === liveSurface.toLowerCase());
                 if (preset) return { bg: preset.elements.badge.background, text: preset.elements.badge.text };
                 
@@ -787,8 +810,8 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                             key={idx}
                             className="group border transition-colors w-full overflow-hidden"
                             style={{
-                                backgroundColor: safeStyle.backgroundColor || 'rgba(255, 255, 255, 0.05)',
-                                borderColor: safeStyle.borderColor || 'rgba(255, 255, 255, 0.1)',
+                                backgroundColor: (safeStyle.backgroundColor && safeStyle.backgroundColor !== 'transparent') ? safeStyle.backgroundColor : (theme?.accordionBackgroundColor || theme?.cardBackgroundColor || '#FFFFFF'),
+                                borderColor: (safeStyle.borderColor && safeStyle.borderColor !== 'transparent') ? safeStyle.borderColor : (theme?.accordionBorderColor || theme?.cardBorderColor || '#E5E7EB'),
                                 borderRadius: safeStyle.borderRadius || '0.75rem'
                             }}
                         >
@@ -807,7 +830,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                                 className="text-base opacity-80 leading-relaxed border-t mt-2"
                                 style={{
                                     padding: safeStyle.padding || '1.25rem',
-                                    borderColor: 'rgba(255, 255, 255, 0.05)',
+                                    borderColor: theme?.accordionBorderColor || theme?.cardBorderColor || '#E5E7EB',
                                     color: safeStyle.color ?? theme?.accordionAnswerColor ?? theme?.textColor ?? '#D1D5DB'
                                 }}
                             >
@@ -876,7 +899,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
             };
             return (
-                <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, id)} style={progressBarStyle}>
+                <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, el)} style={progressBarStyle}>
                     <div className="flex justify-between mb-1 text-xs font-bold uppercase tracking-wider">
                         <span>{content.text}</span>
                         <span>{content.percentage}%</span>

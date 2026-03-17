@@ -46,6 +46,15 @@ export const TestimonialsLight: React.FC<TestimonialsLightProps> = ({
   
   // Theme colors for ElementsSection - pass complete section.styles for unified styling
   const styleAny = styles as any;
+  const colorToHex = (val: string | undefined): string | undefined => {
+    if (!val || typeof val !== 'string' || val.startsWith('#')) return val;
+    const m = val.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*[\d.]+)?\s*\)/);
+    if (!m) return val;
+    const r = Math.max(0, Math.min(255, parseInt(m[1], 10)));
+    const g = Math.max(0, Math.min(255, parseInt(m[2], 10)));
+    const b = Math.max(0, Math.min(255, parseInt(m[3], 10)));
+    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+  };
   const themeColors = {
     ...styles,
     titleFontWeight: styleAny.titleFontWeight || styleAny.fontWeight,
@@ -168,13 +177,18 @@ export const TestimonialsLight: React.FC<TestimonialsLightProps> = ({
               type: 'card',
               content: {},
               style: {
-                  backgroundColor: styles.overlayColor || '#FFFFFF',
-                  borderColor: styles.borderColor || '#E5E7EB',
-                  borderRadius: '1.5rem', // Default matching rounded-3xl
+                  backgroundColor: (styleAny.cardBackgroundColor || styles.overlayColor || '#FFFFFF'),
+                  borderColor: (styleAny.cardBorderColor || styles.borderColor || '#E5E7EB'),
+                  borderRadius: '1.5rem',
                   borderWidth: '1px',
                   borderStyle: 'solid',
-                  padding: '2rem' // Default matching p-8
+                  padding: '2rem'
               }
+          };
+          const cardStyle = {
+            ...cardElement.style,
+            backgroundColor: colorToHex(cardElement.style?.backgroundColor) || styleAny.cardBackgroundColor || styles.overlayColor || '#FFFFFF',
+            borderColor: colorToHex(cardElement.style?.borderColor) || styleAny.cardBorderColor || styles.borderColor || '#E5E7EB',
           };
 
           return (
@@ -186,11 +200,12 @@ export const TestimonialsLight: React.FC<TestimonialsLightProps> = ({
                   e.stopPropagation(); 
                   
                   if (!readOnly) {
-                      // 1. Prepare the standard card element for the database
+                      // 1. Use resolved cardStyle so first card (and sidebar) get theme colors, not #FFFFFF
                       const hydratedCard: WebsiteElement = {
                           ...cardElement,
                           id: cardId,
-                          type: 'card'
+                          type: 'card',
+                          style: { ...cardElement.style, ...cardStyle }
                       };
 
                       // 2. Hydrate: If it's not in the section elements array, add it now
@@ -210,7 +225,7 @@ export const TestimonialsLight: React.FC<TestimonialsLightProps> = ({
                     ? 'border-blue-500 ring-4 ring-blue-500/20 z-20' 
                     : 'border-transparent hover:border-blue-500/30'
               }`}
-              style={cardElement.style}
+              style={cardStyle}
             >
               {isSelected && !readOnly && (
                 <button 

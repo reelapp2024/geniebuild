@@ -382,7 +382,7 @@ export const INITIAL_TEMPLATE: WebsiteData = {
     typography: DEFAULT_TYPOGRAPHY
   },
   sections: [
-    // 0. HERO 1 (NEW TOP SECTION)
+    // 0. HERO (default opening at localhost:3000 shows Hero first)
     {
         id: 'hero-1',
         type: 'hero',
@@ -390,13 +390,13 @@ export const INITIAL_TEMPLATE: WebsiteData = {
             title: 'Build the Future.',
             subtitle: 'Experience the next generation of web design with our AI-powered builder.',
             ctaText: 'Get Started',
-            imageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2000' // Background image
+            imageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2000'
         },
         styles: {
             backgroundColor: '#0E1214',
             backgroundImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2000',
             overlayColor: '#000000',
-            overlayOpacityValue: '0.6', // 60% opacity
+            overlayOpacityValue: '0.6',
             textColor: '#FFFFFF',
             accentColor: '#F59E0B',
             buttonBackgroundColor: '#E11D48',
@@ -409,13 +409,91 @@ export const INITIAL_TEMPLATE: WebsiteData = {
             variant: 'HeroCenter'
         }
     },
-    // 1. BASIC ELEMENTS SECTION
+    // 1. CTA
+    {
+        id: 'cta-1',
+        type: 'cta',
+        content: {
+            title: 'Ready to dive in?',
+            subtitle: 'Join thousands of users building the future today.',
+            ctaText: 'Get Started Now'
+        },
+        styles: {
+            backgroundColor: '#0E1214',
+            textColor: '#C7CDD6',
+            titleColor: '#F8FAFC',
+            accentColor: '#F59E0B',
+            buttonBackgroundColor: '#E11D48',
+            buttonTextColor: '#FFFFFF',
+            paddingTop: 'pt-16 md:pt-32',
+            paddingBottom: 'pb-16 md:pb-32',
+            paddingX: 'px-6',
+            textAlign: 'center',
+            titleSize: 'text-4xl md:text-6xl',
+            variant: 'center'
+        }
+    },
+    // 2. FAQ
+    {
+        id: 'faq-1',
+        type: 'faq',
+        content: {
+            title: 'Frequently Asked Questions',
+            subtitle: 'Everything you need to know about our product and billing.',
+            items: [
+                { title: 'How does the billing work?', content: 'We offer flexible pricing plans depending on your needs. You can choose to be billed monthly or annually.' },
+                { title: 'Can I cancel my subscription anytime?', content: 'Yes, you can cancel your subscription at any time without any hidden fees or penalties.' },
+                { title: 'Do you offer technical support?', content: 'Yes, we provide email and chat support for all plans. Enterprise plans include dedicated support.' }
+            ] as any
+        },
+        styles: {
+            backgroundColor: '#0E1214',
+            textColor: '#C7CDD6',
+            titleColor: '#F8FAFC',
+            accentColor: '#F59E0B',
+            buttonBackgroundColor: '#E11D48',
+            buttonTextColor: '#FFFFFF',
+            paddingTop: 'pt-24',
+            paddingBottom: 'pb-24',
+            paddingX: 'px-6',
+            textAlign: 'center',
+            variant: 'FAQCentered'
+        },
+        elements: []
+    },
+    // 3. TESTIMONIALS
+    {
+        id: 'testimonials-1',
+        type: 'testimonials',
+        content: {
+            title: 'What Our Clients Say',
+            subtitle: 'Real feedback from people who use our product.',
+            items: [
+                { id: '1', title: '', author: 'John Doe', role: 'CEO', description: 'Great product!', avatar: 'https://i.pravatar.cc/150?img=11' },
+                { id: '2', title: '', author: 'Jane Smith', role: 'Designer', description: 'Amazing service!', avatar: 'https://i.pravatar.cc/150?img=5' },
+                { id: '3', title: '', author: 'Bob Johnson', role: 'Developer', description: 'Highly recommended!', avatar: 'https://i.pravatar.cc/150?img=8' }
+            ]
+        },
+        styles: {
+            backgroundColor: '#0E1214',
+            textColor: '#C7CDD6',
+            titleColor: '#F8FAFC',
+            accentColor: '#F59E0B',
+            buttonBackgroundColor: '#E11D48',
+            buttonTextColor: '#FFFFFF',
+            paddingTop: 'pt-20',
+            paddingBottom: 'pb-20',
+            paddingX: 'px-6',
+            textAlign: 'center',
+            variant: 'TestimonialsGrid'
+        },
+        elements: []
+    },
+    // 4. BASIC ELEMENTS SECTION
     {
       id: 'section-basic',
       type: 'elements',
-      content: { 
-          title: 'Basic Elements', 
-      },
+      content: { title: 'Basic Elements' },
       elements: BASIC_ELEMENTS_LIST,
       styles: { 
           backgroundColor: '#0E1214', 
@@ -431,13 +509,11 @@ export const INITIAL_TEMPLATE: WebsiteData = {
           variant: 'default' 
       }
     },
-    // 2. ADVANCED ELEMENTS SECTION
+    // 5. ADVANCED ELEMENTS SECTION
     {
       id: 'section-advanced',
       type: 'elements',
-      content: { 
-          title: 'Advanced Elements', 
-      },
+      content: { title: 'Advanced Elements' },
       elements: ADVANCED_ELEMENTS_LIST,
       styles: { 
           backgroundColor: '#161b22', 

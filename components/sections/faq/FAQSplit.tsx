@@ -84,11 +84,19 @@ export const FAQSplit: React.FC<FAQSplitProps> = ({
         )}
       </div>
 
-      {/* RIGHT COLUMN: Reusable Accordion Element */}
+      {/* RIGHT COLUMN: Reusable Accordion Element - Theme colors from start */}
       <div className="lg:col-span-7">
         <ElementsSection 
           isWrapped={false} 
-          section={{ ...section, elements: [getEl('accordion', 'accordion', { items: activeItems }, { accentColor: styles.accentColor || '#3b82f6' })] }} 
+          section={{ ...section, elements: [getEl('accordion', 'accordion', { items: activeItems }, {
+            accentColor: styles.accentColor || '#3b82f6',
+            backgroundColor: styleAny.accordionBackgroundColor || styleAny.cardBackgroundColor || styles.overlayColor || '#0E1214',
+            borderColor: styleAny.accordionBorderColor || styleAny.cardBorderColor || styles.borderColor || '#2D2D2D',
+            titleColor: styleAny.accordionQuestionColor || styles.titleColor || '#F8FAFC',
+            color: styleAny.accordionAnswerColor || styles.textColor || '#D1D5DB',
+            borderRadius: '12px',
+            padding: '20px',
+          })] }} 
           onElementSelect={onElementSelect} 
           selectedElementId={selectedElementId} 
           onElementUpdate={onElementUpdate || (() => {})} 
