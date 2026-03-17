@@ -4,6 +4,7 @@ import { WebsiteData, Section, WebsiteElement } from './types';
 // Global Element Defaults - Universal baseline styles for all elements
 // NOTE: No color properties here - elements inherit from theme via ElementsSection
 export const ELEMENT_DEFAULTS: Record<string, any> = {
+  card: { padding: '32px', borderRadius: '24px', borderWidth: '1px', borderStyle: 'solid', backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' },
   button: { padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', textAlign: 'center' },
   heading: { fontWeight: 'bold', textAlign: 'center'},
   text: { opacity: 1, textAlign: 'center'},

@@ -3,6 +3,7 @@ export type SectionType = 'navbar' | 'hero' | 'features' | 'cta' | 'footer' | 't
 
 export type ElementType = 
   // Basic
+  | 'card'
   | 'heading' 
   | 'text' 
   | 'button' 

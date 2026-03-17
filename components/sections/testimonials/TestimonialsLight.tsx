@@ -159,14 +159,37 @@ export const TestimonialsLight: React.FC<TestimonialsLightProps> = ({
             };
           };
 
+          // Generate a unique, consistent ID for this specific card
+          const cardId = `${elementPrefix}-main-card`;
+          
+          // Hydrate the virtual card element so the sidebar can read and edit its styles
+          const cardElement = section.elements?.find(e => e.id === cardId) || {
+              id: cardId,
+              type: 'card',
+              content: {},
+              style: {
+                  backgroundColor: styles.overlayColor || '#FFFFFF',
+                  borderColor: styles.borderColor || '#E5E7EB',
+                  borderRadius: '1.5rem', // Default matching rounded-3xl
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  padding: '2rem' // Default matching p-8
+              }
+          };
+
           return (
             <div 
               key={item.id} 
-              className="relative group/item rounded-3xl p-8 shadow-sm border transition-all duration-300 hover:shadow-md"
-              style={{ 
-                backgroundColor: '#FFFFFF', 
-                borderColor: (styles.borderColor || '#E5E7EB') + '20' 
+              onClick={(e) => {
+                  e.stopPropagation(); // Prevent the section background from being selected
+                  if (!readOnly && onElementSelect) {
+                      onElementSelect(cardId, cardElement as WebsiteElement);
+                  }
               }}
+              className={`relative group/item shadow-sm transition-all duration-300 hover:shadow-md cursor-pointer ${
+                  selectedElementId === cardId ? 'ring-2 ring-blue-500 ring-offset-2 z-10' : ''
+              }`}
+              style={cardElement.style}
             >
               {isSelected && !readOnly && (
                 <button 
