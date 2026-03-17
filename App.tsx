@@ -1705,7 +1705,7 @@ const AppContent: React.FC = () => {
               // Universal Upsert Pattern: Works for ALL sections
               const existingElementIndex = s.elements?.findIndex(e => e.id === elementId) ?? -1;
               
-              const COLOR_STYLE_KEYS = ['backgroundColor', 'color', 'borderColor', 'borderLeftColor', 'borderRightColor', 'borderTopColor', 'borderBottomColor'];
+              const COLOR_STYLE_KEYS = ['backgroundColor', 'color', 'titleColor', 'borderColor', 'borderLeftColor', 'borderRightColor', 'borderTopColor', 'borderBottomColor'];
               const normalizeStyle = (style: Record<string, any> | undefined) => {
                 if (!style) return style;
                 const out = { ...style };
@@ -1749,7 +1749,42 @@ const AppContent: React.FC = () => {
   };
 
   const resetElementToDefault = async () => {
-    if (!selectedSection || !selectedElementId) return;
+    if (!selectedSection || !selectedElementId || !selectedElement) return;
+
+    // Accordion (and other style-only elements): reset to theme/variant-aware defaults (no API)
+    // Section light → accordion uses dark theme colors; section dark → accordion uses light theme colors
+    if (selectedElement.type === 'accordion') {
+      try {
+        const template = SECTION_TEMPLATES[selectedSection.type] || null;
+        const currentVariant = selectedSection.styles?.variant || template?.styles?.variant || 'center';
+        const variantOverrides = (template?.variantOverrides as Record<string, any>)?.[currentVariant] || {};
+        const sectionStyles = selectedSection.styles || {};
+        const templateStyles = template?.styles || {};
+        const isLight = (variantOverrides.themeMode === 'light') || (sectionStyles as any).themeMode === 'light' || (templateStyles as any).themeMode === 'light';
+
+        const theme = getActiveGlobalTheme() as any;
+        // Contrast: section light → accordion dark; section dark → accordion light (from theme variant)
+        const accordionBg = isLight ? (theme.surface || '#0E1214') : (theme.light?.surface || '#FFFFFF');
+        const accordionBorder = isLight ? (theme.overlay?.color || '#2D2D2D') : (theme.light?.overlay?.color || '#E5E7EB');
+        const accordionTitleColor = isLight ? ((theme.accordion?.questionColor ?? theme.heading) || '#F8FAFC') : ((theme.light?.accordion?.questionColor ?? theme.light?.heading) || '#111827');
+        const accordionAnswerColor = isLight ? ((theme.accordion?.answerColor ?? theme.description) || '#C7CDD6') : ((theme.light?.accordion?.answerColor ?? theme.light?.description) || '#4B5563');
+
+        const defaultStyle = {
+          backgroundColor: colorToHex(accordionBg) || accordionBg,
+          borderColor: colorToHex(accordionBorder) || accordionBorder,
+          borderRadius: '12px',
+          padding: '20px',
+          titleColor: colorToHex(accordionTitleColor) || accordionTitleColor,
+          color: colorToHex(accordionAnswerColor) || accordionAnswerColor,
+        };
+        updateElement(selectedSection.id, selectedElementId, { style: defaultStyle });
+        toast.success('Accordion reset to theme default.');
+      } catch (e: any) {
+        console.error('Error resetting accordion:', e);
+        toast.error(`Failed to reset: ${e.message}`);
+      }
+      return;
+    }
 
     try {
       const { projectId, pageId, token } = getUrlParams();
@@ -1801,11 +1836,7 @@ const AppContent: React.FC = () => {
         }
       } else {
         // Handle regular elements - find the element in the original data
-        // For now, we'll reset the entire section content if it's a regular element
-        // This is a simplified approach - you may need to adjust based on your element structure
         if (selectedElement && originalData) {
-          // Try to find matching element content in originalData
-          // This depends on your element structure
           const elementContent = originalData[selectedElement.type] || originalData;
           if (elementContent) {
             updateElement(selectedSection.id, selectedElementId, { content: elementContent });
@@ -1849,6 +1880,8 @@ const AppContent: React.FC = () => {
                 const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : ((activeGlobalTheme as any).surface || '#0E1214');
                 const activeHeading = isLight ? ((activeGlobalTheme as any).light?.heading || '#111827') : ((activeGlobalTheme as any).heading || '#F8FAFC');
                 const activeDesc    = isLight ? ((activeGlobalTheme as any).light?.description || '#4B5563') : ((activeGlobalTheme as any).description || '#C7CDD6');
+                const activeAccordionQuestion = isLight ? ((activeGlobalTheme as any).light?.accordion?.questionColor || activeHeading) : ((activeGlobalTheme as any).accordion?.questionColor || activeHeading);
+                const activeAccordionAnswer   = isLight ? ((activeGlobalTheme as any).light?.accordion?.answerColor || activeDesc) : ((activeGlobalTheme as any).accordion?.answerColor || activeDesc);
                 const activeOverlayHex = isLight 
                   ? ((activeGlobalTheme as any).light?.overlay?.color || '#FFFFFF')
                   : ((activeGlobalTheme as any).overlay?.color || PRESET_THEMES[0].elements.overlay.color);
@@ -1891,6 +1924,8 @@ const AppContent: React.FC = () => {
                   titleColor:      (overrides as any).titleColor      || activeHeading,
                   textColor:       (overrides as any).textColor       || activeDesc,
                   subtitleColor:   (overrides as any).subtitleColor   || activeDesc,
+                  accordionQuestionColor: (overrides as any).accordionQuestionColor || activeAccordionQuestion,
+                  accordionAnswerColor:   (overrides as any).accordionAnswerColor   || activeAccordionAnswer,
                   buttonBackgroundColor: (overrides as any).buttonBackgroundColor || activeBtnBg,
                   buttonTextColor:       (overrides as any).buttonTextColor       || activeBtnText,
                   borderColor:           (overrides as any).borderColor           || activeBorder
@@ -2031,10 +2066,12 @@ const AppContent: React.FC = () => {
         const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : ((activeGlobalTheme as any).surface || '#0E1214');
         const activeHeading = isLight ? ((activeGlobalTheme as any).light?.heading || '#111827') : ((activeGlobalTheme as any).heading || '#F8FAFC');
         const activeDesc    = isLight ? ((activeGlobalTheme as any).light?.description || '#4B5563') : ((activeGlobalTheme as any).description || '#C7CDD6');
-        const activeOverlayHex = isLight 
+        const activeAccordionQuestion = isLight ? ((activeGlobalTheme as any).light?.accordion?.questionColor || activeHeading) : ((activeGlobalTheme as any).accordion?.questionColor || activeHeading);
+        const activeAccordionAnswer   = isLight ? ((activeGlobalTheme as any).light?.accordion?.answerColor || activeDesc) : ((activeGlobalTheme as any).accordion?.answerColor || activeDesc);
+        const activeOverlayHex = isLight
           ? ((activeGlobalTheme as any).light?.overlay?.color || '#FFFFFF')
           : ((activeGlobalTheme as any).overlay?.color || PRESET_THEMES[0].elements.overlay.color);
-        const activeOverlayOpacity = isLight 
+        const activeOverlayOpacity = isLight
           ? ((activeGlobalTheme as any).light?.overlay?.opacity?.toString() || '0.90')
           : ((activeGlobalTheme as any).overlay?.opacity?.toString() || '0.75');
         const activeOverlayBlend = (activeGlobalTheme as any).overlay?.blend || 'normal';
@@ -2046,6 +2083,8 @@ const AppContent: React.FC = () => {
         newSectionStyles.titleColor = activeHeading;
         newSectionStyles.textColor = activeDesc;
         newSectionStyles.subtitleColor = activeDesc;
+        newSectionStyles.accordionQuestionColor = activeAccordionQuestion;
+        newSectionStyles.accordionAnswerColor = activeAccordionAnswer;
         newSectionStyles.buttonBackgroundColor = activeBtnBg;
         newSectionStyles.buttonTextColor = activeBtnText;
         newSectionStyles.borderColor = activeBorder;
@@ -2065,12 +2104,27 @@ const AppContent: React.FC = () => {
             }
         }
 
+        // Accordion default style (same as Reset to Default) so light variant doesn't go full white
+        const activeAccordionBg = isLight ? ((activeGlobalTheme as any).surface || '#0E1214') : ((activeGlobalTheme as any).light?.surface || '#FFFFFF');
+        const activeAccordionBorder = isLight ? ((activeGlobalTheme as any).overlay?.color || '#2D2D2D') : ((activeGlobalTheme as any).light?.overlay?.color || '#E5E7EB');
+        const defaultAccordionStyle = {
+          backgroundColor: colorToHex(activeAccordionBg) || activeAccordionBg,
+          borderColor: colorToHex(activeAccordionBorder) || activeAccordionBorder,
+          borderRadius: '12px',
+          padding: '20px',
+          titleColor: colorToHex(activeAccordionQuestion) || activeAccordionQuestion,
+          color: colorToHex(activeAccordionAnswer) || activeAccordionAnswer,
+        };
+
         // 2. Clear variantStyles for the current variant
         const variantStyles = s.variantStyles || {};
         variantStyles[currentVariant] = { ...newSectionStyles };
 
-        // 3. Strip hardcoded colors from ALL elements so they inherit the theme seamlessly
+        // 3. Strip hardcoded colors from elements; accordion gets theme default so it never goes white
         const newElements = s.elements?.map(el => {
+            if (el.type === 'accordion') {
+              return { ...el, style: { ...defaultAccordionStyle } };
+            }
             const newStyle = { ...el.style };
             delete newStyle.color;
             delete newStyle.backgroundColor;
@@ -2137,6 +2191,8 @@ const AppContent: React.FC = () => {
           const activeSurface = isLight ? ((activeGlobalTheme as any).light?.surface || '#FFFFFF') : ((activeGlobalTheme as any).surface || '#0E1214');
           const activeHeading = isLight ? ((activeGlobalTheme as any).light?.heading || '#111827') : ((activeGlobalTheme as any).heading || '#F8FAFC');
           const activeDesc    = isLight ? ((activeGlobalTheme as any).light?.description || '#4B5563') : ((activeGlobalTheme as any).description || '#C7CDD6');
+          const activeAccordionQuestion = isLight ? ((activeGlobalTheme as any).light?.accordion?.questionColor || activeHeading) : ((activeGlobalTheme as any).accordion?.questionColor || activeHeading);
+          const activeAccordionAnswer   = isLight ? ((activeGlobalTheme as any).light?.accordion?.answerColor || activeDesc) : ((activeGlobalTheme as any).accordion?.answerColor || activeDesc);
           const activeOverlayHex = isLight 
             ? ((activeGlobalTheme as any).light?.overlay?.color || '#FFFFFF')
             : ((activeGlobalTheme as any).overlay?.color || PRESET_THEMES[0].elements.overlay.color);
@@ -2179,13 +2235,30 @@ const AppContent: React.FC = () => {
             titleColor:      (overrides as any).titleColor      || activeHeading,
             textColor:       (overrides as any).textColor       || activeDesc,
             subtitleColor:   (overrides as any).subtitleColor   || activeDesc,
+            accordionQuestionColor: (overrides as any).accordionQuestionColor || activeAccordionQuestion,
+            accordionAnswerColor:   (overrides as any).accordionAnswerColor   || activeAccordionAnswer,
             buttonBackgroundColor: (overrides as any).buttonBackgroundColor || activeBtnBg,
             buttonTextColor:       (overrides as any).buttonTextColor       || activeBtnText,
             borderColor:           (overrides as any).borderColor           || activeBorder
           };
 
-          // BUG 3 FIX: Strip hardcoded inline colors from elements so they perfectly inherit the new variant's theme
+          // Accordion default style (same as Reset to Default) so light variant doesn't go full white
+          const activeAccordionBg = isLight ? ((activeGlobalTheme as any).surface || '#0E1214') : ((activeGlobalTheme as any).light?.surface || '#FFFFFF');
+          const activeAccordionBorder = isLight ? ((activeGlobalTheme as any).overlay?.color || '#2D2D2D') : ((activeGlobalTheme as any).light?.overlay?.color || '#E5E7EB');
+          const defaultAccordionStyle = {
+            backgroundColor: colorToHex(activeAccordionBg) || activeAccordionBg,
+            borderColor: colorToHex(activeAccordionBorder) || activeAccordionBorder,
+            borderRadius: '12px',
+            padding: '20px',
+            titleColor: colorToHex(activeAccordionQuestion) || activeAccordionQuestion,
+            color: colorToHex(activeAccordionAnswer) || activeAccordionAnswer,
+          };
+
+          // Strip inline colors from elements; accordion gets theme default so it never goes white
           const updatedElements = s.elements?.map(el => {
+              if (el.type === 'accordion') {
+                return { ...el, style: { ...defaultAccordionStyle } };
+              }
               const newStyle = { ...el.style };
               delete newStyle.color;
               delete newStyle.backgroundColor;
@@ -2421,6 +2494,8 @@ const AppContent: React.FC = () => {
                   backgroundColor: colors.surface,
                   textColor: colors.description,
                   titleColor: colors.heading,
+                  accordionQuestionColor: colors.accordion?.questionColor ?? colors.heading,
+                  accordionAnswerColor: colors.accordion?.answerColor ?? colors.description,
                   accentColor: colors.accent,
                   buttonBackgroundColor: colors.primaryButton?.bg || colors.primaryButton,
                   buttonTextColor: colors.primaryButton?.text,
@@ -2442,6 +2517,8 @@ const AppContent: React.FC = () => {
               const activeSurface = isLight ? (colors.light?.surface || '#FFFFFF') : colors.surface;
               const activeHeading = isLight ? (colors.light?.heading || '#111827') : colors.heading;
               const activeDesc = isLight ? (colors.light?.description || '#4B5563') : colors.description;
+              const activeAccordionQuestion = isLight ? (colors.light?.accordion?.questionColor ?? activeHeading) : (colors.accordion?.questionColor ?? activeHeading);
+              const activeAccordionAnswer   = isLight ? (colors.light?.accordion?.answerColor ?? activeDesc) : (colors.accordion?.answerColor ?? activeDesc);
               const activeOverlayHex = isLight ? (colors.light?.overlay?.color || '#FFFFFF') : baseHex;
               const activeOverlayOpacity = isLight ? (colors.light?.overlay?.opacity || 0.90) : defaultOpacity;
 
@@ -2466,6 +2543,8 @@ const AppContent: React.FC = () => {
                       textColor: activeDesc,
                       titleColor: activeHeading,
                       subtitleColor: activeDesc,
+                      accordionQuestionColor: activeAccordionQuestion,
+                      accordionAnswerColor: activeAccordionAnswer,
                       accentColor: colors.accent,
                       buttonBackgroundColor: colors.primaryButton?.bg,
                       buttonTextColor: colors.primaryButton?.text,
@@ -2475,8 +2554,21 @@ const AppContent: React.FC = () => {
                       overlayOpacityValue: activeOverlayOpacity.toString(), 
                       overlayBlendMode: blendMode
                   },
-                  // BUG 3 FIX: Strip inline element colors so the new global theme instantly applies everywhere
+                  // Strip inline element colors; accordion gets theme default so light variant doesn't go full white
                   elements: section.elements?.map(el => {
+                      if (el.type === 'accordion') {
+                        const accordionBg = isLight ? (colors.surface || '#0E1214') : (colors.light?.surface || '#FFFFFF');
+                        const accordionBorder = isLight ? (baseHex || '#2D2D2D') : (colors.light?.overlay?.color || '#E5E7EB');
+                        const defaultAccordionStyle = {
+                          backgroundColor: colorToHex(accordionBg) || accordionBg,
+                          borderColor: colorToHex(accordionBorder) || accordionBorder,
+                          borderRadius: '12px',
+                          padding: '20px',
+                          titleColor: colorToHex(activeAccordionQuestion) || activeAccordionQuestion,
+                          color: colorToHex(activeAccordionAnswer) || activeAccordionAnswer,
+                        };
+                        return { ...el, style: { ...defaultAccordionStyle } };
+                      }
                       const newStyle = { ...el.style };
                       delete newStyle.color;
                       delete newStyle.backgroundColor;
@@ -2743,11 +2835,11 @@ const AppContent: React.FC = () => {
           }
       };
       
-      const isCard = context === 'element' && elementType === 'card';
+      const isCardOrAccordion = context === 'element' && (elementType === 'card' || elementType === 'accordion');
 
       return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-2 duration-300">
-              {!isCard && (
+              {!isCardOrAccordion && (
               <AccordionGroup title="Layout & Spacing" defaultOpen={true}>
                   <div className="mb-4">
                       {context === 'section' && <TextInput label="Max Width" value={styles.maxWidth} onChange={(v) => onUpdate('maxWidth', v)} placeholder="max-w-6xl" />}
@@ -2759,7 +2851,7 @@ const AppContent: React.FC = () => {
                   </div>
               </AccordionGroup>
               )}
-              {context === 'element' && elementType !== 'card' && (
+              {context === 'element' && elementType !== 'card' && elementType !== 'accordion' && (
               <AccordionGroup title="Typography" defaultOpen={true}>
                        {/* Icon Reset Button */}
                        {elementType === 'icon' && (
@@ -2849,6 +2941,43 @@ const AppContent: React.FC = () => {
                   <AccordionGroup title="Card styles" defaultOpen={true}>
                       <ColorInput label="Background" value={styles.backgroundColor || '#FFFFFF'} onChange={(v) => onUpdate('backgroundColor', colorToHex(v) || v)} />
                       <ColorInput label="Border color" value={styles.borderColor || '#E5E7EB'} onChange={(v) => onUpdate('borderColor', colorToHex(v) || v)} />
+                      <RangeInput
+                          label="Border radius"
+                          value={Math.min(48, Math.max(0, borderRadiusPx))}
+                          min={0}
+                          max={48}
+                          step={2}
+                          unit="px"
+                          onChange={(v) => onUpdate('borderRadius', `${v}px`)}
+                      />
+                      <RangeInput
+                          label="Padding"
+                          value={Math.min(96, Math.max(0, paddingPx))}
+                          min={0}
+                          max={96}
+                          step={4}
+                          unit="px"
+                          onChange={(v) => onUpdate('padding', `${v}px`)}
+                      />
+                  </AccordionGroup>
+                  );
+              })()}
+              {context === 'element' && elementType === 'accordion' && (() => {
+                  const parsePx = (val: string | undefined): number => {
+                    if (!val || typeof val !== 'string') return 20;
+                    const num = parseFloat(val);
+                    if (val.includes('rem')) return Math.round(num * 16);
+                    if (val.includes('px')) return Math.round(num);
+                    return Math.round(num) || 20;
+                  };
+                  const borderRadiusPx = parsePx(styles.borderRadius);
+                  const paddingPx = parsePx(styles.padding);
+                  return (
+                  <AccordionGroup title="Accordion styles" defaultOpen={true}>
+                      <ColorInput label="Background" value={styles.backgroundColor || '#1a1a1a'} onChange={(v) => onUpdate('backgroundColor', colorToHex(v) || v)} />
+                      <ColorInput label="Border color" value={styles.borderColor || '#333333'} onChange={(v) => onUpdate('borderColor', colorToHex(v) || v)} />
+                      <ColorInput label="Question text color" value={styles.titleColor || themeColors?.accordionQuestionColor || themeColors?.titleColor || '#F8FAFC'} onChange={(v) => onUpdate('titleColor', colorToHex(v) || v)} />
+                      <ColorInput label="Answer text color" value={styles.color || themeColors?.accordionAnswerColor || themeColors?.textColor || '#D1D5DB'} onChange={(v) => onUpdate('color', colorToHex(v) || v)} />
                       <RangeInput
                           label="Border radius"
                           value={Math.min(48, Math.max(0, borderRadiusPx))}

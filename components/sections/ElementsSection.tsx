@@ -17,6 +17,8 @@ interface ElementsSectionProps {
   themeColors?: {
     titleColor?: string;
     textColor?: string;
+    accordionQuestionColor?: string;
+    accordionAnswerColor?: string;
     accentColor?: string;
     buttonBackgroundColor?: string;
     buttonTextColor?: string;
@@ -137,6 +139,8 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
   const theme = themeColors || {
     titleColor: section.styles?.titleColor || themeData?.heading || '#F8FAFC',
     textColor: section.styles?.textColor || themeData?.description || '#D1D5DB',
+    accordionQuestionColor: (section.styles as Record<string, string>)?.accordionQuestionColor || (themeData as any)?.accordion?.questionColor || themeData?.heading || '#F8FAFC',
+    accordionAnswerColor: (section.styles as Record<string, string>)?.accordionAnswerColor || (themeData as any)?.accordion?.answerColor || themeData?.description || '#D1D5DB',
     accentColor: section.styles?.accentColor || themeData?.accent || '#3b82f6',
     buttonBackgroundColor: section.styles?.buttonBackgroundColor || themeData?.primaryButton?.bg || '#E11D48',
     buttonTextColor: section.styles?.buttonTextColor || themeData?.primaryButton?.text || '#FFFFFF',
@@ -770,22 +774,43 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
 
         case 'accordion':
-            const accordionStyle = { ...safeStyle, color: safeStyle.color || theme?.textColor || '#D1D5DB' };
+            // Wrapper: no background/border — only each <details> gets its own card-like styling
+            const accordionWrapperStyle = { color: safeStyle.color || theme?.textColor || '#D1D5DB' };
             const items = content.items && content.items.length > 0 ? content.items : [
                 { title: 'Sample Question 1', content: 'Sample answer 1.' },
                 { title: 'Sample Question 2', content: 'Sample answer 2.' }
             ];
             return (
-                <div key={id} className={`space-y-3 w-full ${selectedClass}`} onClick={!readOnly ? (e) => handleClick(e, el) : undefined} style={accordionStyle}>
+                <div key={id} className={`space-y-3 w-full ${selectedClass}`} onClick={!readOnly ? (e) => handleClick(e, el) : undefined} style={accordionWrapperStyle}>
                     {items.map((item: any, idx: number) => (
-                        <details key={idx} className="group bg-white/5 border border-white/10 rounded-xl open:bg-white/10 transition-colors w-full overflow-hidden">
-                            <summary className="flex items-center justify-between p-5 cursor-pointer list-none select-none">
-                                <span className="font-bold text-lg" style={{ color: theme?.titleColor || '#F8FAFC' }}>{item.title || item.question}</span>
-                                <div className="shrink-0 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-open:rotate-180 transition-transform group-open:bg-white/10">
+                        <details
+                            key={idx}
+                            className="group border transition-colors w-full overflow-hidden"
+                            style={{
+                                backgroundColor: safeStyle.backgroundColor || 'rgba(255, 255, 255, 0.05)',
+                                borderColor: safeStyle.borderColor || 'rgba(255, 255, 255, 0.1)',
+                                borderRadius: safeStyle.borderRadius || '0.75rem'
+                            }}
+                        >
+                            <summary
+                                className="flex items-center justify-between cursor-pointer list-none select-none"
+                                style={{ padding: safeStyle.padding || '1.25rem' }}
+                            >
+                                <span className="font-bold text-lg" style={{ color: (safeStyle as Record<string, string>).titleColor || theme?.accordionQuestionColor || theme?.titleColor || safeStyle.color || '#F8FAFC' }}>
+                                    {item.title || item.question}
+                                </span>
+                                <div className="shrink-0 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-open:rotate-180 transition-transform">
                                     <i className="fa-solid fa-chevron-down text-sm" style={{ color: theme?.accentColor || '#3b82f6' }}></i>
                                 </div>
                             </summary>
-                            <div className="p-5 pt-0 text-base opacity-80 leading-relaxed border-t border-white/5 mt-2">
+                            <div
+                                className="text-base opacity-80 leading-relaxed border-t mt-2"
+                                style={{
+                                    padding: safeStyle.padding || '1.25rem',
+                                    borderColor: 'rgba(255, 255, 255, 0.05)',
+                                    color: safeStyle.color ?? theme?.accordionAnswerColor ?? theme?.textColor ?? '#D1D5DB'
+                                }}
+                            >
                                 {item.content || item.answer}
                             </div>
                         </details>

@@ -63,9 +63,11 @@ export const PRESET_THEMES = [
       "ring": "#F43F5E", "shadow": "rgba(0,0,0,0.35)",
       "badge": { "text": "#F8FAFC", "background": "rgba(225,29,72,0.15)" },
       "trust": { "text": "#C7CDD6", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#F59E0B" },
+      "accordion": { "questionColor": "#F8FAFC", "answerColor": "#C7CDD6" },
       "light": {
         "surface": "#FFF1F2", "heading": "#4C0519", "description": "#9F1239",
-        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" }
+        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
+        "accordion": { "questionColor": "#4C0519", "answerColor": "#9F1239" }
       }
     }
   },
@@ -80,9 +82,11 @@ export const PRESET_THEMES = [
       "ring": "#818CF8", "shadow": "rgba(0,0,0,0.34)",
       "badge": { "text": "#F8FAFC", "background": "rgba(79,70,229,0.15)" },
       "trust": { "text": "#BCC6DD", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#EAB308" },
+      "accordion": { "questionColor": "#F8FAFC", "answerColor": "#BCC6DD" },
       "light": {
         "surface": "#EEF2FF", "heading": "#1E1B4B", "description": "#3730A3",
-        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" }
+        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
+        "accordion": { "questionColor": "#1E1B4B", "answerColor": "#3730A3" }
       }
     }
   },
@@ -97,9 +101,11 @@ export const PRESET_THEMES = [
       "ring": "#FACC15", "shadow": "rgba(0,0,0,0.45)",
       "badge": { "text": "#FFFFFF", "background": "rgba(253,176,34,0.15)" },
       "trust": { "text": "#E5E7EB", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#38BDF8" },
+      "accordion": { "questionColor": "#FFFFFF", "answerColor": "#E5E7EB" },
       "light": {
         "surface": "#FEFCE8", "heading": "#78350F", "description": "#A16207",
-        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" }
+        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
+        "accordion": { "questionColor": "#78350F", "answerColor": "#A16207" }
       }
     }
   },
@@ -114,9 +120,11 @@ export const PRESET_THEMES = [
       "ring": "#34D399", "shadow": "rgba(0,0,0,0.40)",
       "badge": { "text": "#FFFFFF", "background": "rgba(34,197,94,0.15)" },
       "trust": { "text": "#D3DEDA", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#60A5FA" },
+      "accordion": { "questionColor": "#FFFFFF", "answerColor": "#D3DEDA" },
       "light": {
         "surface": "#F0FDF4", "heading": "#052E16", "description": "#166534",
-        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" }
+        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
+        "accordion": { "questionColor": "#052E16", "answerColor": "#166534" }
       }
     }
   },
@@ -131,9 +139,11 @@ export const PRESET_THEMES = [
       "ring": "#22D3EE", "shadow": "rgba(0,0,0,0.38)",
       "badge": { "text": "#FFFFFF", "background": "rgba(14,165,164,0.15)" },
       "trust": { "text": "#BDD0DB", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#A7F3D0" },
+      "accordion": { "questionColor": "#FFFFFF", "answerColor": "#BDD0DB" },
       "light": {
         "surface": "#F0FDFA", "heading": "#042F2E", "description": "#0F766E",
-        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" }
+        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
+        "accordion": { "questionColor": "#042F2E", "answerColor": "#0F766E" }
       }
     }
   },
@@ -148,9 +158,11 @@ export const PRESET_THEMES = [
       "ring": "#C084FC", "shadow": "rgba(0,0,0,0.42)",
       "badge": { "text": "#FFFFFF", "background": "rgba(168,85,247,0.15)" },
       "trust": { "text": "#D8CCE6", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#F59E0B" },
+      "accordion": { "questionColor": "#FFFFFF", "answerColor": "#D8CCE6" },
       "light": {
         "surface": "#FAF5FF", "heading": "#3B0764", "description": "#6B21A8",
-        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" }
+        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
+        "accordion": { "questionColor": "#3B0764", "answerColor": "#6B21A8" }
       }
     }
   },
@@ -165,9 +177,11 @@ export const PRESET_THEMES = [
       "ring": "#38BDF8", "shadow": "rgba(0,0,0,0.40)",
       "badge": { "text": "#F8FAFC", "background": "rgba(37,99,235,0.15)" },
       "trust": { "text": "#B8C7D9", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#22D3EE" },
+      "accordion": { "questionColor": "#F8FAFC", "answerColor": "#B8C7D9" },
       "light": {
         "surface": "#EFF6FF", "heading": "#1E3A8A", "description": "#1E40AF",
-        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" }
+        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
+        "accordion": { "questionColor": "#1E3A8A", "answerColor": "#1E40AF" }
       }
     }
   },
@@ -182,9 +196,11 @@ export const PRESET_THEMES = [
       "ring": "#F59E0B", "shadow": "rgba(0,0,0,0.44)",
       "badge": { "text": "#FFFFFF", "background": "rgba(217,119,6,0.15)" },
       "trust": { "text": "#C9D6CF", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#34D399" },
+      "accordion": { "questionColor": "#FFFFFF", "answerColor": "#C9D6CF" },
       "light": {
         "surface": "#FFFBEB", "heading": "#78350F", "description": "#92400E",
-        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" }
+        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
+        "accordion": { "questionColor": "#78350F", "answerColor": "#92400E" }
       }
     }
   },
@@ -199,9 +215,11 @@ export const PRESET_THEMES = [
       "ring": "#F87171", "shadow": "rgba(0,0,0,0.46)",
       "badge": { "text": "#FFFFFF", "background": "rgba(220,38,38,0.15)" },
       "trust": { "text": "#E2C9CF", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#FB923C" },
+      "accordion": { "questionColor": "#FFFFFF", "answerColor": "#E2C9CF" },
       "light": {
         "surface": "#FEF2F2", "heading": "#7F1D1D", "description": "#991B1B",
-        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" }
+        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
+        "accordion": { "questionColor": "#7F1D1D", "answerColor": "#991B1B" }
       }
     }
   },
@@ -216,9 +234,11 @@ export const PRESET_THEMES = [
       "ring": "#FBBF24", "shadow": "rgba(0,0,0,0.43)",
       "badge": { "text": "#FFFFFF", "background": "rgba(245,158,11,0.15)" },
       "trust": { "text": "#C9D3E6", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#10B981" },
+      "accordion": { "questionColor": "#FFFFFF", "answerColor": "#C9D3E6" },
       "light": {
         "surface": "#FFFBEB", "heading": "#78350F", "description": "#92400E",
-        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" }
+        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
+        "accordion": { "questionColor": "#78350F", "answerColor": "#92400E" }
       }
     }
   }
