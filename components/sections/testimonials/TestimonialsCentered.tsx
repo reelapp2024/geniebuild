@@ -158,10 +158,43 @@ export const TestimonialsCentered: React.FC<TestimonialsCenteredProps> = ({
             };
           };
 
+          // One card element per review: use from section if available, else virtual default
+          const cardId = `${elementPrefix}-main-card`;
+          const cardElement = section.elements?.find(e => e.id === cardId) || {
+            id: cardId,
+            type: 'card',
+            content: {},
+            style: {
+              paddingTop: '2rem',
+              paddingBottom: '2rem',
+              borderBottomWidth: '1px',
+              borderBottomStyle: 'solid',
+              borderBottomColor: 'rgba(255,255,255,0.1)',
+            }
+          };
+
           return (
             <div 
               key={item.id} 
-              className="relative group/item py-8 border-b border-white/10 last:border-0"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!readOnly) {
+                  const hydratedCard: WebsiteElement = { ...cardElement, id: cardId, type: 'card' };
+                  if (onElementUpdate && !section.elements?.find(el => el.id === cardId)) {
+                    onElementUpdate(cardId, hydratedCard);
+                  }
+                  if (onElementSelect) {
+                    onElementSelect(cardId, hydratedCard);
+                  }
+                }
+              }}
+              className={`relative group/item last:!border-b-0 cursor-pointer border-2 border-transparent transition-all duration-300 ${
+                selectedElementId === cardId
+                  ? 'border-blue-500 ring-4 ring-blue-500/20 z-20'
+                  : 'hover:border-blue-500/30'
+              }`}
+              style={cardElement.style}
             >
               {isSelected && !readOnly && (
                 <button 

@@ -108,8 +108,45 @@ export const TestimonialsColumns: React.FC<TestimonialsColumnsProps> = ({
             };
           };
 
+          // One card element per review: use from section if available, else virtual default
+          const cardId = `${elementPrefix}-main-card`;
+          const cardElement = section.elements?.find(e => e.id === cardId) || {
+            id: cardId,
+            type: 'card',
+            content: {},
+            style: {
+              padding: '2rem',
+              borderLeftWidth: '4px',
+              borderLeftStyle: 'solid',
+              borderLeftColor: styles.accentColor || '#3b82f6',
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              borderRadius: '0 1rem 1rem 0',
+            }
+          };
+
           return (
-            <div key={item.id} className="relative group/item p-8 border-l-4 bg-gradient-to-r from-white/5 to-transparent rounded-r-2xl" style={{ borderColor: styles.accentColor || '#3b82f6' }}>
+            <div
+              key={item.id}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!readOnly) {
+                  const hydratedCard: WebsiteElement = { ...cardElement, id: cardId, type: 'card' };
+                  if (onElementUpdate && !section.elements?.find(el => el.id === cardId)) {
+                    onElementUpdate(cardId, hydratedCard);
+                  }
+                  if (onElementSelect) {
+                    onElementSelect(cardId, hydratedCard);
+                  }
+                }
+              }}
+              className={`relative group/item border-l-4 rounded-r-2xl cursor-pointer border-2 transition-all duration-300 ${
+                selectedElementId === cardId
+                  ? 'border-blue-500 ring-4 ring-blue-500/20 z-20'
+                  : 'border-transparent hover:border-blue-500/30'
+              }`}
+              style={cardElement.style}
+            >
               
               {/* Delete Item Button */}
               {isSelected && !readOnly && onRemoveItem && (

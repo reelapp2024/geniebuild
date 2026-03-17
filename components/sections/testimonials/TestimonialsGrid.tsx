@@ -158,10 +158,44 @@ export const TestimonialsGrid: React.FC<TestimonialsGridProps> = ({
             };
           };
 
+          // One card element per review: use from section if available, else virtual default
+          const cardId = `${elementPrefix}-main-card`;
+          const cardElement = section.elements?.find(e => e.id === cardId) || {
+            id: cardId,
+            type: 'card',
+            content: {},
+            style: {
+              padding: '2rem',
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              borderRadius: '1rem',
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              borderColor: 'rgba(255,255,255,0.05)',
+            }
+          };
+
           return (
             <div 
               key={item.id} 
-              className="relative group/item p-8 bg-white/5 rounded-2xl border border-white/5"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!readOnly) {
+                  const hydratedCard: WebsiteElement = { ...cardElement, id: cardId, type: 'card' };
+                  if (onElementUpdate && !section.elements?.find(el => el.id === cardId)) {
+                    onElementUpdate(cardId, hydratedCard);
+                  }
+                  if (onElementSelect) {
+                    onElementSelect(cardId, hydratedCard);
+                  }
+                }
+              }}
+              className={`relative group/item rounded-2xl cursor-pointer border-2 transition-all duration-300 ${
+                selectedElementId === cardId
+                  ? 'border-blue-500 ring-4 ring-blue-500/20 z-20'
+                  : 'border-transparent hover:border-blue-500/30'
+              }`}
+              style={cardElement.style}
             >
               {isSelected && !readOnly && (
                 <button 

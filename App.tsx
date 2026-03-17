@@ -73,6 +73,17 @@ const AccordionGroup = ({ title, children, defaultOpen = false }: { title: strin
     );
 };
 
+/** Convert rgb/rgba string to hex #RRGGBB so saved colors are stable and don't break selection */
+const colorToHex = (val: string | undefined): string | undefined => {
+  if (!val || typeof val !== 'string' || val.startsWith('#')) return val;
+  const m = val.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*[\d.]+)?\s*\)/);
+  if (!m) return val;
+  const r = Math.max(0, Math.min(255, parseInt(m[1], 10)));
+  const g = Math.max(0, Math.min(255, parseInt(m[2], 10)));
+  const b = Math.max(0, Math.min(255, parseInt(m[3], 10)));
+  return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+};
+
 const ColorInput = ({ label, value, onChange }: { label: string, value: string, onChange: (val: string) => void }) => {
   const pickerValue = value && value.startsWith('#') && (value.length === 4 || value.length === 7) ? value : '#000000';
   return (
@@ -1694,24 +1705,39 @@ const AppContent: React.FC = () => {
               // Universal Upsert Pattern: Works for ALL sections
               const existingElementIndex = s.elements?.findIndex(e => e.id === elementId) ?? -1;
               
+              const COLOR_STYLE_KEYS = ['backgroundColor', 'color', 'borderColor', 'borderLeftColor', 'borderRightColor', 'borderTopColor', 'borderBottomColor'];
+              const normalizeStyle = (style: Record<string, any> | undefined) => {
+                if (!style) return style;
+                const out = { ...style };
+                COLOR_STYLE_KEYS.forEach(k => {
+                  if (typeof out[k] === 'string' && /^rgba?\(/i.test(out[k])) {
+                    const hex = colorToHex(out[k]);
+                    if (hex) out[k] = hex;
+                  }
+                });
+                return out;
+              };
+
               if (existingElementIndex >= 0) {
                   // Standard update for existing element
                   const newElements = [...(s.elements || [])];
+                  const mergedStyle = { ...newElements[existingElementIndex].style, ...(updates.style || {}) };
                   newElements[existingElementIndex] = {
                       ...newElements[existingElementIndex],
                       ...updates,
-                      content: { ...newElements[existingElementIndex].content, ...(updates.content || {}) },
-                      style: { ...newElements[existingElementIndex].style, ...(updates.style || {}) },
-                      settings: { ...newElements[existingElementIndex].settings, ...(updates.settings || {}) }
+                      content: { ...(newElements[existingElementIndex].content || {}), ...(updates.content || {}) },
+                      style: normalizeStyle(mergedStyle),
+                      settings: { ...(newElements[existingElementIndex].settings || {}), ...(updates.settings || {}) }
                   };
                   return { ...s, elements: newElements };
               } else if (selectedVirtualElement && selectedVirtualElement.id === elementId) {
                   // Universal Upsert: First edit on a hydrated element
+                  const mergedStyle = { ...(selectedVirtualElement.style || {}), ...(updates.style || {}) };
                   const newElement = {
                       ...selectedVirtualElement,
                       ...updates,
-                      content: { ...selectedVirtualElement.content, ...(updates.content || {}) },
-                      style: { ...selectedVirtualElement.style, ...(updates.style || {}) }
+                      content: { ...(selectedVirtualElement.content || {}), ...(updates.content || {}) },
+                      style: normalizeStyle(mergedStyle)
                   };
                   return { ...s, elements: [...(s.elements || []), newElement] };
               }
@@ -2717,8 +2743,11 @@ const AppContent: React.FC = () => {
           }
       };
       
+      const isCard = context === 'element' && elementType === 'card';
+
       return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-2 duration-300">
+              {!isCard && (
               <AccordionGroup title="Layout & Spacing" defaultOpen={true}>
                   <div className="mb-4">
                       {context === 'section' && <TextInput label="Max Width" value={styles.maxWidth} onChange={(v) => onUpdate('maxWidth', v)} placeholder="max-w-6xl" />}
@@ -2729,7 +2758,8 @@ const AppContent: React.FC = () => {
                       <SpacingInputGroup label="Margin" values={getSpacingValues('margin')} onChange={(v) => handleSpacingUpdate('margin', v)} />
                   </div>
               </AccordionGroup>
-              {context === 'element' && (
+              )}
+              {context === 'element' && elementType !== 'card' && (
               <AccordionGroup title="Typography" defaultOpen={true}>
                        {/* Icon Reset Button */}
                        {elementType === 'icon' && (
@@ -2805,6 +2835,41 @@ const AppContent: React.FC = () => {
                    </div>
               </AccordionGroup>
               )}
+              {context === 'element' && elementType === 'card' && (() => {
+                  const parsePx = (val: string | undefined): number => {
+                    if (!val || typeof val !== 'string') return 24;
+                    const num = parseFloat(val);
+                    if (val.includes('rem')) return Math.round(num * 16);
+                    if (val.includes('px')) return Math.round(num);
+                    return Math.round(num) || 24;
+                  };
+                  const borderRadiusPx = parsePx(styles.borderRadius);
+                  const paddingPx = parsePx(styles.padding);
+                  return (
+                  <AccordionGroup title="Card styles" defaultOpen={true}>
+                      <ColorInput label="Background" value={styles.backgroundColor || '#FFFFFF'} onChange={(v) => onUpdate('backgroundColor', colorToHex(v) || v)} />
+                      <ColorInput label="Border color" value={styles.borderColor || '#E5E7EB'} onChange={(v) => onUpdate('borderColor', colorToHex(v) || v)} />
+                      <RangeInput
+                          label="Border radius"
+                          value={Math.min(48, Math.max(0, borderRadiusPx))}
+                          min={0}
+                          max={48}
+                          step={2}
+                          unit="px"
+                          onChange={(v) => onUpdate('borderRadius', `${v}px`)}
+                      />
+                      <RangeInput
+                          label="Padding"
+                          value={Math.min(96, Math.max(0, paddingPx))}
+                          min={0}
+                          max={96}
+                          step={4}
+                          unit="px"
+                          onChange={(v) => onUpdate('padding', `${v}px`)}
+                      />
+                  </AccordionGroup>
+                  );
+              })()}
               {context === 'element' && elementType === 'badge' && (() => {
                   const liveSurface = siteData.globalStyles.colors.backgroundColor || '';
                   const preset = PRESET_THEMES.find(t => t.elements.surface.toLowerCase() === liveSurface.toLowerCase());
@@ -3649,25 +3714,27 @@ const AppContent: React.FC = () => {
                                                              </div>
                                                          ))}
                                                      </div>
-                                                 );
+                                                        );
                                              })()
+                                         ) : selectedElement.type === 'card' ? (
+                                             <p className="text-white/50 text-xs">Card appearance is edited in the Design tab.</p>
                                          ) : (
                                              <>
                                                  <TextAreaInput 
                                                      label={selectedElement.type === 'heading' ? 'Heading' : selectedElement.type === 'button' ? 'Button Text' : 'Text'} 
-                                                     value={selectedElement.content.text || ''} 
-                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, text: v} })} 
+                                                     value={selectedElement.content?.text || ''} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: { ...(selectedElement.content || {}), text: v } })} 
                                                  />
                                                  {selectedElement.type === 'heading' && (
                                                      <SelectInput 
-                                                         key={`heading-tag-${selectedElement.id}-${selectedElement.content.htmlTag || 'h2'}`}
+                                                         key={`heading-tag-${selectedElement.id}-${selectedElement.content?.htmlTag || 'h2'}`}
                                                          label="Heading Level" 
                                                          value={
                                                              // For Hero title virtual elements, read from styles.titleHeadingTag
                                                              selectedElement.id.startsWith(`${selectedSection.id}-hero-title`) 
                                                                  ? (selectedSection.styles.titleHeadingTag || 'h1')
-                                                                 : (selectedElement.content.htmlTag || 'h2')
-                                                         } 
+                                                                 : (selectedElement.content?.htmlTag || 'h2')
+                                                         }
                                                          options={[
                                                              {label: 'H1 (Largest)', value: 'h1'},
                                                              {label: 'H2', value: 'h2'},
@@ -3695,8 +3762,7 @@ const AppContent: React.FC = () => {
                                                      if (selectedElement.id.includes('-hero-subtitle')) {
                                                          // Hero subtitle virtual element - read textSize directly from content.subtitleTextSize
                                                          const currentSection = siteData.sections.find(s => s.id === selectedSection.id);
-                                                         if (currentSection && currentSection.content.subtitleTextSize) {
-                                                             // Direct storage - most reliable
+                                                         if (currentSection && currentSection.content?.subtitleTextSize) {
                                                              currentTextSize = currentSection.content.subtitleTextSize;
                                                          } else {
                                                              // Fallback to selectedElement (from useMemo)
@@ -3723,7 +3789,7 @@ const AppContent: React.FC = () => {
                                                              onChange={(v) => {
                                                                  const newTextSize = v as 'base' | 'small' | 'large' | 'xl';
                                                                  updateElement(selectedSection.id, selectedElement.id, { 
-                                                                     content: {...selectedElement.content, textSize: newTextSize} 
+                                                                     content: { ...(selectedElement.content || {}), textSize: newTextSize } 
                                                                  });
                                                              }} 
                                                          />
@@ -3733,24 +3799,18 @@ const AppContent: React.FC = () => {
                                                      <TextInput 
                                                          label="Button Link (URL)" 
                                                          value={
-                                                             // For Hero button virtual elements, read from section content
                                                              selectedElement.id.includes('-hero-button')
-                                                                 ? (selectedSection.content.ctaHref || '')
-                                                                 : (selectedElement.content.link || '')
+                                                                 ? (selectedSection.content?.ctaHref || '')
+                                                                 : (selectedElement.content?.link || '')
                                                          }
                                                          onChange={(v) => {
-                                                             // For Hero button virtual elements, update ctaHref in section content
                                                              if (selectedElement.id.includes('-hero-button')) {
                                                                  updateElement(selectedSection.id, selectedElement.id, {
-                                                                     content: {
-                                                                         ...selectedElement.content,
-                                                                         link: v
-                                                                     }
+                                                                     content: { ...(selectedElement.content || {}), link: v }
                                                                  });
                                                              } else {
-                                                                 // For regular button elements
                                                                  updateElement(selectedSection.id, selectedElement.id, { 
-                                                                     content: {...selectedElement.content, link: v} 
+                                                                     content: { ...(selectedElement.content || {}), link: v } 
                                                                  });
                                                              }
                                                          }}
@@ -3759,6 +3819,7 @@ const AppContent: React.FC = () => {
                                                  )}
                                              </>
                                          )}
+                                         {selectedElement.type !== 'card' && (
                                          <button
                                            onClick={resetElementToDefault}
                                            className="w-full mt-4 px-3 py-2 bg-orange-600/20 hover:bg-orange-600/30 border border-orange-600/40 text-orange-400 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2"
@@ -3767,6 +3828,7 @@ const AppContent: React.FC = () => {
                                            <i className="fa-solid fa-rotate-left"></i>
                                            Reset to Default
                                          </button>
+                                         )}
                                      </div>
                                  )
                              ) : (
