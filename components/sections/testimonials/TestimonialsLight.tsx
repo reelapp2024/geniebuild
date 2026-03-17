@@ -181,20 +181,34 @@ export const TestimonialsLight: React.FC<TestimonialsLightProps> = ({
             <div 
               key={item.id} 
               onClick={(e) => {
-                  e.stopPropagation(); // Prevent the section background from being selected
+                  // STOP BUBBLING: This is the most important part to prevent the section background from stealing the click
+                  e.preventDefault();
+                  e.stopPropagation(); 
+                  
                   if (!readOnly) {
-                      // CRITICAL FIX: Save the virtual card to the global section state on first click!
-                      if (!section.elements?.find(el => el.id === cardId) && onElementUpdate) {
-                          onElementUpdate(cardId, cardElement);
+                      // 1. Prepare the standard card element for the database
+                      const hydratedCard: WebsiteElement = {
+                          ...cardElement,
+                          id: cardId,
+                          type: 'card'
+                      };
+
+                      // 2. Hydrate: If it's not in the section elements array, add it now
+                      if (onElementUpdate && !section.elements?.find(el => el.id === cardId)) {
+                          onElementUpdate(cardId, hydratedCard);
                       }
-                      // Then safely select it
+                      
+                      // 3. Select: Tell the sidebar this specific card is active
                       if (onElementSelect) {
-                          onElementSelect(cardId, cardElement as WebsiteElement);
+                          onElementSelect(cardId, hydratedCard);
                       }
                   }
               }}
-              className={`relative group/item shadow-sm transition-all duration-300 hover:shadow-md cursor-pointer ${
-                  selectedElementId === cardId ? 'ring-2 ring-blue-500 ring-offset-2 z-10' : ''
+              // Add a hover border to make it obvious the card is an element
+              className={`relative group/item shadow-sm transition-all duration-300 hover:shadow-md cursor-pointer border-2 ${
+                  selectedElementId === cardId 
+                    ? 'border-blue-500 ring-4 ring-blue-500/20 z-20' 
+                    : 'border-transparent hover:border-blue-500/30'
               }`}
               style={cardElement.style}
             >
