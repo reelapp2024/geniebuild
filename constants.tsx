@@ -593,7 +593,12 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     variantOverrides: {
       'TestimonialsGrid': { textAlign: 'center' },
       'TestimonialsCentered': { textAlign: 'center', maxWidth: 'max-w-4xl' },
-      'TestimonialsColumns': { textAlign: 'left' }
+      'TestimonialsColumns': { textAlign: 'left' },
+      'TestimonialsLight': {
+          textAlign: 'center',
+          themeMode: 'light',
+          background: { type: 'color', overlay: { enabled: false } }
+      }
     }
   },
   faq: {
@@ -611,7 +616,12 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
     elements: [],
     variantOverrides: {
       'FAQCentered': { textAlign: 'center', maxWidth: 'max-w-4xl' },
-      'FAQSplit': { textAlign: 'left' }
+      'FAQSplit': { textAlign: 'left' },
+      'FAQLight': {
+          textAlign: 'center',
+          themeMode: 'light',
+          background: { type: 'color', overlay: { enabled: false } }
+      }
     }
   },
   cta: {
@@ -631,7 +641,12 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
       },
       variantOverrides: {
         'center': { textAlign: 'center' },
-        'split': { textAlign: 'left' }
+        'split': { textAlign: 'left' },
+        'CTALight': {
+            textAlign: 'center',
+            themeMode: 'light',
+            background: { type: 'color', overlay: { enabled: false } }
+        }
       }
   },
   navbar: {

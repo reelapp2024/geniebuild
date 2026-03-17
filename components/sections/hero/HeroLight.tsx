@@ -138,76 +138,58 @@ export const HeroLight: React.FC<HeroProps> = ({
   
   return (
     <div className={`${styles.maxWidth || 'max-w-5xl'} mx-auto px-6 text-center`}>
-      {/* Render Title using ElementsSection - unwrapped for custom layout */}
-      <div className="mb-6">
-        <ElementsSection
-          section={{
-            ...section,
-            elements: [getTitleElement()]
-          }}
-          onTextEdit={onTextEdit}
-          onElementUpdate={onElementUpdate || (() => {})}
-          onElementSelect={onElementSelect}
-          selectedElementId={selectedElementId}
-          buttonClass={buttonClass}
-          readOnly={readOnly}
-          isWrapped={false}
-          themeColors={themeColors}
-        />
-      </div>
-      
-      {/* Render Subtitle using ElementsSection - unwrapped for custom layout */}
-      <div className="mb-10 mx-auto max-w-2xl opacity-80">
-        <ElementsSection
-          section={{
-            ...section,
-            elements: [getSubtitleElement()]
-          }}
-          onTextEdit={onTextEdit}
-          onElementUpdate={onElementUpdate || (() => {})}
-          onElementSelect={onElementSelect}
-          selectedElementId={selectedElementId}
-          buttonClass={buttonClass}
-          readOnly={readOnly}
-          isWrapped={false}
-          themeColors={themeColors}
-        />
-      </div>
-      
-      {/* Render Button using headless ElementsSection */}
-      <div className="w-full mb-20">
-        <ElementsSection 
-          isWrapped={false}
-          section={{
-            ...section,
-            elements: [buttonElement || {
-              id: buttonId,
-              type: 'button',
-              content: { text: content.ctaText || 'Click Here', link: content.ctaHref || '' },
-              style: {
-                backgroundColor: styles.buttonBackgroundColor || '',
-                color: styles.buttonTextColor || ''
-              }
-            }]
-          }}
-          onElementSelect={onElementSelect}
-          selectedElementId={selectedElementId}
-          onElementUpdate={onElementUpdate || (() => {})}
-          onTextEdit={onTextEdit}
-          buttonClass={buttonClass}
-          readOnly={readOnly}
-          themeColors={styles as any}
-        />
-      </div>
-      
-      {/* Render Image using headless ElementsSection */}
-      {content.imageUrl && (
-        <div className="w-full mt-8 max-w-4xl mx-auto">
+      <div className="flex flex-col gap-8">
+        {/* Render Title using ElementsSection - unwrapped for custom layout */}
+        <div className="mb-6">
+          <ElementsSection
+            section={{
+              ...section,
+              elements: [getTitleElement()]
+            }}
+            onTextEdit={onTextEdit}
+            onElementUpdate={onElementUpdate || (() => {})}
+            onElementSelect={onElementSelect}
+            selectedElementId={selectedElementId}
+            buttonClass={buttonClass}
+            readOnly={readOnly}
+            isWrapped={false}
+            themeColors={themeColors}
+          />
+        </div>
+        
+        {/* Render Subtitle using ElementsSection - unwrapped for custom layout */}
+        <div className="mb-10 mx-auto max-w-2xl opacity-80">
+          <ElementsSection
+            section={{
+              ...section,
+              elements: [getSubtitleElement()]
+            }}
+            onTextEdit={onTextEdit}
+            onElementUpdate={onElementUpdate || (() => {})}
+            onElementSelect={onElementSelect}
+            selectedElementId={selectedElementId}
+            buttonClass={buttonClass}
+            readOnly={readOnly}
+            isWrapped={false}
+            themeColors={themeColors}
+          />
+        </div>
+        
+        {/* Render Button using headless ElementsSection */}
+        <div className="w-full mb-20">
           <ElementsSection 
             isWrapped={false}
             section={{
               ...section,
-              elements: [getImageElement()]
+              elements: [buttonElement || {
+                id: buttonId,
+                type: 'button',
+                content: { text: content.ctaText || 'Click Here', link: content.ctaHref || '' },
+                style: {
+                  backgroundColor: styles.buttonBackgroundColor || '',
+                  color: styles.buttonTextColor || ''
+                }
+              }]
             }}
             onElementSelect={onElementSelect}
             selectedElementId={selectedElementId}
@@ -215,10 +197,32 @@ export const HeroLight: React.FC<HeroProps> = ({
             onTextEdit={onTextEdit}
             buttonClass={buttonClass}
             readOnly={readOnly}
-            themeColors={themeColors}
+            themeColors={styles as any}
           />
         </div>
-      )}
+        
+        {/* Render Image using headless ElementsSection - Premium SaaS dashboard style */}
+        {content.imageUrl && (
+          <div className="w-full mt-8 max-w-4xl mx-auto">
+            <div className="rounded-2xl shadow-xl border border-black/5 overflow-hidden">
+              <ElementsSection 
+                isWrapped={false}
+                section={{
+                  ...section,
+                  elements: [getImageElement()]
+                }}
+                onElementSelect={onElementSelect}
+                selectedElementId={selectedElementId}
+                onElementUpdate={onElementUpdate || (() => {})}
+                onTextEdit={onTextEdit}
+                buttonClass={buttonClass}
+                readOnly={readOnly}
+                themeColors={themeColors}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
