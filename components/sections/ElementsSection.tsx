@@ -968,20 +968,80 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 ...safeStyle,
                 color: safeStyle.color || theme?.textColor || '#D1D5DB'
             };
+            const testimonialItems = content.items || [{ author: 'John Doe', role: 'Customer', content: 'Great service!', avatar: 'https://via.placeholder.com/50' }];
             return (
-                 <div key={id} className={`p-6 rounded-xl bg-white/5 border border-white/10 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={testimonialStyle}>
-                     <div className="flex items-center gap-4 mb-4">
-                         <img src={content.items?.[0]?.avatar || 'https://via.placeholder.com/50'} className="w-12 h-12 rounded-full object-cover" alt="Avatar" />
-                         <div>
-                             <div className="font-bold" style={{ color: theme?.titleColor }}>{content.items?.[0]?.author || 'John Doe'}</div>
-                             <div className="text-xs opacity-50">{content.items?.[0]?.role || 'Customer'}</div>
-                         </div>
-                         <div className="ml-auto text-yellow-500 text-sm">
-                             <i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i>
-                         </div>
-                     </div>
-                     <p className="italic opacity-80">"{content.items?.[0]?.content || 'Great service!'}"</p>
-                 </div>
+                <div key={id} className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full ${selectedClass}`} onClick={(e) => handleClick(e, el)}>
+                    {testimonialItems.map((item: any, idx: number) => (
+                        <div key={idx} className="p-6 rounded-xl bg-white/5 border border-white/10 flex flex-col h-full" style={testimonialStyle}>
+                            <div className="flex items-center gap-4 mb-4">
+                                <img src={item.avatar || 'https://via.placeholder.com/50'} className="w-12 h-12 rounded-full object-cover" alt="Avatar" referrerPolicy="no-referrer" />
+                                <div>
+                                    <div className="font-bold" style={{ color: theme?.titleColor }}>{item.author || 'John Doe'}</div>
+                                    <div className="text-xs opacity-50" style={{ color: theme?.textColor }}>{item.role || 'Customer'}</div>
+                                </div>
+                                <div className="ml-auto text-yellow-500 text-sm">
+                                    <i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i>
+                                </div>
+                            </div>
+                            <p className="italic opacity-80 flex-grow" style={{ color: theme?.textColor }}>"{item.content || 'Great service!'}"</p>
+                        </div>
+                    ))}
+                </div>
+            );
+
+        case 'logo-cloud':
+            const logos = content.items || [];
+            return (
+                <div key={id} className={`flex flex-wrap items-center justify-center gap-8 md:gap-12 py-8 ${selectedClass}`} onClick={(e) => handleClick(e, el)}>
+                    {logos.map((logo: any, idx: number) => (
+                        <img 
+                            key={idx} 
+                            src={logo.src} 
+                            alt={logo.alt || 'Logo'} 
+                            className="h-8 md:h-10 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-300" 
+                            referrerPolicy="no-referrer"
+                        />
+                    ))}
+                </div>
+            );
+
+        case 'stat-card':
+            return (
+                <div key={id} className={`p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 group ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={style}>
+                    <div className="flex items-center gap-4 mb-3">
+                        {content.icon && (
+                            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                                <i className={`fa-solid fa-${content.icon} text-lg`}></i>
+                            </div>
+                        )}
+                        <div className="text-3xl font-bold tracking-tight" style={{ color: theme?.titleColor }}>{content.value || content.targetNumber || '0'}</div>
+                    </div>
+                    <div className="text-sm font-semibold uppercase tracking-wider opacity-60 mb-1" style={{ color: theme?.textColor }}>{content.text || 'Label'}</div>
+                    {content.subText && <div className="text-xs opacity-40 leading-relaxed" style={{ color: theme?.textColor }}>{content.subText}</div>}
+                </div>
+            );
+
+        case 'user-avatars':
+            const avatars = content.items || [];
+            return (
+                <div key={id} className={`flex items-center ${selectedClass}`} onClick={(e) => handleClick(e, el)}>
+                    <div className="flex -space-x-3 overflow-hidden mr-4">
+                        {avatars.map((avatar: any, idx: number) => (
+                            <img 
+                                key={idx} 
+                                className="inline-block h-10 w-10 rounded-full ring-2 ring-[#0F172A] object-cover" 
+                                src={avatar.src} 
+                                alt={`User ${idx + 1}`} 
+                                referrerPolicy="no-referrer"
+                            />
+                        ))}
+                    </div>
+                    {content.targetNumber && (
+                        <div className="text-sm font-medium" style={{ color: theme?.textColor }}>
+                            Join <span className="text-blue-400 font-bold">{content.targetNumber}</span> others
+                        </div>
+                    )}
+                </div>
             );
 
         case 'pricing-table':

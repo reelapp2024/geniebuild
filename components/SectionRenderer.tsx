@@ -190,6 +190,12 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     return bgStyles;
   };
 
+  const isFullBleed = styles.variant?.includes('Modern') || 
+                     styles.variant?.includes('Geometric') || 
+                     styles.variant?.includes('CrimsonJet') || 
+                     styles.variant?.includes('Multicolor') || 
+                     styles.variant?.includes('Gradient');
+
   const inlineStyles: React.CSSProperties = {
     ...getBackgroundStyles(),
     ...(isCustomColor(styles.textColor) ? { color: styles.textColor } : { color: themeData?.description }),
@@ -197,20 +203,20 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     ...(!isTailwindClass(styles.marginBottom) ? { marginBottom: styles.marginBottom } : {}),
     ...(!isTailwindClass(styles.marginLeft) ? { marginLeft: styles.marginLeft } : {}),
     ...(!isTailwindClass(styles.marginRight) ? { marginRight: styles.marginRight } : {}),
-    ...(!isTailwindClass(styles.paddingTop) ? { paddingTop: styles.paddingTop } : {}),
-    ...(!isTailwindClass(styles.paddingBottom) ? { paddingBottom: styles.paddingBottom } : {}),
-    ...(!isTailwindClass(styles.paddingLeft) ? { paddingLeft: styles.paddingLeft } : {}),
-    ...(!isTailwindClass(styles.paddingRight) ? { paddingRight: styles.paddingRight } : {}),
+    ...(!isFullBleed && !isTailwindClass(styles.paddingTop) ? { paddingTop: styles.paddingTop } : {}),
+    ...(!isFullBleed && !isTailwindClass(styles.paddingBottom) ? { paddingBottom: styles.paddingBottom } : {}),
+    ...(!isFullBleed && !isTailwindClass(styles.paddingLeft) ? { paddingLeft: styles.paddingLeft } : {}),
+    ...(!isFullBleed && !isTailwindClass(styles.paddingRight) ? { paddingRight: styles.paddingRight } : {}),
   };
 
   const bgClass = !styles.background && !isCustomColor(styles.backgroundColor) ? styles.backgroundColor : '';
   const textClass = !isCustomColor(styles.textColor) ? styles.textColor : '';
   
   const spacingClasses = [
-      isTailwindClass(styles.paddingTop) ? styles.paddingTop : '',
-      isTailwindClass(styles.paddingBottom) ? styles.paddingBottom : '',
-      isTailwindClass(styles.paddingLeft) ? styles.paddingLeft : '',
-      isTailwindClass(styles.paddingRight) ? styles.paddingRight : '',
+      !isFullBleed && isTailwindClass(styles.paddingTop) ? styles.paddingTop : '',
+      !isFullBleed && isTailwindClass(styles.paddingBottom) ? styles.paddingBottom : '',
+      !isFullBleed && isTailwindClass(styles.paddingLeft) ? styles.paddingLeft : '',
+      !isFullBleed && isTailwindClass(styles.paddingRight) ? styles.paddingRight : '',
       isTailwindClass(styles.marginTop) ? styles.marginTop : '',
       isTailwindClass(styles.marginBottom) ? styles.marginBottom : '',
       isTailwindClass(styles.marginLeft) ? styles.marginLeft : '',

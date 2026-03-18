@@ -58,6 +58,16 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({ children, className,
         doc.open();
         doc.write('<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"></head><body><div id="frame-root"></div></body></html>');
         doc.close();
+
+        // Suppress ResizeObserver errors in the iframe window too
+        const win = doc.defaultView;
+        if (win) {
+            win.addEventListener('error', (e) => {
+                if (e.message?.includes('ResizeObserver')) {
+                    e.stopImmediatePropagation();
+                }
+            });
+        }
         
         // Inject Tailwind
         const script = doc.createElement('script');
@@ -79,9 +89,9 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({ children, className,
                 margin: 0; 
                 padding: 0;
                 overflow-x: hidden;
-                /* Ensure full height and width for layout */
-                height: 100%;
-                min-height: 100vh;
+                /* Allow content to determine height */
+                height: auto;
+                min-height: 100%;
                 width: 100%;
                 max-width: 100%;
                 box-sizing: border-box;
@@ -93,7 +103,7 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({ children, className,
             #frame-root {
                 width: 100%;
                 max-width: 100%;
-                min-height: 100vh;
+                min-height: auto;
                 margin: 0;
                 padding: 0;
             }
@@ -122,6 +132,44 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({ children, className,
         frame.removeEventListener('load', handleLoad);
     };
   }, []);
+
+  // Sync Dynamic Styles (The variable CSS properties)
+  useEffect(() => {
+    if (!mountNode || !frameRef.current) return;
+    
+    const frame = frameRef.current;
+    
+    // Auto-resize iframe height based on content
+    const updateHeight = () => {
+        // Use requestAnimationFrame to ensure we update in sync with the browser's paint cycle
+        // and avoid "ResizeObserver loop completed with undelivered notifications"
+        window.requestAnimationFrame(() => {
+            const doc = frame.contentDocument;
+            if (doc && doc.body) {
+                // Use scrollHeight to get the content height
+                const height = doc.body.scrollHeight;
+                
+                // Get current height to compare
+                const currentHeightStr = frame.style.height;
+                const currentHeight = currentHeightStr ? parseInt(currentHeightStr, 10) : 0;
+
+                // Only update if the height has actually changed significantly (> 1px)
+                // to avoid redundant layout cycles and potential infinite loops
+                if (height > 0 && Math.abs(currentHeight - height) > 1) {
+                    frame.style.height = `${height}px`;
+                }
+            }
+        });
+    };
+
+    const resizeObserver = new ResizeObserver(updateHeight);
+    resizeObserver.observe(mountNode);
+    
+    // Initial update
+    setTimeout(updateHeight, 100);
+
+    return () => resizeObserver.disconnect();
+  }, [mountNode]);
 
   // Sync Dynamic Styles (The variable CSS properties)
   useEffect(() => {

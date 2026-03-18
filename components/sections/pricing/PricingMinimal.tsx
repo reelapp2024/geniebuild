@@ -16,7 +16,7 @@ interface PricingProps {
 }
 
 export const PricingMinimal: React.FC<PricingProps> = ({ section, isSelected, onTextEdit, onItemEdit, onRemoveItem, onAddItem, titleClass, titleStyle, buttonClass }) => {
-  const { content } = section;
+  const { content, styles } = section;
   return (
     <div className="max-w-7xl mx-auto px-6">
       <div className="text-center mb-12">

@@ -29,7 +29,10 @@ export type ElementType =
   | 'pricing-table'
   | 'flip-box'
   | 'call-to-action'
-  | 'countdown-timer';
+  | 'countdown-timer'
+  | 'logo-cloud'
+  | 'stat-card'
+  | 'user-avatars';
 
 // Comprehensive Style Interface based on "Common Properties" request
 export interface ElementStyle {
@@ -196,6 +199,8 @@ export interface WebsiteElement {
         avatar?: string; // Testimonial
         rating?: number; // Review
         price?: string; // Pricing Table
+        src?: string;   // Logo Cloud / User Avatars
+        alt?: string;   // Logo Cloud
     }[]; 
     
     rating?: number; 
@@ -360,11 +365,11 @@ export interface Section {
   
   styles: {
     // Container
-    backgroundColor: string; // Deprecated - use background.type instead
+    backgroundColor?: string; // Deprecated - use background.type instead
     
     // Spacing
-    paddingTop: string;
-    paddingBottom: string;
+    paddingTop?: string;
+    paddingBottom?: string;
     paddingLeft?: string;
     paddingRight?: string;
     paddingX?: string; // Deprecated but kept for backward compatibility if needed
@@ -374,7 +379,7 @@ export interface Section {
     marginLeft?: string;
     marginRight?: string;
 
-    textAlign: 'left' | 'center' | 'right';
+    textAlign?: 'left' | 'center' | 'right';
     maxWidth?: 'max-w-4xl' | 'max-w-5xl' | 'max-w-6xl' | 'max-w-7xl' | 'max-w-full';
     
     // New comprehensive background system
@@ -418,7 +423,7 @@ export interface Section {
     themeMode?: 'light' | 'dark';
 
     // Typography & Colors
-    textColor: string; 
+    textColor?: string; 
     
     titleColor?: string;
     titleSize?: string;
@@ -437,11 +442,11 @@ export interface Section {
     fontSize?: string;
     fontWeight?: string;
     
-    accentColor: string; 
+    accentColor?: string; 
 
     // Buttons
-    buttonBackgroundColor: string;
-    buttonTextColor: string;
+    buttonBackgroundColor?: string;
+    buttonTextColor?: string;
     buttonStyle?: 'rounded' | 'pill' | 'square';
     
     borderRadius?: string; 

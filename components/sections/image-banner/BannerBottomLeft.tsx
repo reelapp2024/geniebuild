@@ -12,7 +12,7 @@ interface BannerProps {
 }
 
 export const BannerBottomLeft: React.FC<BannerProps> = ({ section, onTextEdit, buttonClass, titleClass, titleStyle }) => {
-  const { content } = section;
+  const { content, styles } = section;
   return (
     <div className="relative z-10 max-w-7xl mx-auto px-6 text-left flex flex-col justify-end min-h-[400px]">
         {(() => {

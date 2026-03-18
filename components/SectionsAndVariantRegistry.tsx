@@ -26,7 +26,7 @@ export interface SectionConfig {
 export const SECTIONS_REGISTRY: SectionConfig[] = [
   {
     sectionType: 'hero',
-    variants: ['HeroCenter', 'HeroLight', 'HeroCrimsonJet'],
+    variants: ['HeroCenter', 'HeroLight', 'HeroCrimsonJet', 'HeroModern'],
     defaultVariant: 'HeroCenter'
   },
   {
@@ -41,7 +41,7 @@ export const SECTIONS_REGISTRY: SectionConfig[] = [
   },
   {
     sectionType: 'cta',
-    variants: ['CTACenter', 'CTASplit', 'CTALight'],
+    variants: ['CTACenter', 'CTASplit', 'CTALight', 'CTAModern'],
     defaultVariant: 'CTACenter'
   },
   {
@@ -56,12 +56,12 @@ export const SECTIONS_REGISTRY: SectionConfig[] = [
   },
   {
     sectionType: 'testimonials',
-    variants: ['TestimonialsGrid', 'TestimonialsCentered', 'TestimonialsColumns', 'TestimonialsLight'],
+    variants: ['TestimonialsGrid', 'TestimonialsCentered', 'TestimonialsColumns', 'TestimonialsLight', 'TestimonialsModern'],
     defaultVariant: 'TestimonialsGrid'
   },
   {
     sectionType: 'faq',
-    variants: ['FAQCentered', 'FAQSplit', 'FAQLight'],
+    variants: ['FAQCentered', 'FAQSplit', 'FAQLight', 'FAQModern'],
     defaultVariant: 'FAQCentered'
   },
  

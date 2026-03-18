@@ -207,9 +207,9 @@ export const FooterApi: React.FC<FooterApiProps> = ({ section, readOnly = true }
             {resolvedData.logo?.url ? (
               <img
                 src={resolvedData.logo.url}
-                alt={resolvedData.logo.alt || 'Logo'}
+                alt={(resolvedData.logo as any).alt || 'Logo'}
                 className="h-10 w-auto object-contain mb-4"
-                style={{ maxHeight: '60px', ...resolvedData.logo.style }}
+                style={{ maxHeight: '60px', ...(resolvedData.logo as any).style }}
               />
             ) : (
               <h3 className="text-2xl font-bold mb-4" style={{ color: section.styles.titleColor || 'inherit' }}>

@@ -3871,6 +3871,204 @@ const AppContent: React.FC = () => {
                                                      </div>
                                                         );
                                              })()
+                                         ) : selectedElement.type === 'logo-cloud' ? (
+                                             (() => {
+                                                 const items = selectedElement.content.items || [];
+                                                 return (
+                                                     <div className="space-y-4">
+                                                         <div className="flex items-center justify-between mb-2">
+                                                             <label className="text-[10px] font-bold text-white/40 uppercase">Logos</label>
+                                                             <button 
+                                                                 onClick={() => {
+                                                                     const newItems = [...items, { src: 'https://cdn.worldvectorlogo.com/logos/google-2015.svg', alt: 'New Logo' }];
+                                                                     updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                 }}
+                                                                 className="px-2 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded border border-blue-600/30 text-[9px]"
+                                                             >
+                                                                 <i className="fa-solid fa-plus mr-1"></i>Add Logo
+                                                             </button>
+                                                         </div>
+                                                         {items.map((item: any, idx: number) => (
+                                                             <div key={idx} className="p-3 bg-[#151515] border border-[#333] rounded space-y-3 relative group">
+                                                                 <button 
+                                                                     onClick={() => {
+                                                                         const newItems = items.filter((_: any, i: number) => i !== idx);
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }}
+                                                                     className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] transition-opacity"
+                                                                 >
+                                                                     <i className="fa-solid fa-xmark"></i>
+                                                                 </button>
+                                                                 <ImageControl 
+                                                                     label={`Logo ${idx + 1} URL`} 
+                                                                     value={item.src || ''} 
+                                                                     onChange={(v) => {
+                                                                         const newItems = [...items];
+                                                                         newItems[idx] = { ...newItems[idx], src: v };
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }} 
+                                                                     onUpload={() => triggerUpload(selectedSection.id, `items.${idx}.src`, selectedElement.id)}
+                                                                 />
+                                                                 <TextInput 
+                                                                     label="Alt Text" 
+                                                                     value={item.alt || ''} 
+                                                                     onChange={(v) => {
+                                                                         const newItems = [...items];
+                                                                         newItems[idx] = { ...newItems[idx], alt: v };
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }} 
+                                                                 />
+                                                             </div>
+                                                         ))}
+                                                     </div>
+                                                 );
+                                             })()
+                                         ) : selectedElement.type === 'stat-card' ? (
+                                             <div className="space-y-4">
+                                                 <TextInput 
+                                                     label="Stat Value" 
+                                                     value={selectedElement.content.value || selectedElement.content.targetNumber || ''} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, value: v, targetNumber: v} })} 
+                                                     placeholder="e.g. 99% or 500k+"
+                                                 />
+                                                 <TextInput 
+                                                     label="Label" 
+                                                     value={selectedElement.content.text || ''} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, text: v} })} 
+                                                     placeholder="e.g. Satisfaction Rate"
+                                                 />
+                                                 <TextAreaInput 
+                                                     label="Description" 
+                                                     value={selectedElement.content.subText || ''} 
+                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, subText: v} })} 
+                                                 />
+                                                 <IconPicker 
+                                                     label="Icon" 
+                                                     value={selectedElement.content.icon || ''} 
+                                                     onChange={(v) => {
+                                                         const iconValue = v.startsWith('fa-') ? v.replace('fa-', '') : v;
+                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, icon: iconValue} });
+                                                     }} 
+                                                 />
+                                             </div>
+                                         ) : selectedElement.type === 'user-avatars' ? (
+                                             (() => {
+                                                 const items = selectedElement.content.items || [];
+                                                 return (
+                                                     <div className="space-y-4">
+                                                         <div className="flex items-center justify-between mb-2">
+                                                             <label className="text-[10px] font-bold text-white/40 uppercase">Avatars</label>
+                                                             <button 
+                                                                 onClick={() => {
+                                                                     const newItems = [...items, { src: `https://picsum.photos/seed/${Math.random()}/32/32` }];
+                                                                     updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                 }}
+                                                                 className="px-2 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded border border-blue-600/30 text-[9px]"
+                                                             >
+                                                                 <i className="fa-solid fa-plus mr-1"></i>Add Avatar
+                                                             </button>
+                                                         </div>
+                                                         {items.map((item: any, idx: number) => (
+                                                             <div key={idx} className="p-3 bg-[#151515] border border-[#333] rounded space-y-3 relative group">
+                                                                 <button 
+                                                                     onClick={() => {
+                                                                         const newItems = items.filter((_: any, i: number) => i !== idx);
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }}
+                                                                     className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] transition-opacity"
+                                                                 >
+                                                                     <i className="fa-solid fa-xmark"></i>
+                                                                 </button>
+                                                                 <ImageControl 
+                                                                     label={`Avatar ${idx + 1} URL`} 
+                                                                     value={item.src || ''} 
+                                                                     onChange={(v) => {
+                                                                         const newItems = [...items];
+                                                                         newItems[idx] = { ...newItems[idx], src: v };
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }} 
+                                                                     onUpload={() => triggerUpload(selectedSection.id, `items.${idx}.src`, selectedElement.id)}
+                                                                 />
+                                                             </div>
+                                                         ))}
+                                                         <TextInput 
+                                                             label="Extra Count (e.g. +50)" 
+                                                             value={selectedElement.content.targetNumber || ''} 
+                                                             onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, targetNumber: v} })} 
+                                                         />
+                                                     </div>
+                                                 );
+                                             })()
+                                         ) : selectedElement.type === 'testimonial' ? (
+                                             (() => {
+                                                 const items = selectedElement.content.items || [];
+                                                 return (
+                                                     <div className="space-y-4">
+                                                         <div className="flex items-center justify-between mb-2">
+                                                             <label className="text-[10px] font-bold text-white/40 uppercase">Testimonials</label>
+                                                             <button 
+                                                                 onClick={() => {
+                                                                     const newItems = [...items, { author: 'New User', role: 'Customer', content: 'Great service!', avatar: 'https://via.placeholder.com/50' }];
+                                                                     updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                 }}
+                                                                 className="px-2 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded border border-blue-600/30 text-[9px]"
+                                                             >
+                                                                 <i className="fa-solid fa-plus mr-1"></i>Add Testimonial
+                                                             </button>
+                                                         </div>
+                                                         {items.map((item: any, idx: number) => (
+                                                             <div key={idx} className="p-3 bg-[#151515] border border-[#333] rounded space-y-3 relative group">
+                                                                 <button 
+                                                                     onClick={() => {
+                                                                         const newItems = items.filter((_: any, i: number) => i !== idx);
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }}
+                                                                     className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] transition-opacity"
+                                                                 >
+                                                                     <i className="fa-solid fa-xmark"></i>
+                                                                 </button>
+                                                                 <TextInput 
+                                                                     label="Author Name" 
+                                                                     value={item.author || ''} 
+                                                                     onChange={(v) => {
+                                                                         const newItems = [...items];
+                                                                         newItems[idx] = { ...newItems[idx], author: v };
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }} 
+                                                                 />
+                                                                 <TextInput 
+                                                                     label="Role" 
+                                                                     value={item.role || ''} 
+                                                                     onChange={(v) => {
+                                                                         const newItems = [...items];
+                                                                         newItems[idx] = { ...newItems[idx], role: v };
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }} 
+                                                                 />
+                                                                 <ImageControl 
+                                                                     label="Avatar URL" 
+                                                                     value={item.avatar || ''} 
+                                                                     onChange={(v) => {
+                                                                         const newItems = [...items];
+                                                                         newItems[idx] = { ...newItems[idx], avatar: v };
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }} 
+                                                                     onUpload={() => triggerUpload(selectedSection.id, `items.${idx}.avatar`, selectedElement.id)}
+                                                                 />
+                                                                 <TextAreaInput 
+                                                                     label="Content" 
+                                                                     value={item.content || ''} 
+                                                                     onChange={(v) => {
+                                                                         const newItems = [...items];
+                                                                         newItems[idx] = { ...newItems[idx], content: v };
+                                                                         updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, items: newItems} });
+                                                                     }} 
+                                                                 />
+                                                             </div>
+                                                         ))}
+                                                     </div>
+                                                 );
+                                             })()
                                          ) : selectedElement.type === 'card' ? (
                                              <p className="text-white/50 text-xs">Card appearance is edited in the Design tab.</p>
                                          ) : (
@@ -4050,60 +4248,42 @@ const AppContent: React.FC = () => {
             </aside>
             {/* Canvas Wrapper - Full width/height with browser-like content zoom */}
             <main 
-                className="flex-1 bg-[#111] relative" 
-                style={{ 
-                    height: '100%', 
-                    width: '100%',
-                    overflow: 'hidden',
-                    position: 'relative'
-                }} 
+                className="flex-1 bg-[#111] relative overflow-hidden" 
                 onClick={() => { setSelectedSectionId(null); setSelectedElementId(null); }}
             >
-                {/* Page container - fixed at full width/height, connected to all edges (top, bottom, left, right) */}
-                <div 
-                    className="absolute inset-0 shadow-2xl ring-1 ring-white/10 bg-white"
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        position: 'absolute',
-                        overflow: 'hidden'
-                    }}
-                >
-                    {/* Content wrapper - only this scales, page container stays fixed */}
-                    <div
+                {/* Scrollable viewport container */}
+                <div className="absolute inset-0 flex items-start justify-center overflow-auto p-12 custom-scrollbar">
+                    {/* Device Container - width controlled by viewMode, scaled by zoomLevel */}
+                    <div 
+                        className="shadow-2xl ring-1 ring-white/10 transition-all duration-300 origin-top"
                         style={{
-                            width: `${100 / (zoomLevel / 100)}%`,
-                            height: `${100 / (zoomLevel / 100)}%`,
+                            width: `${currentDeviceWidth}px`,
+                            minHeight: 'fit-content',
+                            height: 'auto',
+                            backgroundColor: themeData?.surface || '#0E1214',
                             transform: `scale(${zoomLevel / 100})`,
-                            transformOrigin: 'top left',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            fontFamily: defaultTypography.fontFamily
+                            position: 'relative',
+                            fontFamily: defaultTypography.fontFamily,
+                            marginBottom: '100px' // Buffer at bottom for better preview feel
                         }}
                     >
                         <PreviewFrame 
-                            className="w-full h-full" 
+                            className="w-full" 
                             style={{ 
-                                backgroundColor: 'var(--bg-color)',
+                                backgroundColor: 'transparent',
                                 width: '100%',
-                                height: '100%',
-                                minHeight: '100%',
+                                height: 'auto',
+                                minHeight: '500px',
                                 display: 'block',
                                 border: 'none'
                             }}
                         >
                             <div 
                                 id="canvas-root" 
-                                className="w-full h-full" 
+                                className="w-full" 
                                 style={{ 
                                     width: '100%',
-                                    height: '100%',
-                                    minHeight: '100%'
+                                    height: 'auto'
                                 }}
                             >
                          {siteData.sections.map((section) => (

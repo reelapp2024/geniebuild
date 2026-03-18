@@ -12,7 +12,7 @@ interface BannerProps {
 }
 
 export const BannerSplit: React.FC<BannerProps> = ({ section, onTextEdit, buttonClass, titleClass, titleStyle }) => {
-  const { content } = section;
+  const { content, styles } = section;
   return (
     <div className="relative z-10 max-w-7xl mx-auto px-6 grid md:grid-cols-2 items-center text-left">
         <div className="bg-black/50 p-8 rounded-2xl backdrop-blur-sm">

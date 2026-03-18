@@ -12,7 +12,7 @@ interface BannerProps {
 }
 
 export const BannerCenter: React.FC<BannerProps> = ({ section, onTextEdit, buttonClass, titleClass, titleStyle }) => {
-  const { content } = section;
+  const { content, styles } = section;
   return (
     <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
         {(() => {

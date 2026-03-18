@@ -23,7 +23,7 @@
         "./*"
       ],
       "@ui/blocks": [
-        "../../packages/ui/src/index.ts"
+        "./src/ui-blocks/index.tsx"
       ]
     },
     "allowImportingTsExtensions": true,

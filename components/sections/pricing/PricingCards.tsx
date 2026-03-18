@@ -16,7 +16,7 @@ interface PricingProps {
 }
 
 export const PricingCards: React.FC<PricingProps> = ({ section, isSelected, onTextEdit, onItemEdit, onRemoveItem, onAddItem, titleClass, titleStyle, buttonClass }) => {
-  const { content } = section;
+  const { content, styles } = section;
 
   const updateFeature = (itemId: string, features: string[], index: number, newValue: string) => {
     const newFeatures = [...features];

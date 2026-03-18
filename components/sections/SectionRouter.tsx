@@ -12,7 +12,7 @@
  */
 
 import React, { useState } from 'react';
-import { Section } from '../../types';
+import { Section, WebsiteElement } from '../../types';
 import { getDefaultVariant, isValidVariant } from '../SectionsAndVariantRegistry';
 import { getHeadingSizeClass } from '../../utils/headingSizeUtils';
 
@@ -21,6 +21,7 @@ import { getHeadingSizeClass } from '../../utils/headingSizeUtils';
 import { HeroCenter } from './hero/HeroCenter';
 import { HeroLight } from './hero/HeroLight';
 import { HeroCrimsonJet } from './hero/HeroCrimsonJet';
+import { HeroModern } from './hero/HeroModern';
 // Navbar variants
 import { NavbarSimple } from './navbar/NavbarSimple';
 import { NavbarCentered } from './navbar/NavbarCentered';
@@ -36,6 +37,7 @@ import { FeaturesCards } from './features/FeaturesCards';
 import { CTACenter } from './cta/CTACenter';
 import { CTASplit } from './cta/CTASplit';
 import { CTALight } from './cta/CTALight';
+import { CTAModern } from './cta/CTAModern';
 
 // Footer variants
 import { FooterColumns } from './footer/FooterColumns';
@@ -57,10 +59,12 @@ import { TestimonialsGrid } from './testimonials/TestimonialsGrid';
 import { TestimonialsCentered } from './testimonials/TestimonialsCentered';
 import { TestimonialsColumns } from './testimonials/TestimonialsColumns';
 import { TestimonialsLight } from './testimonials/TestimonialsLight';
+import { TestimonialsModern } from './testimonials/TestimonialsModern';
 // FAQ variants
 import { FAQCentered } from './faq/FAQCentered';
 import { FAQSplit } from './faq/FAQSplit';
 import { FAQLight } from './faq/FAQLight';
+import { FAQModern } from './faq/FAQModern';
 
 import { ElementsSection } from './ElementsSection';
 import { AllElementsTest } from './allelementsTest/AllElementsTest';
@@ -114,6 +118,8 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return <HeroCrimsonJet {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroLight':
           return <HeroLight {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
+        case 'HeroModern':
+          return <HeroModern {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroCenter':
         case 'center':
         default:
@@ -171,6 +177,8 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return <CTASplit {...baseProps} onElementUpdate={props.onElementUpdate} />;
         case 'CTALight':
           return <CTALight {...baseProps} onElementUpdate={props.onElementUpdate} />;
+        case 'CTAModern':
+          return <CTAModern {...baseProps} onElementUpdate={props.onElementUpdate} />;
         case 'CTACenter':
         default:
           return <CTACenter {...baseProps} onElementUpdate={props.onElementUpdate} />;
@@ -238,6 +246,18 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
               selectedElementId={props.selectedElementId}
             />
           );
+        case 'TestimonialsModern':
+          return (
+            <TestimonialsModern
+              {...baseProps}
+              onItemEdit={props.onItemEdit}
+              onRemoveItem={props.onRemoveItem}
+              onAddItem={props.onAddItem}
+              onElementUpdate={props.onElementUpdate}
+              onElementSelect={props.onElementSelect}
+              selectedElementId={props.selectedElementId}
+            />
+          );
         case 'TestimonialsGrid':
         default:
           return (
@@ -266,6 +286,15 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
         case 'FAQLight':
           return (
             <FAQLight
+              {...baseProps}
+              onElementUpdate={props.onElementUpdate}
+              onElementSelect={props.onElementSelect}
+              selectedElementId={props.selectedElementId}
+            />
+          );
+        case 'FAQModern':
+          return (
+            <FAQModern
               {...baseProps}
               onElementUpdate={props.onElementUpdate}
               onElementSelect={props.onElementSelect}

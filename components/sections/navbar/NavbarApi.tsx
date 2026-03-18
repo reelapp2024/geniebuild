@@ -108,7 +108,7 @@ export const NavbarApi: React.FC<NavbarApiProps> = ({ section, readOnly = true }
     });
 
     if (level === 0) {
-      const MenuItemWithDropdown = ({ item }: { item: any }) => {
+      const MenuItemWithDropdown = ({ item, ...props }: { item: any, [key: string]: any }) => {
         const [isOpen, setIsOpen] = useState(false);
         const hasChildren = item.children && Array.isArray(item.children) && item.children.length > 0;
         const sortedChildren = hasChildren 
@@ -268,9 +268,9 @@ export const NavbarApi: React.FC<NavbarApiProps> = ({ section, readOnly = true }
           {resolvedData.logo?.url ? (
             <img
               src={resolvedData.logo.url}
-              alt={resolvedData.logo.alt || 'Logo'}
+              alt={(resolvedData.logo as any).alt || 'Logo'}
               className="h-8 md:h-10 w-auto object-contain"
-              style={{ maxHeight: '60px', ...resolvedData.logo.style }}
+              style={{ maxHeight: '60px', ...(resolvedData.logo as any).style }}
             />
           ) : (
             <div className="font-bold text-xl md:text-2xl" style={{ color: section.styles.titleColor || 'inherit' }}>
