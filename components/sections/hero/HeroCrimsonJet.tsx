@@ -80,7 +80,7 @@ export const HeroCrimsonJet: React.FC<HeroProps> = ({
 
   const getTitleElement = (): WebsiteElement => {
     if (section.elements?.find(e => e.id === `${section.id}-title`)) return section.elements.find(e => e.id === `${section.id}-title`)!;
-    return { id: `${section.id}-title`, type: 'heading', content: { text: content.title || 'Experience the Power of Crimson Jet.', htmlTag: 'h1' }, style: {} };
+    return { id: `${section.id}-title`, type: 'heading', content: { text: content.title || 'Experience the Power of Crimson Jet.', htmlTag: (styles.titleHeadingTag || 'h1') as any }, style: { fontSize: styles.titleSize } };
   };
 
   const getDescElement = (): WebsiteElement => {

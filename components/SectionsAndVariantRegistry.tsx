@@ -26,7 +26,7 @@ export interface SectionConfig {
 export const SECTIONS_REGISTRY: SectionConfig[] = [
   {
     sectionType: 'hero',
-    variants: ['HeroCenter', 'HeroLight', 'HeroCrimsonJet', 'HeroModern'],
+    variants: ['HeroCenter', 'HeroLight', 'HeroCrimsonJet', 'HeroModern', 'HeroExplore', 'HeroOverlay', 'HeroMarquee'],
     defaultVariant: 'HeroCenter'
   },
   {

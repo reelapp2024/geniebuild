@@ -22,6 +22,9 @@ import { HeroCenter } from './hero/HeroCenter';
 import { HeroLight } from './hero/HeroLight';
 import { HeroCrimsonJet } from './hero/HeroCrimsonJet';
 import { HeroModern } from './hero/HeroModern';
+import { HeroExplore } from './hero/HeroExplore';
+import { HeroOverlay } from './hero/HeroOverlay';
+import { HeroMarquee } from './hero/HeroMarquee';
 // Navbar variants
 import { NavbarSimple } from './navbar/NavbarSimple';
 import { NavbarCentered } from './navbar/NavbarCentered';
@@ -120,6 +123,12 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return <HeroLight {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
         case 'HeroModern':
           return <HeroModern {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+        case 'HeroExplore':
+          return <HeroExplore {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+        case 'HeroOverlay':
+          return <HeroOverlay {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+        case 'HeroMarquee':
+          return <HeroMarquee {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroCenter':
         case 'center':
         default:

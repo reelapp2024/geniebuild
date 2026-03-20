@@ -2,6 +2,7 @@ import React from 'react';
 import { Section, WebsiteElement } from '../../../types';
 import { ElementsSection } from '../ElementsSection';
 import { useTheme } from '@ui/blocks';
+import { PRESET_THEMES } from '../../../constants';
 
 interface HeroProps {
   section: Section;
@@ -49,7 +50,7 @@ export const HeroModern: React.FC<HeroProps> = ({
       style: {
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         color: 'rgba(255, 255, 255, 0.6)',
-        padding: '4px 12px',
+        padding: '6px',
         borderRadius: '9999px',
         fontSize: '10px',
         fontWeight: '700',
@@ -73,7 +74,7 @@ export const HeroModern: React.FC<HeroProps> = ({
       },
       style: {
         color: styles.titleColor || themeData?.heading || '',
-        fontSize: '4rem',
+        fontSize: styles.titleSize || '4rem',
         fontWeight: '800',
         lineHeight: '1.1',
         letterSpacing: '-0.02em',
@@ -123,7 +124,25 @@ export const HeroModern: React.FC<HeroProps> = ({
 
   const getSecondaryButtonElement = (): WebsiteElement => {
     const el = section.elements?.find(e => e.id === secondaryButtonId);
-    if (el) return el;
+    const activeTheme = PRESET_THEMES.find(t => t.elements.surface.toLowerCase() === themeData?.surface?.toLowerCase());
+    const secondaryButton = {
+      bg: themeData?.elements?.secondaryButton?.bg || activeTheme?.elements?.secondaryButton?.bg || 'transparent',
+      text: themeData?.elements?.secondaryButton?.text || activeTheme?.elements?.secondaryButton?.text || themeData?.heading || '#ffffff',
+      border: themeData?.elements?.secondaryButton?.border || activeTheme?.elements?.secondaryButton?.border || themeData?.accent || 'rgba(255, 255, 255, 0.2)'
+    };
+
+    if (el) {
+      return {
+        ...el,
+        style: {
+          ...el.style,
+          backgroundColor: el.style?.backgroundColor || secondaryButton.bg,
+          color: el.style?.color || secondaryButton.text,
+          border: el.style?.border || `1px solid ${secondaryButton.border}`
+        }
+      };
+    }
+
     return {
       id: secondaryButtonId,
       type: 'button',
@@ -132,12 +151,12 @@ export const HeroModern: React.FC<HeroProps> = ({
         link: '#'
       },
       style: {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        color: '#ffffff',
+        backgroundColor: secondaryButton.bg,
+        color: secondaryButton.text,
         padding: '12px 32px',
         borderRadius: '9999px',
         fontWeight: '600',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: `1px solid ${secondaryButton.border}`,
         backdropFilter: 'blur(12px)',
         textAlign: 'left'
       }
@@ -203,7 +222,18 @@ export const HeroModern: React.FC<HeroProps> = ({
 
   const getStatCard1Element = (): WebsiteElement => {
     const el = section.elements?.find(e => e.id === statCard1Id);
-    if (el) return el;
+    if (el) {
+      return {
+        ...el,
+        style: {
+          ...el.style,
+          position: 'absolute',
+          bottom: '-24px',
+          left: '-24px',
+          zIndex: 30
+        }
+      };
+    }
     return {
       id: statCard1Id,
       type: 'stat-card',
@@ -225,7 +255,18 @@ export const HeroModern: React.FC<HeroProps> = ({
 
   const getStatCard2Element = (): WebsiteElement => {
     const el = section.elements?.find(e => e.id === statCard2Id);
-    if (el) return el;
+    if (el) {
+      return {
+        ...el,
+        style: {
+          ...el.style,
+          position: 'absolute',
+          top: '-24px',
+          right: '-24px',
+          zIndex: 30
+        }
+      };
+    }
     return {
       id: statCard2Id,
       type: 'user-avatars',
@@ -269,10 +310,6 @@ export const HeroModern: React.FC<HeroProps> = ({
   
   return (
     <div className="relative w-full min-h-screen flex items-center overflow-hidden" style={{ backgroundColor: 'transparent' }}>
-      {/* Dynamic Background Elements */}
-      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] opacity-20 pointer-events-none" style={{ backgroundColor: styles.accentColor || themeData?.accent || '#3B82F6' }}></div>
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[100px] opacity-10 pointer-events-none" style={{ backgroundColor: styles.titleColor || themeData?.heading || '#F43F5E' }}></div>
-      
       <div className="container mx-auto px-6 relative z-10 py-20 lg:py-0">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Content Column */}

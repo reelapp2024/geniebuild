@@ -181,6 +181,10 @@ export interface WebsiteElement {
   content: {
     text?: string; // Main Title / Heading / Button Text
     subText?: string; // Description / Subtitle
+    // Text marquee support (used by HeroMarquee and any text element)
+    enableMarquee?: boolean;
+    marqueeSpeed?: '1x' | '2x' | '3x' | '4x' | '5x' | '6x' | '7x' | '8x' | '9x' | '10x';
+    marqueeDirection?: 'left' | 'right';
     htmlTag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'div' | 'span';
     textSize?: 'base' | 'small' | 'large' | 'xl'; // Text size variant for p tags
     link?: string;
@@ -396,6 +400,18 @@ export interface Section {
       // For image
       image?: {
         url: string;
+        mode?: 'single' | 'multiple';
+        images?: Array<{ url: string; id: string }>;
+        carouselSettings?: {
+          enabled: boolean;
+          autoplay: boolean;
+          duration: number; // Time between slides in ms
+          transitionType: 'slide' | 'fade';
+          transitionSpeed: number; // Transition duration in ms
+          loop: boolean;
+          pauseOnHover: boolean;
+          buttonVariant?: 'minimal' | 'rounded' | 'square' | 'outline' | 'hidden';
+        };
         position?: 'center' | 'top' | 'bottom' | 'left' | 'right' | 'top left' | 'top right' | 'bottom left' | 'bottom right';
         size?: 'cover' | 'contain' | 'auto' | string; // Can be custom like "50% 50%"
         repeat?: 'no-repeat' | 'repeat' | 'repeat-x' | 'repeat-y';

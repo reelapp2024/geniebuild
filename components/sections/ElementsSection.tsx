@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Section, WebsiteElement } from '../../types';
 import { useTheme } from '@ui/blocks';
 import { ELEMENT_DEFAULTS, PRESET_THEMES } from '../../constants';
@@ -146,6 +146,121 @@ const getSafeStyle = (style: any): React.CSSProperties => {
   return css as React.CSSProperties;
 };
 
+const getMarqueePxPerSecond = (speed: unknown): number => {
+  const pxPerSecondMap: Record<string, number> = {
+    '1x': 80,
+    '2x': 120,
+    '3x': 160,
+    '4x': 210,
+    '5x': 260,
+    '6x': 310,
+    '7x': 360,
+    '8x': 420,
+    '9x': 470,
+    '10x': 530,
+  };
+  return pxPerSecondMap[String(speed)] || 210;
+};
+
+const MarqueeTextElement: React.FC<{
+  id: string;
+  text: string;
+  speed: unknown;
+  direction: 'left' | 'right';
+  readOnly: boolean;
+  selectedClass: string;
+  textSizeClass: string;
+  textStyle: React.CSSProperties;
+  safeStyle: React.CSSProperties;
+  onClick?: (e: React.MouseEvent) => void;
+  onBlurText: (value: string) => void;
+}> = ({ id, text, speed, direction, readOnly, selectedClass, textSizeClass, textStyle, safeStyle, onClick, onBlurText }) => {
+  const spanRef = useRef<HTMLSpanElement | null>(null);
+  const [copyWidth, setCopyWidth] = useState<number>(0);
+
+  useEffect(() => {
+    const measure = () => {
+      const el = spanRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 0) setCopyWidth(rect.width);
+    };
+    measure();
+    const handleResize = () => measure();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [text]);
+
+  const distancePx = Math.max(240, copyWidth); // fallback avoids “stuck” animation on first render
+  const pxPerSecond = getMarqueePxPerSecond(speed);
+  const durationSeconds = Math.max(2, distancePx / Math.max(60, pxPerSecond));
+
+  const wrapperStyle: React.CSSProperties = {
+    margin: (safeStyle as any).margin,
+    padding: safeStyle.padding || '6px 16px',
+    backgroundColor: (safeStyle as any).backgroundColor || 'rgba(0,0,0,0.35)',
+    borderRadius: (safeStyle as any).borderRadius,
+    width: (safeStyle as any).width || '100%',
+    height: (safeStyle as any).height,
+    minHeight: (safeStyle as any).minHeight,
+    maxHeight: (safeStyle as any).maxHeight,
+    overflow: 'hidden'
+  };
+
+  const trackStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    whiteSpace: 'nowrap',
+    willChange: 'transform',
+    animationName: direction === 'right' ? 'gb-marquee-right' : 'gb-marquee-left',
+    animationDuration: `${durationSeconds}s`,
+    animationTimingFunction: 'linear',
+    animationIterationCount: 'infinite',
+    // CSS var used by keyframes for pixel-accurate distance
+    ['--gb-marquee-distance' as any]: `${distancePx}px`
+  };
+
+  const editableTextStyle: React.CSSProperties = { ...textStyle };
+
+  return (
+    <div
+      key={`${id}-marquee-${direction}-${String(speed)}`}
+      className={`outline-none rounded relative transition-all cursor-pointer ${textSizeClass} ${selectedClass}`}
+      style={wrapperStyle}
+      onClick={onClick}
+    >
+      <style>{`
+        @keyframes gb-marquee-left {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(calc(-1 * var(--gb-marquee-distance))); }
+        }
+        @keyframes gb-marquee-right {
+          0% { transform: translateX(calc(-1 * var(--gb-marquee-distance))); }
+          100% { transform: translateX(0); }
+        }
+      `}</style>
+
+      <div
+        className="w-max"
+        style={trackStyle}
+      >
+        <span
+          ref={spanRef}
+          style={editableTextStyle}
+          contentEditable={!readOnly}
+          suppressContentEditableWarning={!readOnly}
+          onBlur={!readOnly ? (e: any) => onBlurText(e.currentTarget.textContent || '') : undefined}
+        >
+          {text}
+        </span>
+        <span style={editableTextStyle}>
+          {text}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onElementUpdate, onElementSelect, selectedElementId, buttonClass, readOnly = false, isWrapped = true, themeColors }) => {
   const elements = section.elements || [];
   const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
@@ -273,6 +388,23 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             // Remove undefined properties
             if (!textStyle.fontFamily) delete textStyle.fontFamily;
             if (!textStyle.fontSize) delete textStyle.fontSize;
+            if (content.enableMarquee) {
+                return (
+                    <MarqueeTextElement
+                      id={id}
+                      text={content.text || ''}
+                      speed={content.marqueeSpeed}
+                      direction={content.marqueeDirection === 'right' ? 'right' : 'left'}
+                      readOnly={readOnly}
+                      selectedClass={selectedClass}
+                      textSizeClass={textSizeClass}
+                      textStyle={textStyle}
+                      safeStyle={safeStyle as any}
+                      onClick={!readOnly ? (e) => handleClick(e, el) : undefined}
+                      onBlurText={(v) => handleContentUpdate(id, 'text', v)}
+                    />
+                );
+            }
             return (
                 <p 
                     key={`${id}-${content.textSize || 'base'}`}
@@ -739,7 +871,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             
             // 7. Badge size and padding
             const badgeFontSize = renderStyle?.fontSize || '0.75rem';
-            const badgePadding = renderStyle?.padding || '4px 12px';
+            const badgePadding = renderStyle?.padding || '6px';
             const badgeBorderRadius = renderStyle?.borderRadius || '9999px';
             
             // 8. Create safe style object excluding colors
@@ -1007,7 +1139,12 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
 
         case 'stat-card':
             return (
-                <div key={id} className={`p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 group ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={style}>
+                <div
+                    key={id}
+                    className={`p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 group ${selectedClass}`}
+                    onClick={(e) => handleClick(e, el)}
+                    style={style as React.CSSProperties}
+                >
                     <div className="flex items-center gap-4 mb-3">
                         {content.icon && (
                             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">

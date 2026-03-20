@@ -44,7 +44,7 @@ export const TestimonialsModern: React.FC<TestimonialsProps> = ({
       style: {
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         color: 'rgba(255, 255, 255, 0.4)',
-        padding: '4px 12px',
+        padding: '6px',
         borderRadius: '9999px',
         fontSize: '10px',
         fontWeight: '700',

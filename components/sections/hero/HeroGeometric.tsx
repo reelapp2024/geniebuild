@@ -81,7 +81,8 @@ export const HeroGeometric: React.FC<HeroProps> = ({
         htmlTag: (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
       },
       style: {
-        color: styles.titleColor || themeData?.heading || ''
+        color: styles.titleColor || themeData?.heading || '',
+        fontSize: styles.titleSize
       }
     };
   };
@@ -179,7 +180,7 @@ export const HeroGeometric: React.FC<HeroProps> = ({
               fontWeight: badgeElement?.style?.fontWeight || 'bold',
               textTransform: (badgeElement?.style?.textTransform as any) || 'uppercase',
               letterSpacing: badgeElement?.style?.letterSpacing || '0.2em',
-              padding: (typeof badgeElement?.style?.padding === 'string' ? badgeElement.style.padding : '4px 12px') || '4px 12px',
+              padding: (typeof badgeElement?.style?.padding === 'string' ? badgeElement.style.padding : '6px') || '6px',
               borderRadius: (typeof badgeElement?.style?.borderRadius === 'string' ? badgeElement.style.borderRadius : '9999px') || '9999px'
             } as React.CSSProperties}
             contentEditable={!readOnly}

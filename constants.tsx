@@ -6,6 +6,7 @@ import { WebsiteData, Section, WebsiteElement } from './types';
 export const ELEMENT_DEFAULTS: Record<string, any> = {
   card: { padding: '32px', borderRadius: '24px', borderWidth: '1px', borderStyle: 'solid', backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' },
   button: { padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', textAlign: 'center' },
+  badge: { padding: '6px' },
   heading: { fontWeight: 'bold', textAlign: 'center'},
   text: { opacity: 1, textAlign: 'center'},
   icon: { fontSize: '24px' },
@@ -43,7 +44,8 @@ export const PRESET_FONTS = [
   { name: 'Merriweather', value: '"Merriweather", serif' },
   { name: 'Lora', value: '"Lora", serif' },
   { name: 'Crimson Text', value: '"Crimson Text", serif' },
-  
+  { name: 'Libre Caslon Text', value: '"Libre Caslon Text", serif' },
+ 
   // Script/Display fonts
   { name: 'Dancing Script', value: '"Dancing Script", cursive' },
   { name: 'Pacifico', value: '"Pacifico", cursive' },
@@ -626,6 +628,88 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
                   size: 'cover',
                   repeat: 'no-repeat',
                   overlay: { enabled: true }
+              }
+          }
+      },
+      'HeroExplore': {
+          textAlign: 'left',
+          titleColor: '#F8FAFC',
+          subtitleColor: '#D1D5DB',
+          textColor: '#D1D5DB',
+          background: {
+              type: 'gradient',
+              gradient: {
+                  type: 'linear',
+                  direction: 135,
+                  stops: [
+                      { color: '#0A1220', position: 0 },
+                      { color: '#0F2430', position: 100 }
+                  ]
+              },
+              overlay: { enabled: false }
+          },
+          imageOverlayOpacity: 0.14
+      },
+      'HeroMarquee': {
+          textAlign: 'center',
+          titleColor: '#F8FAFC',
+          subtitleColor: '#E5E7EB',
+          textColor: '#E5E7EB',
+          titleSize: 'clamp(3rem, 8vw, 7rem)',
+          background: {
+              type: 'image',
+              image: {
+                  url: 'https://step.themerex.net/splash/src/img/hero/1.jpg',
+                  mode: 'multiple',
+                  images: [
+                      { id: 'hero-marquee-1', url: 'https://step.themerex.net/splash/src/img/hero/1.jpg' },
+                      { id: 'hero-marquee-3', url: 'https://step.themerex.net/splash/src/img/hero/3.jpg' },
+                      { id: 'hero-marquee-2', url: 'https://step.themerex.net/splash/src/img/hero/2.jpg' }
+                  ],
+                  carouselSettings: {
+                      enabled: true,
+                      autoplay: true,
+                      duration: 5500,
+                      transitionType: 'fade',
+                      transitionSpeed: 900,
+                      loop: true,
+                      pauseOnHover: false,
+                      buttonVariant: 'hidden'
+                  },
+                  position: 'center',
+                  size: 'cover',
+                  repeat: 'no-repeat',
+                  overlay: { enabled: true, color: '#000000', opacity: 0.38, blendMode: 'normal' }
+              }
+          }
+      },
+      'HeroOverlay': {
+          textAlign: 'center',
+          background: {
+              type: 'image',
+              image: {
+                  url: 'https://images.unsplash.com/photo-1470071131384-001b85755536?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+                  mode: 'multiple',
+                  images: [
+                      { id: 'img2', url: 'https://images.unsplash.com/photo-1470071131384-001b85755536?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80' },
+                      { id: 'img3', url: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80' },
+                      { id: 'img4', url: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80' },
+                      { id: 'img5', url: 'https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80' }
+                  ],
+                  carouselSettings: {
+                      enabled: true,
+                      autoplay: true,
+                      duration: 5000,
+                      transitionType: 'fade',
+                      transitionSpeed: 1000,
+                      loop: true,
+                      pauseOnHover: false,
+                      buttonVariant: 'outline'
+                  },
+                  position: 'center',
+                  size: 'cover',
+                  repeat: 'no-repeat',
+                  overlay: { enabled: true, color: '#000000', opacity: 0.5, blendMode: 'normal' }
               }
           }
       }

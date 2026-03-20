@@ -18,6 +18,123 @@ interface SectionRendererProps {
   selectedElementId?: string | null;
 }
 
+const BackgroundCarousel: React.FC<{
+  images: Array<{ url: string; id: string }>;
+  settings: any;
+  styles: any;
+}> = ({ images, settings, styles }) => {
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [isHovered, setIsHovered] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!settings.enabled || !settings.autoplay || images.length <= 1) return;
+    if (settings.pauseOnHover && isHovered) return;
+    
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length);
+    }, settings.duration || 5000);
+    return () => clearInterval(interval);
+  }, [settings.enabled, settings.autoplay, settings.duration, images.length, settings.pauseOnHover, isHovered]);
+
+  if (!images || images.length === 0) return null;
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const transitionStyle = settings.transitionType === 'fade' 
+    ? { transition: `opacity ${settings.transitionSpeed || 500}ms ease-in-out` }
+    : { transition: `transform ${settings.transitionSpeed || 500}ms ease-in-out` };
+
+  const buttonVariant = settings.buttonVariant || 'minimal';
+
+  const renderButtons = () => {
+    if (buttonVariant === 'hidden' || images.length <= 1) return null;
+
+    let btnClass = "absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center cursor-pointer transition-all ";
+    
+    switch (buttonVariant) {
+      case 'rounded':
+        btnClass += "w-12 h-12 rounded-full bg-black/50 text-white hover:bg-black/70 backdrop-blur-sm";
+        break;
+      case 'square':
+        btnClass += "w-12 h-12 bg-black/50 text-white hover:bg-black/70 backdrop-blur-sm";
+        break;
+      case 'outline':
+        btnClass += "w-12 h-12 rounded-full border-2 border-white text-white hover:bg-white/20 backdrop-blur-sm";
+        break;
+      case 'minimal':
+      default:
+        btnClass += "w-10 h-10 text-white/70 hover:text-white drop-shadow-md";
+        break;
+    }
+
+    return (
+      <>
+        <div className={`${btnClass} left-4`} onClick={handlePrev}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </div>
+        <div className={`${btnClass} right-4`} onClick={handleNext}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+      </>
+    );
+  };
+
+  return (
+    <div 
+      className="absolute inset-0 z-0 overflow-hidden"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {settings.transitionType === 'slide' ? (
+        <div 
+          className="absolute inset-0 flex h-full w-full"
+          style={{ 
+            ...transitionStyle,
+            transform: `translateX(-${currentIndex * 100}%)` 
+          }}
+        >
+          {images.map((img) => (
+            <div 
+              key={img.id}
+              className="w-full h-full flex-shrink-0 bg-cover bg-center bg-no-repeat"
+              style={{ 
+                backgroundImage: `url(${img.url})`,
+                backgroundPosition: styles.background?.image?.position || styles.backgroundPosition || 'center',
+                backgroundSize: styles.background?.image?.size || styles.backgroundSize || 'cover',
+                backgroundRepeat: styles.background?.image?.repeat || styles.backgroundRepeat || 'no-repeat',
+              }}
+            />
+          ))}
+        </div>
+      ) : (
+        images.map((img, idx) => (
+          <div 
+            key={img.id}
+            className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+            style={{ 
+              backgroundImage: `url(${img.url})`,
+              opacity: currentIndex === idx ? 1 : 0,
+              backgroundPosition: styles.background?.image?.position || styles.backgroundPosition || 'center',
+              backgroundSize: styles.background?.image?.size || styles.backgroundSize || 'cover',
+              backgroundRepeat: styles.background?.image?.repeat || styles.backgroundRepeat || 'no-repeat',
+              ...transitionStyle
+            }}
+          />
+        ))
+      )}
+      {renderButtons()}
+    </div>
+  );
+};
+
 const SectionRenderer: React.FC<SectionRendererProps> = ({ 
   section, 
   onUpdate, 
@@ -155,12 +272,28 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
             bgStyles.backgroundImage = `radial-gradient(circle, ${stops})`;
           }
         }
-      } else if (styles.background.type === 'image' && styles.background.image?.url) {
-        bgStyles.backgroundImage = `url(${styles.background.image.url})`;
-        bgStyles.backgroundPosition = styles.background.image.position || styles.backgroundPosition || 'center';
-        bgStyles.backgroundSize = styles.background.image.size || styles.backgroundSize || 'cover';
-        bgStyles.backgroundRepeat = styles.background.image.repeat || styles.backgroundRepeat || 'no-repeat';
-        bgStyles.backgroundAttachment = styles.background.image.attachment || styles.backgroundAttachment || 'scroll';
+      } else if (styles.background.type === 'image') {
+        const imgConfig = styles.background.image || {};
+        const isCarousel =
+          imgConfig.mode === 'multiple' &&
+          imgConfig.carouselSettings?.enabled &&
+          Array.isArray(imgConfig.images) &&
+          imgConfig.images.length > 0;
+        
+        if (!isCarousel && imgConfig.url) {
+          bgStyles.backgroundImage = `url(${imgConfig.url})`;
+          bgStyles.backgroundPosition = imgConfig.position || styles.backgroundPosition || 'center';
+          bgStyles.backgroundSize = imgConfig.size || styles.backgroundSize || 'cover';
+          bgStyles.backgroundRepeat = imgConfig.repeat || styles.backgroundRepeat || 'no-repeat';
+          bgStyles.backgroundAttachment = imgConfig.attachment || styles.backgroundAttachment || 'scroll';
+        } else if (!isCarousel && styles.backgroundImage) {
+          // Backward-compat fallback for legacy sections that only stored backgroundImage
+          bgStyles.backgroundImage = `url(${styles.backgroundImage})`;
+          bgStyles.backgroundPosition = styles.backgroundPosition || 'center';
+          bgStyles.backgroundSize = styles.backgroundSize || 'cover';
+          bgStyles.backgroundRepeat = styles.backgroundRepeat || 'no-repeat';
+          bgStyles.backgroundAttachment = styles.backgroundAttachment || 'scroll';
+        }
       }
     } else {
       if (styles.backgroundImage) {
@@ -194,7 +327,9 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
                      styles.variant?.includes('Geometric') || 
                      styles.variant?.includes('CrimsonJet') || 
                      styles.variant?.includes('Multicolor') || 
-                     styles.variant?.includes('Gradient');
+                     styles.variant?.includes('Gradient') ||
+                     styles.variant?.includes('Explore') ||
+                     styles.variant?.includes('Marquee');
 
   const inlineStyles: React.CSSProperties = {
     ...getBackgroundStyles(),
@@ -366,8 +501,23 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
 
   const enableGeometry = styles.enableGeometry !== undefined ? styles.enableGeometry : (styles.variant === 'HeroGeometric');
   
+  const isCarousel = styles.background?.type === 'image' && 
+                     styles.background.image?.mode === 'multiple' && 
+                     styles.background.image?.carouselSettings?.enabled && 
+                     styles.background.image?.images && 
+                     styles.background.image.images.length > 0;
+
   return (
     <div className={containerClass} style={inlineStyles} onClick={(e) => { if(!readOnly) { e.stopPropagation(); onClick(); }}}>
+      {/* Background Carousel */}
+      {isCarousel && (
+        <BackgroundCarousel 
+          images={styles.background!.image!.images!} 
+          settings={styles.background!.image!.carouselSettings} 
+          styles={styles} 
+        />
+      )}
+
       {/* Background overlay - Layer 1: Gradient (like website multicolor theme) */}
       {overlays.gradientOverlay && (
         <div 

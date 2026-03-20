@@ -120,7 +120,8 @@ export const HeroMulticolorV1: React.FC<HeroProps> = ({
         htmlTag: (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
       },
       style: {
-        color: colors.heading
+        color: colors.heading,
+        fontSize: styles.titleSize
       }
     };
   };

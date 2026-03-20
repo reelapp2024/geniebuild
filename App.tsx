@@ -958,29 +958,147 @@ const BackgroundControl = ({
       {/* Image Background */}
       {localBackground.type === 'image' && (
         <div className="space-y-3">
-          <ImageControl
-            label="Background Image"
-            value={localBackground.image?.url || ''}
+          <SelectInput
+            label="Image Mode"
+            value={localBackground.image?.mode || 'single'}
+            options={[
+              { label: 'Single Image', value: 'single' },
+              { label: 'Carousel (Multiple)', value: 'multiple' }
+            ]}
             onChange={(v) => {
-              // Ensure background type is 'image' when URL is pasted
-              const currentImage = localBackground.image || {
-                url: '',
-                position: 'center',
-                size: 'cover',
-                repeat: 'no-repeat',
-                attachment: 'scroll',
-                overlay: themeOverlayDefaults
-              };
-              // Update background with image URL and ensure type is 'image'
+              const currentImage = localBackground.image || {};
               updateBackground({
                 type: 'image',
-                image: { ...currentImage, url: v }
+                image: { ...currentImage, mode: v }
               });
             }}
-            onUpload={onUpload || (() => {})}
-            uploading={uploading}
-            uploadProgress={uploadProgress}
           />
+
+          {localBackground.image?.mode === 'multiple' ? (
+            <div className="space-y-3 p-3 bg-[#151515] rounded border border-[#333]">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-bold text-white/40 capitalize ml-1">Carousel Images</label>
+                <button
+                  onClick={() => {
+                    const currentImages = localBackground.image?.images || [];
+                    updateBackground({
+                      image: {
+                        ...localBackground.image,
+                        images: [...currentImages, { id: `img-${Date.now()}`, url: 'https://images.unsplash.com/photo-1470071131384-001b85755536?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80' }]
+                      }
+                    });
+                  }}
+                  className="px-2 py-1 text-[9px] bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded border border-blue-600/30"
+                >
+                  <i className="fa-solid fa-plus mr-1"></i>Add Image
+                </button>
+              </div>
+              
+              {(localBackground.image?.images || []).map((img: any, index: number) => (
+                <div key={img.id} className="flex gap-2 items-center">
+                  <div className="flex-1">
+                    <ImageControl
+                      label={`Image ${index + 1}`}
+                      value={img.url}
+                      onChange={(v) => {
+                        const newImages = [...(localBackground.image?.images || [])];
+                        newImages[index] = { ...newImages[index], url: v };
+                        updateBackground({ image: { ...localBackground.image, images: newImages } });
+                      }}
+                      onUpload={onUpload || (() => {})}
+                      uploading={uploading}
+                      uploadProgress={uploadProgress}
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newImages = [...(localBackground.image?.images || [])];
+                      newImages.splice(index, 1);
+                      updateBackground({ image: { ...localBackground.image, images: newImages } });
+                    }}
+                    className="mt-5 px-2 py-1.5 text-[10px] bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded border border-red-600/30"
+                  >
+                    <i className="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              ))}
+
+              <div className="pt-2 border-t border-[#333] space-y-3">
+                <label className="text-[10px] font-bold text-white/40 capitalize ml-1">Carousel Settings</label>
+                
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-white/70">Enable Carousel</label>
+                  <input 
+                    type="checkbox" 
+                    checked={localBackground.image?.carouselSettings?.enabled ?? true}
+                    onChange={(e) => updateBackground({ 
+                      image: { ...localBackground.image, carouselSettings: { ...localBackground.image?.carouselSettings, enabled: e.target.checked } } 
+                    })}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-white/70">Autoplay</label>
+                  <input 
+                    type="checkbox" 
+                    checked={localBackground.image?.carouselSettings?.autoplay ?? true}
+                    onChange={(e) => updateBackground({ 
+                      image: { ...localBackground.image, carouselSettings: { ...localBackground.image?.carouselSettings, autoplay: e.target.checked } } 
+                    })}
+                  />
+                </div>
+
+                <SelectInput
+                  label="Transition Type"
+                  value={localBackground.image?.carouselSettings?.transitionType || 'fade'}
+                  options={[
+                    { label: 'Fade', value: 'fade' },
+                    { label: 'Slide', value: 'slide' }
+                  ]}
+                  onChange={(v) => updateBackground({ 
+                    image: { ...localBackground.image, carouselSettings: { ...localBackground.image?.carouselSettings, transitionType: v } } 
+                  })}
+                />
+
+                <SelectInput
+                  label="Button Style"
+                  value={localBackground.image?.carouselSettings?.buttonVariant || 'minimal'}
+                  options={[
+                    { label: 'Minimal', value: 'minimal' },
+                    { label: 'Rounded', value: 'rounded' },
+                    { label: 'Square', value: 'square' },
+                    { label: 'Outline', value: 'outline' },
+                    { label: 'Hidden', value: 'hidden' }
+                  ]}
+                  onChange={(v) => updateBackground({ 
+                    image: { ...localBackground.image, carouselSettings: { ...localBackground.image?.carouselSettings, buttonVariant: v } } 
+                  })}
+                />
+              </div>
+            </div>
+          ) : (
+            <ImageControl
+              label="Background Image"
+              value={localBackground.image?.url || ''}
+              onChange={(v) => {
+                const currentImage = localBackground.image || {
+                  url: '',
+                  position: 'center',
+                  size: 'cover',
+                  repeat: 'no-repeat',
+                  attachment: 'scroll',
+                  overlay: themeOverlayDefaults
+                };
+                updateBackground({
+                  type: 'image',
+                  image: { ...currentImage, url: v }
+                });
+              }}
+              onUpload={onUpload || (() => {})}
+              uploading={uploading}
+              uploadProgress={uploadProgress}
+            />
+          )}
         </div>
       )}
     </div>
@@ -1060,6 +1178,8 @@ const AppContent: React.FC = () => {
   };
   
   const currentDeviceWidth = deviceWidths[viewMode]; 
+  const zoomScale = zoomLevel / 100;
+  const zoomViewportWidthPercent = 100 / zoomScale;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<{sectionId: string, elementId?: string, field: string} | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -2947,6 +3067,48 @@ const AppContent: React.FC = () => {
                            </div>
                        )}
                    <SelectInput label="Font Weight" value={styles.fontWeight || '400'} options={[{label: 'Normal', value: '400'}, {label: 'Bold', value: '700'}, {label: 'Black', value: '900'}, {label: 'Light', value: '300'}]} onChange={(v) => onUpdate('fontWeight', v)} />
+                  {(elementType === 'heading' || elementType === 'text') && ((() => {
+                    const parseCssToPx = (val?: string | number): number => {
+                      if (typeof val === 'number') return val;
+                      if (!val || typeof val !== 'string') return 16;
+                      const num = parseFloat(val);
+                      if (!Number.isFinite(num)) return 16;
+                      if (val.includes('rem')) return num * 16;
+                      if (val.includes('em')) return num * 16;
+                      if (val.includes('px')) return num;
+                      return num;
+                    };
+                    const parseLineHeightMultiplier = (lh?: unknown, fontSizeStr?: unknown): number => {
+                      if (typeof lh === 'number' && Number.isFinite(lh)) return lh;
+                      if (typeof lh !== 'string' || lh.trim() === '') return 1.25;
+                      const num = parseFloat(lh);
+                      if (!Number.isFinite(num)) return 1.25;
+                      if (lh.includes('px') || lh.includes('rem') || lh.includes('em')) {
+                        const fontPx = parseCssToPx(fontSizeStr as any);
+                        if (!Number.isFinite(fontPx) || fontPx <= 0) return 1.25;
+                        const lhPx = parseCssToPx(lh);
+                        return Math.min(3, Math.max(0.5, lhPx / fontPx));
+                      }
+                      // unitless multiplier
+                      return Math.min(3, Math.max(0.5, num));
+                    };
+
+                    const fontSizeStr = styles.fontSize;
+                    const currentLineHeight = parseLineHeightMultiplier(styles.lineHeight, fontSizeStr);
+                    const clamped = Math.min(3, Math.max(0.8, currentLineHeight));
+
+                    return (
+                      <RangeInput
+                        label="Line Height"
+                        value={clamped}
+                        min={0.8}
+                        max={3}
+                        step={0.05}
+                        unit=""
+                        onChange={(v) => onUpdate('lineHeight', `${v}`)}
+                      />
+                    );
+                  })())}
                    <div className="mt-2">
                         <label className="text-[10px] font-bold text-white/40 capitalize ml-1 mb-1 block">Alignment</label>
                         <ButtonGroup value={styles.textAlign || 'left'} onChange={(v) => onUpdate('textAlign', v)} options={[{ icon: 'fa-align-left', value: 'left', label: 'Left' }, { icon: 'fa-align-center', value: 'center', label: 'Center' }, { icon: 'fa-align-right', value: 'right', label: 'Right' }, { icon: 'fa-align-justify', value: 'justify', label: 'Justify' }]} />
@@ -3028,6 +3190,18 @@ const AppContent: React.FC = () => {
               {context === 'element' && elementType === 'badge' && (() => {
                   const liveSurface = siteData.globalStyles.colors.backgroundColor || '';
                   const preset = PRESET_THEMES.find(t => t.elements.surface.toLowerCase() === liveSurface.toLowerCase());
+                  const parsePaddingPx = (value: unknown): number => {
+                      if (typeof value !== 'string') return 6;
+                      const firstToken = value.trim().split(/\s+/)[0] || '';
+                      const match = firstToken.match(/([\d.]+)(px|rem|%|em)?/);
+                      if (!match) return 6;
+                      const num = parseFloat(match[1]);
+                      if (!Number.isFinite(num)) return 6;
+                      const unit = match[2] || 'px';
+                      if (unit === 'rem' || unit === 'em') return Math.round(num * 16);
+                      if (unit === '%') return Math.round(num);
+                      return Math.round(num);
+                  };
                   
                   let fallbackBg = preset?.elements.badge.background;
                   let fallbackText = preset?.elements.badge.text;
@@ -3059,7 +3233,15 @@ const AppContent: React.FC = () => {
                           </div>
                           <ColorInput label="Background Color" value={styles.backgroundColor || fallbackBg} onChange={(v) => onUpdate('backgroundColor', v)} />
                           <ColorInput label="Text Color" value={styles.color || fallbackText} onChange={(v) => onUpdate('color', v)} />
-                          <TextInput label="Padding" value={typeof styles.padding === 'string' ? styles.padding : ''} onChange={(v) => onUpdate('padding', v)} placeholder="e.g., 4px 12px" />
+                          <RangeInput
+                              label="Padding (All)"
+                              value={Math.min(64, Math.max(0, parsePaddingPx(styles.padding)))}
+                              min={0}
+                              max={64}
+                              step={1}
+                              unit="px"
+                              onChange={(v) => onUpdate('padding', `${v}px`)}
+                          />
                           <SelectInput 
                               label="Size" 
                               value={styles.fontSize || '0.75rem'} 
@@ -3927,8 +4109,11 @@ const AppContent: React.FC = () => {
                                              <div className="space-y-4">
                                                  <TextInput 
                                                      label="Stat Value" 
-                                                     value={selectedElement.content.value || selectedElement.content.targetNumber || ''} 
-                                                     onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, value: v, targetNumber: v} })} 
+                                                    value={selectedElement.content.value !== undefined ? String(selectedElement.content.value) : (selectedElement.content.targetNumber !== undefined ? String(selectedElement.content.targetNumber) : '')} 
+                                                    onChange={(v) => {
+                                                      const num = parseFloat(v) || 0;
+                                                      updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, value: num, targetNumber: num } });
+                                                    }} 
                                                      placeholder="e.g. 99% or 500k+"
                                                  />
                                                  <TextInput 
@@ -3993,8 +4178,11 @@ const AppContent: React.FC = () => {
                                                          ))}
                                                          <TextInput 
                                                              label="Extra Count (e.g. +50)" 
-                                                             value={selectedElement.content.targetNumber || ''} 
-                                                             onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, targetNumber: v} })} 
+                                                            value={selectedElement.content.targetNumber !== undefined ? String(selectedElement.content.targetNumber) : ''} 
+                                                            onChange={(v) => {
+                                                              const num = parseFloat(v) || 0;
+                                                              updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, targetNumber: num } });
+                                                            }} 
                                                          />
                                                      </div>
                                                  );
@@ -4078,43 +4266,88 @@ const AppContent: React.FC = () => {
                                                      value={selectedElement.content?.text || ''} 
                                                      onChange={(v) => updateElement(selectedSection.id, selectedElement.id, { content: { ...(selectedElement.content || {}), text: v } })} 
                                                  />
-                                                 {selectedElement.type === 'heading' && (
-                                                     <SelectInput 
-                                                         key={`heading-tag-${selectedElement.id}-${selectedElement.content?.htmlTag || 'h2'}`}
-                                                         label="Heading Level" 
-                                                         value={
-                                                             // For Hero title virtual elements, read from styles.titleHeadingTag
-                                                             selectedElement.id.startsWith(`${selectedSection.id}-hero-title`) 
-                                                                 ? (selectedSection.styles.titleHeadingTag || 'h1')
-                                                                 : (selectedElement.content?.htmlTag || 'h2')
+                                                 {selectedElement.type === 'heading' && (() => {
+                                                     const isHeroTitle = selectedElement.id.startsWith(`${selectedSection.id}-hero-title`);
+                                                     const headingTag = (isHeroTitle 
+                                                         ? (selectedSection.styles.titleHeadingTag || 'h1')
+                                                         : (selectedElement.content?.htmlTag || 'h2')) as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+                                                     
+                                                     let currentSizeStr = isHeroTitle 
+                                                         ? (selectedSection.styles.titleSize || selectedSection.styles.fontSize) 
+                                                         : (selectedElement.style?.fontSize);
+                                                         
+                                                     if (!currentSizeStr) {
+                                                         currentSizeStr = defaultSizes[headingTag] || '2rem';
+                                                     }
+                                                     
+                                                     let currentNum = 2;
+                                                     if (typeof currentSizeStr === 'string') {
+                                                         const match = currentSizeStr.match(/^([\d.]+)(rem|px|em)?$/);
+                                                         if (match) {
+                                                             currentNum = parseFloat(match[1]);
+                                                             if (match[2] === 'px') currentNum = currentNum / 16;
                                                          }
-                                                         options={[
-                                                             {label: 'H1 (Largest)', value: 'h1'},
-                                                             {label: 'H2', value: 'h2'},
-                                                             {label: 'H3', value: 'h3'},
-                                                             {label: 'H4', value: 'h4'},
-                                                             {label: 'H5', value: 'h5'},
-                                                             {label: 'H6 (Smallest)', value: 'h6'}
-                                                         ]} 
-                                                         onChange={(v) => {
-                                                             // For Hero title virtual elements, update titleHeadingTag in styles
-                                                             if (selectedElement.id.startsWith(`${selectedSection.id}-hero-title`)) {
-                                                                 updateSectionStyle(selectedSection.id, 'titleHeadingTag', v);
-                                                             } else {
-                                                                 // For regular heading elements
-                                                                 updateElement(selectedSection.id, selectedElement.id, { content: {...selectedElement.content, htmlTag: v as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'} });
-                                                             }
-                                                         }} 
-                                                         />
-                                                 )}
+                                                     }
+                                                     
+                                                     return (
+                                                         <>
+                                                             <SelectInput 
+                                                                 key={`heading-tag-${selectedElement.id}-${headingTag}`}
+                                                                 label="Heading Level" 
+                                                                 value={headingTag}
+                                                                 options={[
+                                                                     {label: 'H1 (Largest)', value: 'h1'},
+                                                                     {label: 'H2', value: 'h2'},
+                                                                     {label: 'H3', value: 'h3'},
+                                                                     {label: 'H4', value: 'h4'},
+                                                                     {label: 'H5', value: 'h5'},
+                                                                     {label: 'H6 (Smallest)', value: 'h6'}
+                                                                 ]} 
+                                                                 onChange={(v) => {
+                                                                     if (isHeroTitle) {
+                                                                         updateSectionStyle(selectedSection.id, 'titleHeadingTag', v);
+                                                                         updateSectionStyle(selectedSection.id, 'titleSize', ''); // Reset size
+                                                                     } else {
+                                                                         updateElement(selectedSection.id, selectedElement.id, { 
+                                                                             content: {...selectedElement.content, htmlTag: v as any},
+                                                                             style: {...selectedElement.style, fontSize: ''} // Reset size
+                                                                         });
+                                                                     }
+                                                                 }} 
+                                                             />
+                                                             <RangeInput 
+                                                                 label="Heading Size" 
+                                                                 value={currentNum} 
+                                                                 min={0.5} 
+                                                                 max={10} 
+                                                                 step={0.1} 
+                                                                 unit="rem" 
+                                                                 onChange={(v) => {
+                                                                     const newSize = `${v}rem`;
+                                                                     if (isHeroTitle) {
+                                                                         updateSectionStyle(selectedSection.id, 'titleSize', newSize);
+                                                                     } else {
+                                                                         updateElement(selectedSection.id, selectedElement.id, { 
+                                                                             style: {...selectedElement.style, fontSize: newSize} 
+                                                                         });
+                                                                     }
+                                                                 }} 
+                                                             />
+                                                         </>
+                                                     );
+                                                 })()}
                                                  {selectedElement.type === 'text' && (() => {
                                                      // For Hero subtitle virtual elements, we need to compute textSize from subtitleSize
                                                      // For regular text elements, read from content.textSize
                                                      let currentTextSize: 'base' | 'small' | 'large' | 'xl' = 'base';
+                                                    let currentEnableMarquee = false;
+                                                    let currentMarqueeSpeed: '1x' | '2x' | '3x' | '4x' | '5x' | '6x' | '7x' | '8x' | '9x' | '10x' = '4x';
+                                                    let currentMarqueeDirection: 'left' | 'right' = 'left';
+                                                    const currentSection = siteData.sections.find(s => s.id === selectedSection.id);
+                                                    const currentElement = currentSection?.elements?.find(e => e.id === selectedElement.id);
                                                      
                                                      if (selectedElement.id.includes('-hero-subtitle')) {
                                                          // Hero subtitle virtual element - read textSize directly from content.subtitleTextSize
-                                                         const currentSection = siteData.sections.find(s => s.id === selectedSection.id);
                                                          if (currentSection && currentSection.content?.subtitleTextSize) {
                                                              currentTextSize = currentSection.content.subtitleTextSize;
                                                          } else {
@@ -4123,29 +4356,156 @@ const AppContent: React.FC = () => {
                                                          }
                                                      } else {
                                                          // Regular text element - read from content.textSize
-                                                         const currentSection = siteData.sections.find(s => s.id === selectedSection.id);
-                                                         const currentElement = currentSection?.elements?.find(e => e.id === selectedElement.id);
                                                          currentTextSize = (currentElement?.content?.textSize || selectedElement.content?.textSize || 'base') as 'base' | 'small' | 'large' | 'xl';
                                                      }
+                                                    currentEnableMarquee = Boolean(currentElement?.content?.enableMarquee ?? selectedElement.content?.enableMarquee ?? false);
+                                                    currentMarqueeSpeed = (currentElement?.content?.marqueeSpeed || selectedElement.content?.marqueeSpeed || '4x') as any;
+                                                    currentMarqueeDirection = (currentElement?.content?.marqueeDirection || selectedElement.content?.marqueeDirection || 'left') as any;
+
+                                                    const parseCssToPx = (val?: unknown): number => {
+                                                        if (typeof val === 'number' && Number.isFinite(val)) return val;
+                                                        if (typeof val !== 'string') return 16;
+                                                        const num = parseFloat(val);
+                                                        if (!Number.isFinite(num)) return 16;
+                                                        if (val.includes('rem')) return num * 16;
+                                                        if (val.includes('em')) return num * 16;
+                                                        if (val.includes('px')) return num;
+                                                        return num;
+                                                    };
+                                                    const parsePaddingYpx = (val?: unknown): number => {
+                                                        if (typeof val !== 'string' || val.trim() === '') return 10;
+                                                        const parts = val.trim().split(/\s+/);
+                                                        // padding: "Y X" => first token is Y
+                                                        const first = parts[0];
+                                                        return parseCssToPx(first);
+                                                    };
+                                                    const currentMarqueeBgWidthPercent = (() => {
+                                                        const w = (currentElement?.style as any)?.width ?? (selectedElement.style as any)?.width;
+                                                        if (typeof w === 'string' && w.includes('%')) return Math.min(100, Math.max(70, parseFloat(w)));
+                                                        return 100;
+                                                    })();
+                                                    const currentMarqueeBgHeightPx = (() => {
+                                                        const h = (currentElement?.style as any)?.height ?? (selectedElement.style as any)?.height;
+                                                        if (typeof h === 'string' && h.includes('px')) {
+                                                            const n = parseCssToPx(h);
+                                                            if (Number.isFinite(n)) return Math.round(Math.min(140, Math.max(20, n)));
+                                                        }
+                                                        const fontPx = parseCssToPx(((currentElement?.style as any)?.fontSize ?? (selectedElement.style as any)?.fontSize) || '16px');
+                                                        const lhStr = (currentElement?.style as any)?.lineHeight ?? (selectedElement.style as any)?.lineHeight;
+                                                        const lhNum = typeof lhStr === 'string' && lhStr.includes('px') ? parseCssToPx(lhStr) / Math.max(1, fontPx) : parseFloat(lhStr as any);
+                                                        const multiplier = Number.isFinite(lhNum) ? lhNum : 1.25;
+                                                        const padY = parsePaddingYpx((currentElement?.style as any)?.padding ?? (selectedElement.style as any)?.padding);
+                                                        const est = fontPx * multiplier + padY * 2;
+                                                        return Math.round(Math.min(140, Math.max(20, est)));
+                                                    })();
                                                      
                                                      return (
-                                                         <SelectInput 
-                                                             key={`text-size-${selectedElement.id}-${currentTextSize}`}
-                                                             label="Text Size" 
-                                                             value={currentTextSize}
-                                                             options={[
-                                                                 {label: 'Base', value: 'base'},
-                                                                 {label: 'Small', value: 'small'},
-                                                                 {label: 'Large', value: 'large'},
-                                                                 {label: 'XL', value: 'xl'}
-                                                             ]} 
-                                                             onChange={(v) => {
-                                                                 const newTextSize = v as 'base' | 'small' | 'large' | 'xl';
-                                                                 updateElement(selectedSection.id, selectedElement.id, { 
-                                                                     content: { ...(selectedElement.content || {}), textSize: newTextSize } 
-                                                                 });
-                                                             }} 
-                                                         />
+                                                        <>
+                                                            <SelectInput 
+                                                                key={`text-size-${selectedElement.id}-${currentTextSize}`}
+                                                                label="Text Size" 
+                                                                value={currentTextSize}
+                                                                options={[
+                                                                    {label: 'Base', value: 'base'},
+                                                                    {label: 'Small', value: 'small'},
+                                                                    {label: 'Large', value: 'large'},
+                                                                    {label: 'XL', value: 'xl'}
+                                                                ]} 
+                                                                onChange={(v) => {
+                                                                    const newTextSize = v as 'base' | 'small' | 'large' | 'xl';
+                                                                    updateElement(selectedSection.id, selectedElement.id, { 
+                                                                        content: { ...(selectedElement.content || {}), textSize: newTextSize } 
+                                                                    });
+                                                                }} 
+                                                            />
+                                                            <div className="flex items-center justify-between mt-3">
+                                                                <label className="text-[10px] font-bold text-white/40 capitalize ml-1">Enable Marquee</label>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={currentEnableMarquee}
+                                                                    onChange={(e) => {
+                                                                        updateElement(selectedSection.id, selectedElement.id, {
+                                                                            content: {
+                                                                                ...(selectedElement.content || {}),
+                                                                                enableMarquee: e.target.checked
+                                                                            }
+                                                                        });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            {currentEnableMarquee && (
+                                                                <>
+                                                                    <SelectInput
+                                                                        label="Marquee Speed"
+                                                                        value={currentMarqueeSpeed}
+                                                                        options={[
+                                                                            { label: '1x (Slowest)', value: '1x' },
+                                                                            { label: '2x', value: '2x' },
+                                                                            { label: '3x', value: '3x' },
+                                                                            { label: '4x', value: '4x' },
+                                                                            { label: '5x', value: '5x' },
+                                                                            { label: '6x', value: '6x' },
+                                                                            { label: '7x', value: '7x' },
+                                                                            { label: '8x', value: '8x' },
+                                                                            { label: '9x', value: '9x' },
+                                                                            { label: '10x (Fastest)', value: '10x' }
+                                                                        ]}
+                                                                        onChange={(v) => {
+                                                                            updateElement(selectedSection.id, selectedElement.id, {
+                                                                                content: {
+                                                                                    ...(selectedElement.content || {}),
+                                                                                    marqueeSpeed: v as any
+                                                                                }
+                                                                            });
+                                                                        }}
+                                                                    />
+                                                                    <SelectInput
+                                                                        label="Marquee Direction"
+                                                                        value={currentMarqueeDirection}
+                                                                        options={[
+                                                                            { label: 'Left', value: 'left' },
+                                                                            { label: 'Right', value: 'right' }
+                                                                        ]}
+                                                                        onChange={(v) => {
+                                                                            updateElement(selectedSection.id, selectedElement.id, {
+                                                                                content: {
+                                                                                    ...(selectedElement.content || {}),
+                                                                                    marqueeDirection: v as any
+                                                                                }
+                                                                            });
+                                                                        }}
+                                                                    />
+
+                                                                    <RangeInput
+                                                                        label="Marquee BG Width"
+                                                                        value={currentMarqueeBgWidthPercent}
+                                                                        min={70}
+                                                                        max={100}
+                                                                        step={1}
+                                                                        unit="%"
+                                                                        onChange={(v) => {
+                                                                            updateElement(selectedSection.id, selectedElement.id, {
+                                                                                style: { ...(selectedElement.style as any), width: `${v}%` }
+                                                                            });
+                                                                        }}
+                                                                    />
+
+                                                                    <RangeInput
+                                                                        label="Marquee BG Height"
+                                                                        value={currentMarqueeBgHeightPx}
+                                                                        min={20}
+                                                                        max={140}
+                                                                        step={2}
+                                                                        unit="px"
+                                                                        onChange={(v) => {
+                                                                            updateElement(selectedSection.id, selectedElement.id, {
+                                                                                style: { ...(selectedElement.style as any), height: `${v}px` }
+                                                                            });
+                                                                        }}
+                                                                    />
+                                                                </>
+                                                            )}
+                                                        </>
                                                      );
                                                  })()}
                                                  {selectedElement.type === 'button' && (
@@ -4253,29 +4613,33 @@ const AppContent: React.FC = () => {
             >
                 {/* Scrollable viewport container */}
                 <div className="absolute inset-0 flex items-start justify-center overflow-auto p-12 custom-scrollbar">
-                    {/* Device Container - width controlled by viewMode, scaled by zoomLevel */}
+                    {/* Device Container - fixed width by selected device */}
                     <div 
                         className="shadow-2xl ring-1 ring-white/10 transition-all duration-300 origin-top"
                         style={{
                             width: `${currentDeviceWidth}px`,
+                            flexShrink: 0,
                             minHeight: 'fit-content',
                             height: 'auto',
                             backgroundColor: themeData?.surface || '#0E1214',
-                            transform: `scale(${zoomLevel / 100})`,
                             position: 'relative',
                             fontFamily: defaultTypography.fontFamily,
                             marginBottom: '100px' // Buffer at bottom for better preview feel
                         }}
                     >
+                        {/* Browser-like zoom: keep device frame fixed, change inner viewport scale */}
+                        <div className="w-full overflow-hidden">
                         <PreviewFrame 
-                            className="w-full" 
+                            className="block origin-top-left"
                             style={{ 
                                 backgroundColor: 'transparent',
-                                width: '100%',
+                                width: `${zoomViewportWidthPercent}%`,
                                 height: 'auto',
                                 minHeight: '500px',
                                 display: 'block',
-                                border: 'none'
+                                border: 'none',
+                                transform: `scale(${zoomScale})`,
+                                transformOrigin: 'top left'
                             }}
                         >
                             <div 
@@ -4312,6 +4676,7 @@ const AppContent: React.FC = () => {
                         ))}
                     </div>
                 </PreviewFrame>
+                        </div>
                     </div>
                 </div>
             </main>
