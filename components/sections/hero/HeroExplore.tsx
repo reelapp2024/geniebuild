@@ -12,6 +12,12 @@ interface HeroProps {
   onElementUpdate?: (elementId: string, updates: Partial<WebsiteElement>) => void;
   selectedElementId?: string | null;
   readOnly?: boolean;
+  themeColors?: {
+    titleFontFamily?: string;
+    subtitleFontFamily?: string;
+    descriptionFontFamily?: string;
+    buttonFontFamily?: string;
+  };
 }
 
 export const HeroExplore: React.FC<HeroProps> = ({
@@ -22,7 +28,8 @@ export const HeroExplore: React.FC<HeroProps> = ({
   onElementSelect,
   onElementUpdate,
   selectedElementId,
-  readOnly = false
+  readOnly = false,
+  themeColors: fontThemeColors
 }) => {
   const { content, styles } = section;
   const { themeData } = useTheme();
@@ -59,17 +66,19 @@ export const HeroExplore: React.FC<HeroProps> = ({
     buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
     buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
     buttonAlign: styleAny.buttonAlign || styles.textAlign,
-    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily,
+    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || fontThemeColors?.buttonFontFamily,
     // Map heading style properties
     titleFontWeight: styleAny.titleFontWeight || styleAny.fontWeight,
     titleFontSize: styleAny.titleSize || styleAny.fontSize,
     titleAlign: styleAny.titleAlign || styles.textAlign,
-    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily,
+    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily || fontThemeColors?.titleFontFamily,
     // Map text/subtitle style properties
     subtitleFontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight,
     subtitleFontSize: styleAny.subtitleSize || styleAny.fontSize,
     subtitleAlign: styleAny.subtitleAlign || styles.textAlign,
-    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily,
+    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || fontThemeColors?.subtitleFontFamily,
+    descriptionFontFamily:
+      styleAny.descriptionFontFamily || styleAny.fontFamily || fontThemeColors?.descriptionFontFamily,
     // Global fallback properties
     fontWeight: styleAny.fontWeight,
     fontSize: styleAny.fontSize,

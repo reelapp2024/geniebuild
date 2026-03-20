@@ -472,6 +472,11 @@ export interface Section {
 
     linkColor?: string; 
 
+    titleFontFamily?: string;
+    subtitleFontFamily?: string;
+    descriptionFontFamily?: string;
+    buttonFontFamily?: string;
+    // Legacy: used as a fallback for all categories
     fontFamily?: string;
   };
 }

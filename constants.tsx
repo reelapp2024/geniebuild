@@ -355,7 +355,7 @@ const ADVANCED_ELEMENTS_LIST: WebsiteElement[] = [
     }
 ];
 
-const DEFAULT_TYPOGRAPHY = {
+export const DEFAULT_TYPOGRAPHY = {
     h1: { fontFamily: '"Poppins", sans-serif', fontWeight: '700', fontSize: '3.75rem', lineHeight: '1.1' },
     h2: { fontFamily: '"Poppins", sans-serif', fontWeight: '600', fontSize: '2.25rem', lineHeight: '1.2' },
     h3: { fontFamily: '"Poppins", sans-serif', fontWeight: '600', fontSize: '1.5rem', lineHeight: '1.3' },

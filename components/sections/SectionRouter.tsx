@@ -89,6 +89,12 @@ interface SectionRouterProps {
   titleClass?: string;
   titleStyle?: React.CSSProperties;
   readOnly?: boolean;
+  themeColors?: {
+    titleFontFamily?: string;
+    subtitleFontFamily?: string;
+    descriptionFontFamily?: string;
+    buttonFontFamily?: string;
+  };
 }
 
 /**
@@ -118,21 +124,21 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
     case 'hero':
       switch (variant) {
         case 'HeroCrimsonJet':
-          return <HeroCrimsonJet {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+          return <HeroCrimsonJet {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroLight':
-          return <HeroLight {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
+          return <HeroLight {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
         case 'HeroModern':
-          return <HeroModern {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+          return <HeroModern {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroExplore':
-          return <HeroExplore {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+          return <HeroExplore {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroOverlay':
-          return <HeroOverlay {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+          return <HeroOverlay {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroMarquee':
-          return <HeroMarquee {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+          return <HeroMarquee {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroCenter':
         case 'center':
         default:
-          return <HeroCenter {...baseProps} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
+          return <HeroCenter {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
       }
 
     case 'navbar':

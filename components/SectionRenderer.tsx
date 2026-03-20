@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Section, WebsiteElement } from '../types';
 import { SectionRouter } from './sections/SectionRouter';
 import { useTheme } from '@ui/blocks';
-import { PRESET_THEMES } from '../constants';
+import { DEFAULT_TYPOGRAPHY, PRESET_THEMES } from '../constants';
 
 interface SectionRendererProps {
   section: Section;
@@ -240,6 +240,31 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
   // 1. Resolve Colors - Fallback to global theme (Respecting Light/Dark mode requests)
   const isLight = styles.themeMode === 'light';
   const activeGlobalTheme = (themeData as any)?.elements || themeData || PRESET_THEMES[0].elements;
+  const activeTypography =
+    (themeData as any)?.typography ||
+    (PRESET_THEMES[0] as any)?.typography ||
+    DEFAULT_TYPOGRAPHY;
+
+  // Typography font families (active by hierarchy: section styles -> global theme)
+  const resolvedTitleFontFamily =
+    styles.titleFontFamily ||
+    styles.fontFamily ||
+    activeTypography?.h1?.fontFamily;
+
+  const resolvedSubtitleFontFamily =
+    styles.subtitleFontFamily ||
+    styles.fontFamily ||
+    activeTypography?.h2?.fontFamily;
+
+  const resolvedDescriptionFontFamily =
+    styles.descriptionFontFamily ||
+    styles.fontFamily ||
+    activeTypography?.p?.fontFamily;
+
+  const resolvedButtonFontFamily =
+    styles.buttonFontFamily ||
+    styles.fontFamily ||
+    activeTypography?.button?.fontFamily;
   
   const defaultBg = isLight && activeGlobalTheme.light ? activeGlobalTheme.light.surface : (themeData?.surface || '#0E1214');
   const defaultTitle = isLight && activeGlobalTheme.light ? activeGlobalTheme.light.heading : (themeData?.heading || '#F8FAFC');
@@ -254,6 +279,11 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       buttonBackgroundColor: styles.buttonBackgroundColor || themeData?.primaryButton?.bg || '#E11D48',
       buttonTextColor: styles.buttonTextColor || themeData?.primaryButton?.text || '#FFFFFF',
       borderColor: styles.borderColor || themeData?.ring || '#F43F5E',
+      // Typography font families (used by hero components + ElementsSection)
+      titleFontFamily: resolvedTitleFontFamily,
+      subtitleFontFamily: resolvedSubtitleFontFamily,
+      descriptionFontFamily: resolvedDescriptionFontFamily,
+      buttonFontFamily: resolvedButtonFontFamily,
   };
 
   const getBackgroundStyles = (): React.CSSProperties => {
@@ -494,6 +524,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
         isSelected={isSelected}
         titleClass={titleClass}
         titleStyle={titleStyle}
+        themeColors={themeColors}
         readOnly={readOnly}
       />
     );

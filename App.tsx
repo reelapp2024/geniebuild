@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { WebsiteData, Section, SectionType, WebsiteElement, ElementType } from './types';
-import { INITIAL_TEMPLATE, SECTION_TEMPLATES, PRESET_THEMES, PRESET_FONTS, ELEMENT_DEFAULTS } from './constants';
+import { DEFAULT_TYPOGRAPHY, INITIAL_TEMPLATE, SECTION_TEMPLATES, PRESET_THEMES, PRESET_FONTS, ELEMENT_DEFAULTS } from './constants';
 import { geminiService } from './services/geminiService';
 import SectionRenderer from './components/SectionRenderer';
 import { PreviewFrame } from './components/PreviewFrame';
@@ -1202,7 +1202,12 @@ const AppContent: React.FC = () => {
     textXl: '1.25rem'       // 20px
   });
   const [defaultTypography, setDefaultTypography] = useState({
-    fontFamily: 'Inter, sans-serif'
+    // Legacy field (kept for backward compatibility with saved themes)
+    fontFamily: DEFAULT_TYPOGRAPHY.p.fontFamily,
+    titleFontFamily: DEFAULT_TYPOGRAPHY.h1.fontFamily,
+    subtitleFontFamily: DEFAULT_TYPOGRAPHY.h2.fontFamily,
+    descriptionFontFamily: DEFAULT_TYPOGRAPHY.p.fontFamily,
+    buttonFontFamily: DEFAULT_TYPOGRAPHY.button.fontFamily,
   });
   const [savingTheme, setSavingTheme] = useState(false);
 
@@ -1633,7 +1638,7 @@ const AppContent: React.FC = () => {
     }, 1000); // 1 second debounce
     
     return () => clearTimeout(timeoutId);
-  }, [defaultTypography.fontFamily]);
+  }, [defaultTypography.titleFontFamily, defaultTypography.subtitleFontFamily, defaultTypography.descriptionFontFamily, defaultTypography.buttonFontFamily]);
 
   // Update sections with default sizes in real-time when defaultSizes change
   // Always clear titleSize/subtitleSize to let CSS defaults apply (unless custom override exists)
@@ -1716,24 +1721,24 @@ const AppContent: React.FC = () => {
       .text-large { font-size: ${defaultSizes.textLarge}; }
       .text-xl { font-size: ${defaultSizes.textXl}; }
       
-      /* Apply default font family only to canvas content, not GenieBuild UI */
-      /* Inline styles (with fontFamily) will automatically override this CSS rule */
-      #canvas-root {
-        font-family: ${defaultTypography.fontFamily};
-      }
-      
-      /* Apply font family to all text elements within canvas */
-      /* Inline fontFamily styles will automatically override this (higher specificity) */
+      /* Apply category font families to canvas content (inline element styles override this) */
       #canvas-root h1,
       #canvas-root h2,
       #canvas-root h3,
       #canvas-root h4,
       #canvas-root h5,
-      #canvas-root h6,
+      #canvas-root h6 {
+        font-family: ${defaultTypography.titleFontFamily};
+      }
+
       #canvas-root p,
       #canvas-root span,
       #canvas-root div {
-        font-family: ${defaultTypography.fontFamily};
+        font-family: ${defaultTypography.descriptionFontFamily};
+      }
+
+      #canvas-root button {
+        font-family: ${defaultTypography.buttonFontFamily};
       }
       
       /* Default heading sizes - apply to all headings, inline styles will override */
@@ -1807,6 +1812,46 @@ const AppContent: React.FC = () => {
     styleEl.innerHTML = styleString;
     return () => { /* Don't remove - keep the element alive for MutationObserver */ }
   }, [siteData.globalStyles.colors, defaultSizes, defaultTypography]);
+
+  // Keep global typography in sync with the sidebar controls
+  useEffect(() => {
+    setSiteData(prev => ({
+      ...prev,
+      globalStyles: {
+        ...prev.globalStyles,
+        typography: {
+          ...prev.globalStyles.typography,
+          h1: { ...prev.globalStyles.typography.h1, fontFamily: defaultTypography.titleFontFamily },
+          h2: { ...prev.globalStyles.typography.h2, fontFamily: defaultTypography.subtitleFontFamily },
+          p: { ...prev.globalStyles.typography.p, fontFamily: defaultTypography.descriptionFontFamily },
+          button: { ...prev.globalStyles.typography.button, fontFamily: defaultTypography.buttonFontFamily },
+        },
+      },
+    }));
+  }, [
+    defaultTypography.titleFontFamily,
+    defaultTypography.subtitleFontFamily,
+    defaultTypography.descriptionFontFamily,
+    defaultTypography.buttonFontFamily,
+  ]);
+
+  // Notify ThemeProvider so SectionRenderer can resolve typography fallbacks from useTheme()
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const nextTypography = {
+      ...DEFAULT_TYPOGRAPHY,
+      h1: { ...DEFAULT_TYPOGRAPHY.h1, fontFamily: defaultTypography.titleFontFamily },
+      h2: { ...DEFAULT_TYPOGRAPHY.h2, fontFamily: defaultTypography.subtitleFontFamily },
+      p: { ...DEFAULT_TYPOGRAPHY.p, fontFamily: defaultTypography.descriptionFontFamily },
+      button: { ...DEFAULT_TYPOGRAPHY.button, fontFamily: defaultTypography.buttonFontFamily },
+    };
+    window.dispatchEvent(new CustomEvent('geniebuild-typography-change', { detail: { typography: nextTypography } }));
+  }, [
+    defaultTypography.titleFontFamily,
+    defaultTypography.subtitleFontFamily,
+    defaultTypography.descriptionFontFamily,
+    defaultTypography.buttonFontFamily,
+  ]);
 
 
   const updateSection = (id: string, updates: Partial<Section>) => {
@@ -2459,7 +2504,12 @@ const AppContent: React.FC = () => {
         
         // Load default typography - use saved value or fallback to default
         setDefaultTypography({
-          fontFamily: savedTypography?.fontFamily || 'Inter, sans-serif'
+          // Legacy field
+          fontFamily: savedTypography?.fontFamily || DEFAULT_TYPOGRAPHY.p.fontFamily,
+          titleFontFamily: savedTypography?.titleFontFamily || savedTypography?.fontFamily || DEFAULT_TYPOGRAPHY.h1.fontFamily,
+          subtitleFontFamily: savedTypography?.subtitleFontFamily || savedTypography?.fontFamily || DEFAULT_TYPOGRAPHY.h2.fontFamily,
+          descriptionFontFamily: savedTypography?.descriptionFontFamily || savedTypography?.fontFamily || DEFAULT_TYPOGRAPHY.p.fontFamily,
+          buttonFontFamily: savedTypography?.buttonFontFamily || savedTypography?.fontFamily || DEFAULT_TYPOGRAPHY.button.fontFamily,
         });
         
         // Apply custom colors if present (for custom theme)
@@ -2996,6 +3046,62 @@ const AppContent: React.FC = () => {
                       <SpacingInputGroup label="Margin" values={getSpacingValues('margin')} onChange={(v) => handleSpacingUpdate('margin', v)} />
                   </div>
               </AccordionGroup>
+              )}
+              {context === 'section' && (
+                <AccordionGroup title="Typography" defaultOpen={true}>
+                  <div className="space-y-4">
+                    <SelectInput
+                      label="Title Font"
+                      value={styles.titleFontFamily || styles.fontFamily || ''}
+                      options={[
+                        {
+                          label: `Theme Default (${(defaultTypography.titleFontFamily || DEFAULT_TYPOGRAPHY.h1.fontFamily).split(',')[0].replace(/['"]/g, '').trim()})`,
+                          value: '',
+                        },
+                        ...PRESET_FONTS.map(f => ({ label: f.name, value: f.value })),
+                      ]}
+                      onChange={(v: string) => {
+                        if (v === '') {
+                          onUpdate('titleFontFamily', undefined);
+                          onUpdate('subtitleFontFamily', undefined);
+                        } else {
+                          onUpdate('titleFontFamily', v);
+                          onUpdate('subtitleFontFamily', v);
+                        }
+                      }}
+                    />
+                    <SelectInput
+                      label="Body Font"
+                      value={styles.descriptionFontFamily || styles.fontFamily || ''}
+                      options={[
+                        {
+                          label: `Theme Default (${(defaultTypography.descriptionFontFamily || DEFAULT_TYPOGRAPHY.p.fontFamily).split(',')[0].replace(/['"]/g, '').trim()})`,
+                          value: '',
+                        },
+                        ...PRESET_FONTS.map(f => ({ label: f.name, value: f.value })),
+                      ]}
+                      onChange={(v: string) => {
+                        if (v === '') onUpdate('descriptionFontFamily', undefined);
+                        else onUpdate('descriptionFontFamily', v);
+                      }}
+                    />
+                    <SelectInput
+                      label="Button Font"
+                      value={styles.buttonFontFamily || styles.fontFamily || ''}
+                      options={[
+                        {
+                          label: `Theme Default (${(defaultTypography.buttonFontFamily || DEFAULT_TYPOGRAPHY.button.fontFamily).split(',')[0].replace(/['"]/g, '').trim()})`,
+                          value: '',
+                        },
+                        ...PRESET_FONTS.map(f => ({ label: f.name, value: f.value })),
+                      ]}
+                      onChange={(v: string) => {
+                        if (v === '') onUpdate('buttonFontFamily', undefined);
+                        else onUpdate('buttonFontFamily', v);
+                      }}
+                    />
+                  </div>
+                </AccordionGroup>
               )}
               {context === 'element' && elementType !== 'card' && elementType !== 'accordion' && (
               <AccordionGroup title="Typography" defaultOpen={true}>
@@ -3738,13 +3844,40 @@ const AppContent: React.FC = () => {
                              )}
                              {globalTab === 'typography' && (
                                 <div className="space-y-6">
-                                    <AccordionGroup title="Default Font" defaultOpen={true}>
-                                        <SelectInput 
-                                            label="Font Family" 
-                                            value={defaultTypography.fontFamily} 
-                                            options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))} 
-                                            onChange={(v: string) => setDefaultTypography(prev => ({ ...prev, fontFamily: v }))} 
-                                        />
+                                    <AccordionGroup title="Default Fonts" defaultOpen={true}>
+                                        <div className="space-y-4">
+                                            <SelectInput
+                                                label="Title Font"
+                                                value={defaultTypography.titleFontFamily}
+                                                options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))}
+                                                onChange={(v: string) => setDefaultTypography(prev => ({
+                                                  ...prev,
+                                                  titleFontFamily: v,
+                                                  // Keep subtitles synced with title font (unless a section overrides)
+                                                  subtitleFontFamily: v,
+                                                  fontFamily: v,
+                                                }))}
+                                            />
+                                            <SelectInput
+                                                label="Body Font"
+                                                value={defaultTypography.descriptionFontFamily}
+                                                options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))}
+                                                onChange={(v: string) => setDefaultTypography(prev => ({
+                                                  ...prev,
+                                                  descriptionFontFamily: v,
+                                                  fontFamily: v,
+                                                }))}
+                                            />
+                                            <SelectInput
+                                                label="Button Font"
+                                                value={defaultTypography.buttonFontFamily}
+                                                options={PRESET_FONTS.map(f => ({ label: f.name, value: f.value }))}
+                                                onChange={(v: string) => setDefaultTypography(prev => ({
+                                                  ...prev,
+                                                  buttonFontFamily: v,
+                                                }))}
+                                            />
+                                        </div>
                                     </AccordionGroup>
                                     <AccordionGroup title="Heading Sizes" defaultOpen={true}>
                                         <div className="space-y-3">
@@ -4623,7 +4756,7 @@ const AppContent: React.FC = () => {
                             height: 'auto',
                             backgroundColor: themeData?.surface || '#0E1214',
                             position: 'relative',
-                            fontFamily: defaultTypography.fontFamily,
+                            fontFamily: defaultTypography.descriptionFontFamily,
                             marginBottom: '100px' // Buffer at bottom for better preview feel
                         }}
                     >

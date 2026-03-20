@@ -13,10 +13,17 @@ interface HeroProps {
   onElementUpdate?: (elementId: string, updates: Partial<WebsiteElement>) => void;
   selectedElementId?: string | null;
   readOnly?: boolean;
+  themeColors?: {
+    titleFontFamily?: string;
+    subtitleFontFamily?: string;
+    descriptionFontFamily?: string;
+    buttonFontFamily?: string;
+  };
 }
 
 export const HeroCrimsonJet: React.FC<HeroProps> = ({ 
-  section, onTextEdit, onImageClick, buttonClass, onElementSelect, onElementUpdate, selectedElementId, readOnly = false 
+  section, onTextEdit, onImageClick, buttonClass, onElementSelect, onElementUpdate, selectedElementId, readOnly = false,
+  themeColors: fontThemeColors
 }) => {
   const { themeData } = useTheme();
   const { content, styles } = section;
@@ -63,15 +70,17 @@ export const HeroCrimsonJet: React.FC<HeroProps> = ({
     buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
     buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
     buttonAlign: styleAny.buttonAlign || styles.textAlign,
-    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily,
+    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || fontThemeColors?.buttonFontFamily,
     titleFontWeight: styleAny.titleFontWeight || styleAny.fontWeight || '800',
     titleFontSize: styleAny.titleSize || styleAny.fontSize,
     titleAlign: styleAny.titleAlign || styles.textAlign,
-    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily,
+    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily || fontThemeColors?.titleFontFamily,
     subtitleFontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight,
     subtitleFontSize: styleAny.subtitleSize || styleAny.fontSize,
     subtitleAlign: styleAny.subtitleAlign || styles.textAlign,
-    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily,
+    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || fontThemeColors?.subtitleFontFamily,
+    descriptionFontFamily:
+      styleAny.descriptionFontFamily || styleAny.fontFamily || fontThemeColors?.descriptionFontFamily,
     fontWeight: styleAny.fontWeight,
     fontSize: styleAny.fontSize,
     textAlign: styles.textAlign,
@@ -107,18 +116,58 @@ export const HeroCrimsonJet: React.FC<HeroProps> = ({
     <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'transparent' }}>
       <div className="relative z-10 text-center max-w-4xl px-6 space-y-6 w-full">
         <div className="mx-auto max-w-3xl">
-          <ElementsSection section={{ ...section, elements: [titleElement] }} onTextEdit={onTextEdit} onElementUpdate={onElementUpdate || (() => {})} onElementSelect={onElementSelect} selectedElementId={selectedElementId} readOnly={readOnly} isWrapped={false} themeColors={themeColors} />
+          <ElementsSection
+            section={{ ...section, elements: [titleElement] }}
+            onTextEdit={onTextEdit}
+            onElementUpdate={onElementUpdate || (() => {})}
+            onElementSelect={onElementSelect}
+            selectedElementId={selectedElementId}
+            readOnly={readOnly}
+            isWrapped={false}
+            buttonClass={buttonClass}
+            themeColors={themeColors}
+          />
         </div>
         <div className="mx-auto max-w-2xl">
-          <ElementsSection section={{ ...section, elements: [descElement] }} onTextEdit={onTextEdit} onElementUpdate={onElementUpdate || (() => {})} onElementSelect={onElementSelect} selectedElementId={selectedElementId} readOnly={readOnly} isWrapped={false} themeColors={themeColors} />
+          <ElementsSection
+            section={{ ...section, elements: [descElement] }}
+            onTextEdit={onTextEdit}
+            onElementUpdate={onElementUpdate || (() => {})}
+            onElementSelect={onElementSelect}
+            selectedElementId={selectedElementId}
+            readOnly={readOnly}
+            isWrapped={false}
+            buttonClass={buttonClass}
+            themeColors={themeColors}
+          />
         </div>
         
         <div className="flex gap-4 justify-center pt-4">
           <div className="inline-block">
-            <ElementsSection section={{ ...section, elements: [btn1Element] }} onTextEdit={onTextEdit} onElementUpdate={onElementUpdate || (() => {})} onElementSelect={onElementSelect} selectedElementId={selectedElementId} readOnly={readOnly} isWrapped={false} themeColors={{ ...themeColors, buttonBackgroundColor: theme.primaryButton, buttonTextColor: theme.primaryButtonText }} />
+            <ElementsSection
+              section={{ ...section, elements: [btn1Element] }}
+              onTextEdit={onTextEdit}
+              onElementUpdate={onElementUpdate || (() => {})}
+              onElementSelect={onElementSelect}
+              selectedElementId={selectedElementId}
+              readOnly={readOnly}
+              isWrapped={false}
+              buttonClass={buttonClass}
+              themeColors={{ ...themeColors, buttonBackgroundColor: theme.primaryButton, buttonTextColor: theme.primaryButtonText }}
+            />
           </div>
           <div className="inline-block">
-            <ElementsSection section={{ ...section, elements: [btn2Element] }} onTextEdit={onTextEdit} onElementUpdate={onElementUpdate || (() => {})} onElementSelect={onElementSelect} selectedElementId={selectedElementId} readOnly={readOnly} isWrapped={false} themeColors={{ ...themeColors, buttonBackgroundColor: theme.secondaryButton, buttonTextColor: theme.secondaryButtonText }} />
+            <ElementsSection
+              section={{ ...section, elements: [btn2Element] }}
+              onTextEdit={onTextEdit}
+              onElementUpdate={onElementUpdate || (() => {})}
+              onElementSelect={onElementSelect}
+              selectedElementId={selectedElementId}
+              readOnly={readOnly}
+              isWrapped={false}
+              buttonClass={buttonClass}
+              themeColors={{ ...themeColors, buttonBackgroundColor: theme.secondaryButton, buttonTextColor: theme.secondaryButtonText }}
+            />
           </div>
         </div>
       </div>

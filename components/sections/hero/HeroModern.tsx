@@ -13,6 +13,12 @@ interface HeroProps {
   onElementUpdate?: (elementId: string, updates: any) => void;
   selectedElementId?: string | null;
   readOnly?: boolean;
+  themeColors?: {
+    titleFontFamily?: string;
+    subtitleFontFamily?: string;
+    descriptionFontFamily?: string;
+    buttonFontFamily?: string;
+  };
 }
 
 export const HeroModern: React.FC<HeroProps> = ({ 
@@ -23,7 +29,8 @@ export const HeroModern: React.FC<HeroProps> = ({
   onElementSelect, 
   onElementUpdate, 
   selectedElementId, 
-  readOnly = false 
+  readOnly = false,
+  themeColors: fontThemeColors
 }) => {
   const { content, styles } = section;
   const { themeData } = useTheme();
@@ -295,6 +302,10 @@ export const HeroModern: React.FC<HeroProps> = ({
     accentColor: styles.accentColor || themeData?.accent,
     buttonBackgroundColor: styles.buttonBackgroundColor || themeData?.primaryButton?.bg,
     buttonTextColor: styles.buttonTextColor || themeData?.primaryButton?.text,
+    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily || fontThemeColors?.titleFontFamily,
+    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || fontThemeColors?.subtitleFontFamily,
+    descriptionFontFamily: styleAny.descriptionFontFamily || styleAny.fontFamily || fontThemeColors?.descriptionFontFamily,
+    buttonFontFamily: styleAny.buttonFontFamily || styleAny.fontFamily || fontThemeColors?.buttonFontFamily,
   };
   
   const badgeElement = getBadgeElement();

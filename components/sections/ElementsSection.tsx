@@ -40,6 +40,7 @@ interface ElementsSectionProps {
     subtitleFontSize?: string;
     subtitleAlign?: string;
     subtitleFontFamily?: string;
+    descriptionFontFamily?: string;
     fontWeight?: string;
     fontSize?: string;
     textAlign?: string;
@@ -269,20 +270,44 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
   // Get theme colors from section styles or passed prop
   // Simplified: Only core colors, let ELEMENT_DEFAULTS handle the rest
   const sectionStyles = (section.styles || {}) as Record<string, unknown>;
-  const theme = themeColors || {
+  const baseTheme = {
     titleColor: section.styles?.titleColor || themeData?.heading || '#F8FAFC',
     textColor: section.styles?.textColor || themeData?.description || '#D1D5DB',
     backgroundColor: (sectionStyles?.backgroundColor as string) || (themeData as any)?.surface || '',
-    accordionQuestionColor: (sectionStyles?.accordionQuestionColor as string) || (themeData as any)?.accordion?.questionColor || themeData?.heading || '#F8FAFC',
-    accordionAnswerColor: (sectionStyles?.accordionAnswerColor as string) || (themeData as any)?.accordion?.answerColor || themeData?.description || '#D1D5DB',
+    accordionQuestionColor:
+      (sectionStyles?.accordionQuestionColor as string) ||
+      (themeData as any)?.accordion?.questionColor ||
+      themeData?.heading ||
+      '#F8FAFC',
+    accordionAnswerColor:
+      (sectionStyles?.accordionAnswerColor as string) ||
+      (themeData as any)?.accordion?.answerColor ||
+      themeData?.description ||
+      '#D1D5DB',
     cardBackgroundColor: (sectionStyles?.cardBackgroundColor as string) || (themeData as any)?.light?.surface || '#FFFFFF',
     cardBorderColor: (sectionStyles?.cardBorderColor as string) || (themeData as any)?.light?.overlay?.color || '#E5E7EB',
-    accordionBackgroundColor: (sectionStyles?.accordionBackgroundColor as string) || (sectionStyles?.cardBackgroundColor as string) || (themeData as any)?.light?.surface || '#FFFFFF',
-    accordionBorderColor: (sectionStyles?.accordionBorderColor as string) || (sectionStyles?.cardBorderColor as string) || (themeData as any)?.light?.overlay?.color || '#E5E7EB',
+    accordionBackgroundColor:
+      (sectionStyles?.accordionBackgroundColor as string) ||
+      (sectionStyles?.cardBackgroundColor as string) ||
+      (themeData as any)?.light?.surface ||
+      '#FFFFFF',
+    accordionBorderColor:
+      (sectionStyles?.accordionBorderColor as string) ||
+      (sectionStyles?.cardBorderColor as string) ||
+      (themeData as any)?.light?.overlay?.color ||
+      '#E5E7EB',
     accentColor: section.styles?.accentColor || themeData?.accent || '#3b82f6',
     buttonBackgroundColor: section.styles?.buttonBackgroundColor || themeData?.primaryButton?.bg || '#E11D48',
     buttonTextColor: section.styles?.buttonTextColor || themeData?.primaryButton?.text || '#FFFFFF',
+
+    // Font fallbacks from global theme typography
+    titleFontFamily: (themeData as any)?.typography?.h1?.fontFamily,
+    subtitleFontFamily: (themeData as any)?.typography?.h2?.fontFamily,
+    descriptionFontFamily: (themeData as any)?.typography?.p?.fontFamily,
+    buttonFontFamily: (themeData as any)?.typography?.button?.fontFamily,
   };
+
+  const theme = { ...baseTheme, ...(themeColors || {}) };
   
   // Helper to merge element style with theme defaults
   // Only uses element color if it's explicitly set (not undefined/null/empty)
@@ -340,6 +365,10 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
         case 'heading':
             const headingTag = (content.htmlTag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
             // Style Hierarchy: renderStyle (ELEMENT_DEFAULTS + element.style) > Theme Colors
+            const resolvedHeadingFontFamily =
+              safeStyle.fontFamily && safeStyle.fontFamily.trim() !== ''
+                ? safeStyle.fontFamily
+                : theme?.titleFontFamily;
             const headingStyle: React.CSSProperties = {
                 ...safeStyle,
                 color: safeStyle.color || theme?.titleColor || '#F8FAFC',
@@ -347,9 +376,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 fontWeight: renderStyle.fontWeight || 'bold',
                 fontSize: renderStyle.fontSize || undefined,
                 textAlign: (renderStyle.textAlign as any) || 'left',
-                fontFamily: (renderStyle.fontFamily && renderStyle.fontFamily.trim() !== '') 
-                    ? renderStyle.fontFamily 
-                    : undefined,
+                fontFamily: resolvedHeadingFontFamily && resolvedHeadingFontFamily.trim() !== '' ? resolvedHeadingFontFamily : undefined,
             };
             // Remove undefined properties
             if (!headingStyle.fontFamily) delete headingStyle.fontFamily;
@@ -373,7 +400,14 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             const textSizeClass = content.textSize === 'small' ? 'text-sm' : 
                                   content.textSize === 'large' ? 'text-lg' : 
                                   content.textSize === 'xl' ? 'text-xl' : '';
+            const isSubtitleElement = id.includes('-hero-subtitle');
             // Style Hierarchy: renderStyle (ELEMENT_DEFAULTS + element.style) > Theme Colors
+            const resolvedTextFontFamily =
+              safeStyle.fontFamily && safeStyle.fontFamily.trim() !== ''
+                ? safeStyle.fontFamily
+                : isSubtitleElement
+                  ? theme?.subtitleFontFamily
+                  : theme?.descriptionFontFamily;
             const textStyle: React.CSSProperties = {
                 ...safeStyle,
                 color: safeStyle.color || theme.textColor || '#D1D5DB',
@@ -381,9 +415,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 fontWeight: renderStyle.fontWeight || '400',
                 fontSize: renderStyle.fontSize || undefined,
                 textAlign: (renderStyle.textAlign as any) || 'left',
-                fontFamily: (renderStyle.fontFamily && renderStyle.fontFamily.trim() !== '') 
-                    ? renderStyle.fontFamily 
-                    : undefined,
+                fontFamily: resolvedTextFontFamily && resolvedTextFontFamily.trim() !== '' ? resolvedTextFontFamily : undefined,
             };
             // Remove undefined properties
             if (!textStyle.fontFamily) delete textStyle.fontFamily;
@@ -422,6 +454,10 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
         case 'button':
         case 'call-to-action':
             // Style Hierarchy: renderStyle (ELEMENT_DEFAULTS + element.style) > Theme Colors
+            const resolvedButtonFontFamily =
+              safeStyle.fontFamily && safeStyle.fontFamily.trim() !== ''
+                ? safeStyle.fontFamily
+                : theme?.buttonFontFamily;
             const buttonStyle: React.CSSProperties = {
                 ...safeStyle, // This includes all properties from getSafeStyle
                 backgroundColor: safeStyle.backgroundColor || theme?.buttonBackgroundColor || '#E11D48',
@@ -430,9 +466,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 // Fallback to renderStyle (which already contains ELEMENT_DEFAULTS)
                 fontWeight: renderStyle.fontWeight || 'bold',
                 fontSize: renderStyle.fontSize || undefined,
-                fontFamily: (renderStyle.fontFamily && renderStyle.fontFamily.trim() !== '') 
-                    ? renderStyle.fontFamily 
-                    : undefined,
+                fontFamily: resolvedButtonFontFamily && resolvedButtonFontFamily.trim() !== '' ? resolvedButtonFontFamily : undefined,
             };
             // Remove undefined properties
             if (!buttonStyle.fontSize) delete buttonStyle.fontSize;
