@@ -31,7 +31,10 @@ export const HeroCenter: React.FC<HeroProps> = ({
   readOnly = false,
   themeColors: fontThemeColors
 }) => {
-  const { content, styles } = section;
+  const { content: rawContent, styles: rawStyles } = section;
+  // AI content may be generated async; render safely with empty/placeholder content.
+  const content = rawContent || {};
+  const styles: any = rawStyles || {};
   const { themeData } = useTheme();
   
   // Element IDs - must match what App.tsx expects
@@ -87,7 +90,7 @@ export const HeroCenter: React.FC<HeroProps> = ({
       id: titleId,
       type: 'heading',
       content: {
-        text: content.title || '',
+        text: (content as any)?.title || 'Welcome to our business',
         htmlTag: (styles.titleHeadingTag || 'h1') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
       },
       style: {
@@ -104,7 +107,7 @@ export const HeroCenter: React.FC<HeroProps> = ({
       id: subtitleId,
       type: 'text',
       content: {
-        text: content.subtitle || '',
+        text: (content as any)?.subtitle || 'Discover the best services. We deliver excellence.',
         textSize: 'base' as 'base' | 'small' | 'large' | 'xl'
       },
       style: {
@@ -120,8 +123,8 @@ export const HeroCenter: React.FC<HeroProps> = ({
       id: buttonId,
       type: 'button',
       content: {
-        text: content.ctaText || '',
-        link: content.ctaHref || ''
+        text: (content as any)?.ctaText || 'Get Started',
+        link: (content as any)?.ctaHref || ''
       },
       style: {
         backgroundColor: styles.buttonBackgroundColor || '',
@@ -139,7 +142,7 @@ export const HeroCenter: React.FC<HeroProps> = ({
       id: imageId,
       type: 'image',
       content: {
-        imageUrl: content.imageUrl || '',
+        imageUrl: (content as any)?.imageUrl || '',
         imageAlt: 'Hero'
       },
       style: {}

@@ -1358,9 +1358,78 @@ const AppContent: React.FC = () => {
             return section;
           });
 
+          // Hydrate AI-generated content on first load.
+          // GenieBuild renders from WebsiteDesignsData.sectionData.content, but AI content is stored in SectionContent.
+          // If section.content is empty, replace it with data from getSectionContent.
+          const hydrateSectionsFromSectionContent = async (sectionsToHydrate: Section[]) => {
+            const shouldHydrate = (s: Section) => {
+              const c: any = (s as any)?.content;
+              if (!c) return true;
+              if (typeof c === 'object' && !Array.isArray(c) && Object.keys(c).length === 0) return true;
+              return false;
+            };
+
+            const sectionTypes = Array.from(
+              new Set(sectionsToHydrate.filter(shouldHydrate).map((s) => String(s.type || '').toLowerCase()).filter(Boolean))
+            );
+
+            if (!sectionTypes.length) return sectionsToHydrate;
+
+            const contentByType = new Map<string, any>();
+
+            const fetchMissing = async (types: string[]) => {
+              await Promise.all(
+                types.map(async (sectionType) => {
+                  try {
+                    const sectionId = sectionType; // backend uses sectionId = section type (e.g., 'hero', 'faq')
+                    const resp = await fetch(
+                      `${apiUrl}/getSectionContent/${projectId}/${pageId}/${sectionId}`,
+                      { method: 'GET', headers }
+                    );
+
+                    if (!resp.ok) return;
+                    const result = await resp.json();
+                    if (result?.success && result?.data) {
+                      contentByType.set(sectionType, result.data);
+                    }
+                  } catch (e) {
+                    console.warn('[GenieBuild] hydrateSectionsFromSectionContent error:', e);
+                  }
+                })
+              );
+            };
+
+            // If AI generation is still running, poll for missing types.
+            // Queue-based generation can take >5s, so we retry for a bounded time window.
+            let remainingTypes = sectionTypes;
+            const maxAttempts = 6; // 6 * 5s = 30s total polling window
+            const delayMs = 5000;
+
+            for (let attempt = 0; attempt < maxAttempts && remainingTypes.length; attempt++) {
+              if (attempt > 0) {
+                await new Promise((r) => setTimeout(r, delayMs));
+              }
+
+              await fetchMissing(remainingTypes);
+              remainingTypes = sectionTypes.filter((t) => !contentByType.has(t));
+            }
+
+            if (!contentByType.size) return sectionsToHydrate;
+
+            return sectionsToHydrate.map((s) => {
+              const key = String(s.type || '').toLowerCase();
+              if (contentByType.has(key)) {
+                return { ...s, content: contentByType.get(key) };
+              }
+              return s;
+            });
+          };
+
+          const hydratedSections = await hydrateSectionsFromSectionContent(migratedSections);
+
           setSiteData({
             ...INITIAL_TEMPLATE,
-            sections: migratedSections,
+            sections: hydratedSections,
             globalStyles: {
               ...INITIAL_TEMPLATE.globalStyles,
               colors: globalColors,
@@ -1462,6 +1531,40 @@ const AppContent: React.FC = () => {
       if (!saveResponse.ok) {
         const errorData = await saveResponse.json();
         throw new Error(errorData.message || 'Failed to save website data');
+      }
+
+      // Persist builder-edited section content into SectionContent as well.
+      // This makes "reset to default" use the last saved user content on subsequent loads.
+      try {
+        const sectionMapByType = new Map<string, any>();
+        (updatedComponentIds || []).forEach((comp: any) => {
+          const type = comp?.sectionData?.type;
+          if (!type) return;
+          const content = comp?.sectionData?.content;
+          // Avoid overwriting OpenAI content with empty placeholders.
+          if (!content) return;
+          if (typeof content === 'object' && !Array.isArray(content) && Object.keys(content).length === 0) return;
+
+          sectionMapByType.set(String(type).toLowerCase(), content);
+        });
+
+        const sections = Array.from(sectionMapByType.entries()).map(([sectionId, content]) => ({
+          sectionId,
+          content
+        }));
+
+        await fetch(`${apiUrl}/upsertSectionContentFromBuilder`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            projectId,
+            pageId,
+            locationId: null,
+            sections
+          })
+        });
+      } catch (e) {
+        console.warn('[GenieBuild] Failed to upsert SectionContent from builder:', e);
       }
 
       // Also save theme settings if they exist

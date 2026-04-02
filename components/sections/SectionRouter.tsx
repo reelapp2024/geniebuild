@@ -102,13 +102,19 @@ interface SectionRouterProps {
  */
 export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
   const { section } = props;
-  const sectionType = section.type as string; // Cast to string to handle 'faq' type
-  const variant = section.styles?.variant || getDefaultVariant(sectionType);
+  // AI section content can be generated asynchronously; ensure downstream components never crash.
+  const safeSection: Section = {
+    ...(section as any),
+    content: (section as any)?.content || {},
+    styles: (section as any)?.styles || {},
+  };
+  const sectionType = safeSection.type as string; // Cast to string to handle 'faq' type
+  const variant = (safeSection.styles as any)?.variant || getDefaultVariant(sectionType);
 
  
   // Route to correct variant component based on section type and variant
   const baseProps = {
-    section: props.section,
+    section: safeSection,
     onTextEdit: props.onTextEdit,
     buttonClass: props.buttonClass,
     readOnly: props.readOnly,
