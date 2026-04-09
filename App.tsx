@@ -1397,19 +1397,31 @@ const AppContent: React.FC = () => {
             const isTemplateWhite = templateBg === '#FFFFFF' || templateBg === '#FFF' || templateBg === 'WHITE';
             const isTemplateLight = variantOverrides.themeMode === 'light' || template?.styles?.themeMode === 'light' || isTemplateWhite;
 
-            const explicitThemeMode = section.styles?.themeMode;
-            // It is light if explicitly set to light, OR if born light and not explicitly set to dark
-            const isLight = explicitThemeMode === 'light' || (isTemplateLight && explicitThemeMode !== 'dark');
+            // 🚀 THE FIX: Strongly enforce template DNA. Ignore corrupted 'dark' flags from DB for inherently light sections.
+            const isLight = isTemplateLight; 
 
             const migrated = { ...section };
             
             if (isLight) {
                 if (!migrated.styles) migrated.styles = {};
                 migrated.styles.themeMode = 'light';
-                // Cleanse corrupted dark backgrounds from old database saves
+                
                 const currentBg = (migrated.styles.backgroundColor || '').toUpperCase();
-                if (currentBg && currentBg !== '#FFFFFF' && currentBg !== '#FFF' && !currentBg.includes('255,255,255')) {
+                const currentTitle = (migrated.styles.titleColor || '').toUpperCase();
+                const currentText = (migrated.styles.textColor || '').toUpperCase();
+
+                // 🧹 FACTORY RESET: If bg is dark, OR if text is corrupted (light text on white bg)
+                if (
+                    (currentBg && currentBg !== '#FFFFFF' && currentBg !== '#FFF' && !currentBg.includes('255,255,255')) ||
+                    currentTitle === '#F8FAFC' || currentTitle === '#FFFFFF' || currentTitle === '#FFF' ||
+                    currentText === '#C7CDD6' || currentText === '#FFFFFF'
+                ) {
                     migrated.styles.backgroundColor = '#FFFFFF';
+                    migrated.styles.titleColor = variantOverrides.titleColor || template?.styles?.titleColor || '#111827';
+                    migrated.styles.textColor = variantOverrides.textColor || template?.styles?.textColor || '#4B5563';
+                    migrated.styles.subtitleColor = variantOverrides.subtitleColor || template?.styles?.subtitleColor || '#3b82f6';
+                    migrated.styles.cardBackgroundColor = variantOverrides.cardBackgroundColor || template?.styles?.cardBackgroundColor || '#F9FAFB';
+                    migrated.styles.cardBorderColor = variantOverrides.cardBorderColor || template?.styles?.cardBorderColor || '#E5E7EB';
                 }
             }
 
@@ -2898,8 +2910,8 @@ const AppContent: React.FC = () => {
               const isTemplateWhite = templateBg === '#FFFFFF' || templateBg === '#FFF' || templateBg === 'WHITE';
               const isTemplateLight = overrides.themeMode === 'light' || template?.styles?.themeMode === 'light' || isTemplateWhite;
 
-              const explicitThemeMode = section.styles.themeMode;
-              const isLight = explicitThemeMode === 'light' || (isTemplateLight && explicitThemeMode !== 'dark');
+              // 🚀 THE FIX: Strongly enforce template DNA.
+              const isLight = isTemplateLight;
               const isWhite = isLight; // Map for color fallbacks
 
               return {
@@ -3077,8 +3089,8 @@ const AppContent: React.FC = () => {
                 const isTemplateWhite = templateBg === '#FFFFFF' || templateBg === '#FFF' || templateBg === 'WHITE';
                 const isTemplateLight = overrides.themeMode === 'light' || template?.styles?.themeMode === 'light' || isTemplateWhite;
 
-                const explicitThemeMode = section.styles.themeMode;
-                const isLight = explicitThemeMode === 'light' || (isTemplateLight && explicitThemeMode !== 'dark');
+                // 🚀 THE FIX: Strongly enforce template DNA.
+                const isLight = isTemplateLight;
                 const isWhite = isLight;
                 
                 // If it's explicitly white, we keep it white. Otherwise we follow the theme's surface.
