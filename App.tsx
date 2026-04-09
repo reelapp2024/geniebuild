@@ -1388,16 +1388,41 @@ const AppContent: React.FC = () => {
 
           // Migrate sections to include variantStyles if not present
           const migratedSections = genieBuildSections.map((section: Section) => {
-            if (!section.variantStyles) {
+            // 🧹 DATABASE SANITIZER: Check the section's true DNA to rescue corrupted colors
+            const template = SECTION_TEMPLATES[section.type] || null;
+            const currentVariant = section.styles?.variant || getDefaultVariant(section.type);
+            const variantOverrides = template?.variantOverrides?.[currentVariant] || {};
+            
+            const templateBg = (variantOverrides.backgroundColor || template?.styles?.backgroundColor || '').toUpperCase();
+            const isTemplateWhite = templateBg === '#FFFFFF' || templateBg === '#FFF' || templateBg === 'WHITE';
+            const isTemplateLight = variantOverrides.themeMode === 'light' || template?.styles?.themeMode === 'light' || isTemplateWhite;
+
+            const explicitThemeMode = section.styles?.themeMode;
+            // It is light if explicitly set to light, OR if born light and not explicitly set to dark
+            const isLight = explicitThemeMode === 'light' || (isTemplateLight && explicitThemeMode !== 'dark');
+
+            const migrated = { ...section };
+            
+            if (isLight) {
+                if (!migrated.styles) migrated.styles = {};
+                migrated.styles.themeMode = 'light';
+                // Cleanse corrupted dark backgrounds from old database saves
+                const currentBg = (migrated.styles.backgroundColor || '').toUpperCase();
+                if (currentBg && currentBg !== '#FFFFFF' && currentBg !== '#FFF' && !currentBg.includes('255,255,255')) {
+                    migrated.styles.backgroundColor = '#FFFFFF';
+                }
+            }
+
+            if (!migrated.variantStyles) {
               const currentVariant = section.styles?.variant || getDefaultVariant(section.type);
               return {
-                ...section,
+                ...migrated,
                 variantStyles: {
-                  [currentVariant]: { ...section.styles }
+                  [currentVariant]: { ...migrated.styles }
                 }
               };
             }
-            return section;
+            return migrated;
           });
 
           // Hydrate AI-generated content on first load.
@@ -2864,10 +2889,18 @@ const AppContent: React.FC = () => {
             ...prev,
             globalStyles: newGlobalStyles,
             sections: prev.sections.map(section => {
-              // 🛡️ DUAL-PALETTE PROTECTION LOGIC
-              const bgCol = (section.styles.backgroundColor || '').toUpperCase();
-              const isWhite = bgCol === '#FFFFFF' || bgCol === '#FFF' || bgCol === 'WHITE' || bgCol === 'RGB(255,255,255)';
-              const isLight = section.styles.themeMode === 'light' || isWhite;
+              // 🛡️ DUAL-PALETTE PROTECTION LOGIC (DNA Check)
+              const template = SECTION_TEMPLATES[section.type] || null;
+              const currentVariant = section.styles?.variant || template?.styles?.variant || 'center';
+              const overrides = template?.variantOverrides?.[currentVariant] || {};
+              
+              const templateBg = (overrides.backgroundColor || template?.styles?.backgroundColor || '').toUpperCase();
+              const isTemplateWhite = templateBg === '#FFFFFF' || templateBg === '#FFF' || templateBg === 'WHITE';
+              const isTemplateLight = overrides.themeMode === 'light' || template?.styles?.themeMode === 'light' || isTemplateWhite;
+
+              const explicitThemeMode = section.styles.themeMode;
+              const isLight = explicitThemeMode === 'light' || (isTemplateLight && explicitThemeMode !== 'dark');
+              const isWhite = isLight; // Map for color fallbacks
 
               return {
                 ...section,
@@ -3035,11 +3068,18 @@ const AppContent: React.FC = () => {
             const newSections = isInit ? prev.sections : prev.sections.map(section => {
                 const currentBg = section.styles.background || { type: section.styles.backgroundImage ? 'image' : 'color' };
                 
-                // DUAL-PALETTE ENGINE: Check if this specific section requests the Light Mode palette
-                // We also treat explicitly white sections as "light" to preserve their readability
-                const bgCol = section.styles.backgroundColor?.toUpperCase();
-                const isWhite = bgCol === '#FFFFFF' || bgCol === '#FFF' || bgCol === 'WHITE' || bgCol === 'RGB(255,255,255)';
-                const isLight = section.styles.themeMode === 'light' || isWhite;
+                // DUAL-PALETTE ENGINE (DNA Check)
+                const template = SECTION_TEMPLATES[section.type] || null;
+                const currentVariant = section.styles?.variant || template?.styles?.variant || 'center';
+                const overrides = template?.variantOverrides?.[currentVariant] || {};
+                
+                const templateBg = (overrides.backgroundColor || template?.styles?.backgroundColor || '').toUpperCase();
+                const isTemplateWhite = templateBg === '#FFFFFF' || templateBg === '#FFF' || templateBg === 'WHITE';
+                const isTemplateLight = overrides.themeMode === 'light' || template?.styles?.themeMode === 'light' || isTemplateWhite;
+
+                const explicitThemeMode = section.styles.themeMode;
+                const isLight = explicitThemeMode === 'light' || (isTemplateLight && explicitThemeMode !== 'dark');
+                const isWhite = isLight;
                 
                 // If it's explicitly white, we keep it white. Otherwise we follow the theme's surface.
                 const activeSurface = isWhite ? '#FFFFFF' : (isLight ? (colors.light?.surface || '#FFFFFF') : colors.surface);
