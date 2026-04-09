@@ -70,8 +70,10 @@ export const GuaranteeSimple: React.FC<GuaranteeProps> = ({
   const upperBg = finalBg.toUpperCase();
   const isBgLight = upperBg === '#FFFFFF' || upperBg === '#FFF' || upperBg.startsWith('RGB(255');
   if (isBgLight) {
-      if (finalTitle.toUpperCase() === '#FFFFFF' || finalTitle.toUpperCase() === '#F8FAFC') finalTitle = '#111827';
-      if (finalText.toUpperCase() === '#FFFFFF' || finalText.toUpperCase() === '#C7CDD6') finalText = '#4B5563';
+      // Aggressively intercept any light theme colors bleeding onto the white background
+      const lightColors = ['#FFFFFF', '#FFF', '#C7CDD6', '#F8FAFC', '#E5E7EB', '#9CA3AF', '#D1D5DB', '#F3F4F6'];
+      if (lightColors.includes(finalTitle.toUpperCase())) finalTitle = '#111827';
+      if (lightColors.includes(finalText.toUpperCase())) finalText = '#4B5563';
   }
 
   const themeColors = {
@@ -91,11 +93,13 @@ export const GuaranteeSimple: React.FC<GuaranteeProps> = ({
   const titleId = `${section.id}-title`;
   const descriptionId = `${section.id}-description`;
   const iconId = `${section.id}-icon`;
+  const ctaId = `${section.id}-cta`;
 
   const badgeElement = section.elements?.find(e => e.id === badgeId);
   const titleElement = section.elements?.find(e => e.id === titleId);
   const descriptionElement = section.elements?.find(e => e.id === descriptionId);
   const iconElement = section.elements?.find(e => e.id === iconId);
+  const ctaElement = section.elements?.find(e => e.id === ctaId);
 
   const getBadgeElement = (): WebsiteElement => {
     if (badgeElement) return badgeElement;
@@ -167,6 +171,30 @@ export const GuaranteeSimple: React.FC<GuaranteeProps> = ({
     };
   };
 
+  const getCtaElement = (): WebsiteElement => {
+    if (ctaElement) return ctaElement;
+    return {
+      id: ctaId,
+      type: 'button',
+      content: { 
+          text: content.ctaText || 'Learn More About Our Guarantee',
+          action: content.ctaAction 
+      },
+      style: {
+        backgroundColor: themeColors.buttonBackgroundColor || themeColors.accentColor,
+        color: themeColors.buttonTextColor || '#FFFFFF',
+        padding: '16px 32px',
+        borderRadius: '9999px',
+        fontWeight: '700',
+        fontSize: '16px',
+        border: 'none',
+        cursor: 'pointer',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+        ...buttonStyle
+      }
+    };
+  };
+
   const paddingTop = styles.paddingTop || 'pt-24';
   const paddingBottom = styles.paddingBottom || 'pb-24';
   const paddingX = styles.paddingX || 'px-6';
@@ -233,20 +261,18 @@ export const GuaranteeSimple: React.FC<GuaranteeProps> = ({
             />
           </div>
 
-          {content.ctaText && (
-            <div className="mt-10">
-               <button 
-                className={`px-8 py-4 rounded-full font-bold transition-all hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl`}
-                style={{ 
-                  backgroundColor: themeColors.buttonBackgroundColor || themeColors.accentColor,
-                  color: themeColors.buttonTextColor || '#FFFFFF',
-                  ...buttonStyle
-                }}
-              >
-                {content.ctaText}
-              </button>
-            </div>
-          )}
+          <div className="mt-10 transition-all hover:scale-105 active:scale-95">
+            <ElementsSection
+              isWrapped={false}
+              section={{ ...section, elements: [getCtaElement()] }}
+              onTextEdit={onTextEdit}
+              onElementUpdate={onElementUpdate || (() => {})}
+              onElementSelect={onElementSelect}
+              selectedElementId={selectedElementId}
+              readOnly={readOnly}
+              themeColors={themeColors}
+            />
+          </div>
         </div>
       </div>
     </div>
