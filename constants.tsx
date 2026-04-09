@@ -21,7 +21,16 @@ export const ELEMENT_DEFAULTS: Record<string, any> = {
     boxShadow: 'none',
     filter: 'none'
   },
-  'star-rating': {}
+  'star-rating': {},
+  'feature-box': {
+    padding: '24px',
+    borderRadius: '16px',
+    iconSize: '24px',
+    iconContainerSize: '48px',
+    titleFontSize: '20px',
+    titleFontWeight: '700',
+    descriptionFontSize: '14px'
+  }
 };
 
 export const PRESET_FONTS = [
@@ -58,18 +67,27 @@ export const PRESET_THEMES = [
     "name": "Crimson Jet",
     "elements": {
       "heading": "#F8FAFC", "description": "#C7CDD6", "surface": "#0E1214",
+      "borderColor": "rgba(255,255,255,0.1)",
       "overlay": { "color": "#2D0A0F", "opacity": 0.75, "blend": "normal" }, 
       "primaryButton": { "bg": "#E11D48", "text": "#FFFFFF", "hover": "#BE123C" },
-      "secondaryButton": { "bg": "transparent", "text": "#F8FAFC", "border": "#F43F5E", "hover": "rgba(244,63,94,0.10)" },
+      "secondaryButton": { "bg": "transparent", "text": "#F8FAFC", "border": "#E11D48", "hover": "rgba(244,63,94,0.10)" },
+      "icon": "#E11D48",
+      "iconBg": "rgba(225,29,72,0.1)",
+      "subheading": "#D1D5DB",
+      "secondaryHeading": "#E11D48",
       "accent": "#F59E0B", "gradient": { "from": "#0E1214", "to": "#1F2937" },
       "ring": "#F43F5E", "shadow": "rgba(0,0,0,0.35)",
       "badge": { "text": "#F8FAFC", "background": "rgba(225,29,72,0.15)" },
       "trust": { "text": "#C7CDD6", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#F59E0B" },
       "accordion": { "questionColor": "#F8FAFC", "answerColor": "#C7CDD6" },
       "light": {
-        "surface": "#FFF1F2", "heading": "#4C0519", "description": "#9F1239",
+        "surface": "#FFFFFF", "heading": "#000000", "description": "#333333", "accent": "#E11D48",
+        "borderColor": "rgba(0,0,0,0.1)",
+        "subheading": "#4B5563",
+        "iconBg": "rgba(225,29,72,0.08)",
+        "secondaryHeading": "#E11D48",
         "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
-        "accordion": { "questionColor": "#4C0519", "answerColor": "#9F1239" }
+        "accordion": { "questionColor": "#000000", "answerColor": "#333333" }
       }
     }
   },
@@ -77,18 +95,27 @@ export const PRESET_THEMES = [
     "name": "Indigo Sand",
     "elements": {
       "heading": "#F8FAFC", "description": "#BCC6DD", "surface": "#0F1222",
+      "borderColor": "rgba(255,255,255,0.1)",
       "overlay": { "color": "#0F0F2D", "opacity": 0.75, "blend": "normal" }, 
       "primaryButton": { "bg": "#4F46E5", "text": "#FFFFFF", "hover": "#4338CA" },
-      "secondaryButton": { "bg": "transparent", "text": "#E5E7EB", "border": "#818CF8", "hover": "rgba(129,140,248,0.12)" },
+      "secondaryButton": { "bg": "transparent", "text": "#E5E7EB", "border": "#4F46E5", "hover": "rgba(129,140,248,0.12)" },
+      "icon": "#4F46E5",
+      "iconBg": "rgba(79,70,229,0.1)",
+      "subheading": "#BCC6DD",
+      "secondaryHeading": "#4F46E5",
       "accent": "#EAB308", "gradient": { "from": "#0F1222", "to": "#111827" },
       "ring": "#818CF8", "shadow": "rgba(0,0,0,0.34)",
       "badge": { "text": "#F8FAFC", "background": "rgba(79,70,229,0.15)" },
       "trust": { "text": "#BCC6DD", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#EAB308" },
       "accordion": { "questionColor": "#F8FAFC", "answerColor": "#BCC6DD" },
       "light": {
-        "surface": "#EEF2FF", "heading": "#1E1B4B", "description": "#3730A3",
+        "surface": "#FFFFFF", "heading": "#111827", "description": "#4B5563",
+        "borderColor": "rgba(0,0,0,0.1)",
+        "subheading": "#6B7280",
+        "iconBg": "rgba(79,70,229,0.08)",
+        "secondaryHeading": "#4F46E5",
         "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
-        "accordion": { "questionColor": "#1E1B4B", "answerColor": "#3730A3" }
+        "accordion": { "questionColor": "#111827", "answerColor": "#4B5563" }
       }
     }
   },
@@ -96,18 +123,27 @@ export const PRESET_THEMES = [
     "name": "Saffron Charcoal",
     "elements": {
       "heading": "#FFFFFF", "description": "#E5E7EB", "surface": "#121212",
+      "borderColor": "rgba(255,255,255,0.1)",
       "overlay": { "color": "#2D190A", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#FDB022", "text": "#1A1306", "hover": "#DC8D05" },
-      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#FACC15", "hover": "rgba(250,204,21,0.14)" },
+      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#FDB022", "hover": "rgba(250,204,21,0.14)" },
+      "icon": "#FDB022",
+      "iconBg": "rgba(253,176,34,0.1)",
+      "subheading": "#E5E7EB",
+      "secondaryHeading": "#FDB022",
       "accent": "#38BDF8", "gradient": { "from": "#0B0B0B", "to": "#1A1A1A" },
       "ring": "#FACC15", "shadow": "rgba(0,0,0,0.45)",
       "badge": { "text": "#FFFFFF", "background": "rgba(253,176,34,0.15)" },
       "trust": { "text": "#E5E7EB", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#38BDF8" },
       "accordion": { "questionColor": "#FFFFFF", "answerColor": "#E5E7EB" },
       "light": {
-        "surface": "#FEFCE8", "heading": "#78350F", "description": "#A16207",
+        "surface": "#FFFFFF", "heading": "#111827", "description": "#4B5563",
+        "borderColor": "rgba(0,0,0,0.1)",
+        "subheading": "#6B7280",
+        "iconBg": "rgba(253,176,34,0.08)",
+        "secondaryHeading": "#FDB022",
         "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
-        "accordion": { "questionColor": "#78350F", "answerColor": "#A16207" }
+        "accordion": { "questionColor": "#111827", "answerColor": "#4B5563" }
       }
     }
   },
@@ -115,18 +151,27 @@ export const PRESET_THEMES = [
     "name": "Mint Slate",
     "elements": {
       "heading": "#FFFFFF", "description": "#D3DEDA", "surface": "#0B1412",
+      "borderColor": "rgba(255,255,255,0.1)",
       "overlay": { "color": "#0A2819", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#22C55E", "text": "#022C22", "hover": "#16A34A" }, 
-      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#34D399", "hover": "rgba(52,211,153,0.16)" },
+      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#22C55E", "hover": "rgba(52,211,153,0.16)" },
+      "icon": "#22C55E",
+      "iconBg": "rgba(34,197,94,0.1)",
+      "subheading": "#D3DEDA",
+      "secondaryHeading": "#22C55E",
       "accent": "#60A5FA", "gradient": { "from": "#0B1412", "to": "#0F1A18" },
       "ring": "#34D399", "shadow": "rgba(0,0,0,0.40)",
       "badge": { "text": "#FFFFFF", "background": "rgba(34,197,94,0.15)" },
       "trust": { "text": "#D3DEDA", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#60A5FA" },
       "accordion": { "questionColor": "#FFFFFF", "answerColor": "#D3DEDA" },
       "light": {
-        "surface": "#F0FDF4", "heading": "#052E16", "description": "#166534",
+        "surface": "#FFFFFF", "heading": "#111827", "description": "#4B5563",
+        "borderColor": "rgba(0,0,0,0.1)",
+        "subheading": "#6B7280",
+        "iconBg": "rgba(34,197,94,0.08)",
+        "secondaryHeading": "#22C55E",
         "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
-        "accordion": { "questionColor": "#052E16", "answerColor": "#166534" }
+        "accordion": { "questionColor": "#111827", "answerColor": "#4B5563" }
       }
     }
   },
@@ -134,18 +179,27 @@ export const PRESET_THEMES = [
     "name": "Marine Teal",
     "elements": {
       "heading": "#FFFFFF", "description": "#BDD0DB", "surface": "#0B1720",
+      "borderColor": "rgba(255,255,255,0.1)",
       "overlay": { "color": "#0A2828", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#0EA5A4", "text": "#FFFFFF", "hover": "#0C7E7D" },
-      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#22D3EE", "hover": "rgba(34,211,238,0.16)" },
+      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#0EA5A4", "hover": "rgba(34,211,238,0.16)" },
+      "icon": "#0EA5A4",
+      "iconBg": "rgba(14,165,164,0.1)",
+      "subheading": "#BDD0DB",
+      "secondaryHeading": "#0EA5A4",
       "accent": "#A7F3D0", "gradient": { "from": "#0B1720", "to": "#0F2430" },
       "ring": "#22D3EE", "shadow": "rgba(0,0,0,0.38)",
       "badge": { "text": "#FFFFFF", "background": "rgba(14,165,164,0.15)" },
       "trust": { "text": "#BDD0DB", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#A7F3D0" },
       "accordion": { "questionColor": "#FFFFFF", "answerColor": "#BDD0DB" },
       "light": {
-        "surface": "#F0FDFA", "heading": "#042F2E", "description": "#0F766E",
+        "surface": "#FFFFFF", "heading": "#111827", "description": "#4B5563",
+        "borderColor": "rgba(0,0,0,0.1)",
+        "subheading": "#6B7280",
+        "iconBg": "rgba(14,165,164,0.08)",
+        "secondaryHeading": "#0EA5A4",
         "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
-        "accordion": { "questionColor": "#042F2E", "answerColor": "#0F766E" }
+        "accordion": { "questionColor": "#111827", "answerColor": "#4B5563" }
       }
     }
   },
@@ -153,18 +207,27 @@ export const PRESET_THEMES = [
     "name": "Royal Plum Noir",
     "elements": {
       "heading": "#FFFFFF", "description": "#D8CCE6", "surface": "#120C18",
+      "borderColor": "rgba(255,255,255,0.1)",
       "overlay": { "color": "#230A32", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#A855F7", "text": "#FFFFFF", "hover": "#7E22CE" },
-      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#C084FC", "hover": "rgba(192,132,252,0.14)" },
+      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#A855F7", "hover": "rgba(192,132,252,0.14)" },
+      "icon": "#A855F7",
+      "iconBg": "rgba(168,85,247,0.1)",
+      "subheading": "#D8CCE6",
+      "secondaryHeading": "#A855F7",
       "accent": "#F59E0B", "gradient": { "from": "#0F0A16", "to": "#1A1230" },
       "ring": "#C084FC", "shadow": "rgba(0,0,0,0.42)",
       "badge": { "text": "#FFFFFF", "background": "rgba(168,85,247,0.15)" },
       "trust": { "text": "#D8CCE6", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#F59E0B" },
       "accordion": { "questionColor": "#FFFFFF", "answerColor": "#D8CCE6" },
       "light": {
-        "surface": "#FAF5FF", "heading": "#3B0764", "description": "#6B21A8",
+        "surface": "#FFFFFF", "heading": "#000000", "description": "#333333", "accent": "#A855F7",
+        "borderColor": "rgba(0,0,0,0.1)",
+        "subheading": "#4B5563",
+        "iconBg": "rgba(168,85,247,0.08)",
+        "secondaryHeading": "#A855F7",
         "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
-        "accordion": { "questionColor": "#3B0764", "answerColor": "#6B21A8" }
+        "accordion": { "questionColor": "#000000", "answerColor": "#333333" }
       }
     }
   },
@@ -172,18 +235,27 @@ export const PRESET_THEMES = [
     "name": "Electric Cobalt",
     "elements": {
       "heading": "#F8FAFC", "description": "#B8C7D9", "surface": "#0A1220",
+      "borderColor": "rgba(255,255,255,0.1)",
       "overlay": { "color": "#0A1437", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#2563EB", "text": "#FFFFFF", "hover": "#1E40AF" },
-      "secondaryButton": { "bg": "transparent", "text": "#F8FAFC", "border": "#38BDF8", "hover": "rgba(56,189,248,0.14)" },
+      "secondaryButton": { "bg": "transparent", "text": "#F8FAFC", "border": "#2563EB", "hover": "rgba(56,189,248,0.14)" },
+      "icon": "#2563EB",
+      "iconBg": "rgba(37,99,235,0.1)",
+      "subheading": "#B8C7D9",
+      "secondaryHeading": "#2563EB",
       "accent": "#22D3EE", "gradient": { "from": "#0A1220", "to": "#0F172A" },
       "ring": "#38BDF8", "shadow": "rgba(0,0,0,0.40)",
       "badge": { "text": "#F8FAFC", "background": "rgba(37,99,235,0.15)" },
       "trust": { "text": "#B8C7D9", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#22D3EE" },
       "accordion": { "questionColor": "#F8FAFC", "answerColor": "#B8C7D9" },
       "light": {
-        "surface": "#EFF6FF", "heading": "#1E3A8A", "description": "#1E40AF",
+        "surface": "#FFFFFF", "heading": "#000000", "description": "#333333", "accent": "#2563EB",
+        "borderColor": "rgba(0,0,0,0.1)",
+        "subheading": "#4B5563",
+        "iconBg": "rgba(37,99,235,0.08)",
+        "secondaryHeading": "#2563EB",
         "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
-        "accordion": { "questionColor": "#1E3A8A", "answerColor": "#1E40AF" }
+        "accordion": { "questionColor": "#000000", "answerColor": "#333333" }
       }
     }
   },
@@ -191,18 +263,27 @@ export const PRESET_THEMES = [
     "name": "Copper Forest",
     "elements": {
       "heading": "#FFFFFF", "description": "#C9D6CF", "surface": "#0D1512",
+      "borderColor": "rgba(255,255,255,0.1)",
       "overlay": { "color": "#28140A", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#D97706", "text": "#0E0A04", "hover": "#B45309" },
-      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#F59E0B", "hover": "rgba(245,158,11,0.14)" },
+      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#D97706", "hover": "rgba(245,158,11,0.14)" },
+      "icon": "#D97706",
+      "iconBg": "rgba(217,119,6,0.1)",
+      "subheading": "#C9D6CF",
+      "secondaryHeading": "#D97706",
       "accent": "#34D399", "gradient": { "from": "#0D1512", "to": "#12201B" },
       "ring": "#F59E0B", "shadow": "rgba(0,0,0,0.44)",
       "badge": { "text": "#FFFFFF", "background": "rgba(217,119,6,0.15)" },
       "trust": { "text": "#C9D6CF", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#34D399" },
       "accordion": { "questionColor": "#FFFFFF", "answerColor": "#C9D6CF" },
       "light": {
-        "surface": "#FFFBEB", "heading": "#78350F", "description": "#92400E",
+        "surface": "#FFFFFF", "heading": "#1B2C23", "description": "#43534B", "accent": "#D97706",
+        "borderColor": "rgba(0,0,0,0.1)",
+        "subheading": "#6B7280",
+        "iconBg": "rgba(217,119,6,0.08)",
+        "secondaryHeading": "#D97706",
         "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
-        "accordion": { "questionColor": "#78350F", "answerColor": "#92400E" }
+        "accordion": { "questionColor": "#1B2C23", "answerColor": "#43534B" }
       }
     }
   },
@@ -210,18 +291,27 @@ export const PRESET_THEMES = [
     "name": "Ruby Night",
     "elements": {
       "heading": "#FFFFFF", "description": "#E2C9CF", "surface": "#140A0D",
+      "borderColor": "rgba(255,255,255,0.1)",
       "overlay": { "color": "#2D0A14", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#DC2626", "text": "#FFFFFF", "hover": "#991B1B" },
-      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#F87171", "hover": "rgba(248,113,113,0.14)" },
+      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#DC2626", "hover": "rgba(248,113,113,0.14)" },
+      "icon": "#DC2626",
+      "iconBg": "rgba(220,38,38,0.1)",
+      "subheading": "#E2C9CF",
+      "secondaryHeading": "#DC2626",
       "accent": "#FB923C", "gradient": { "from": "#140A0D", "to": "#1F0E13" },
       "ring": "#F87171", "shadow": "rgba(0,0,0,0.46)",
       "badge": { "text": "#FFFFFF", "background": "rgba(220,38,38,0.15)" },
       "trust": { "text": "#E2C9CF", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#FB923C" },
       "accordion": { "questionColor": "#FFFFFF", "answerColor": "#E2C9CF" },
       "light": {
-        "surface": "#FEF2F2", "heading": "#7F1D1D", "description": "#991B1B",
+        "surface": "#FFFFFF", "heading": "#000000", "description": "#333333", "accent": "#DC2626",
+        "borderColor": "rgba(0,0,0,0.1)",
+        "subheading": "#4B5563",
+        "iconBg": "rgba(220,38,38,0.08)",
+        "secondaryHeading": "#DC2626",
         "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
-        "accordion": { "questionColor": "#7F1D1D", "answerColor": "#991B1B" }
+        "accordion": { "questionColor": "#000000", "answerColor": "#333333" }
       }
     }
   },
@@ -229,18 +319,55 @@ export const PRESET_THEMES = [
     "name": "Citrus Navy",
     "elements": {
       "heading": "#FFFFFF", "description": "#C9D3E6", "surface": "#0A1224",
+      "borderColor": "rgba(255,255,255,0.1)",
       "overlay": { "color": "#0A0F2D", "opacity": 0.75, "blend": "normal" },
       "primaryButton": { "bg": "#F59E0B", "text": "#1A1306", "hover": "#D97706" },
-      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#FBBF24", "hover": "rgba(251,191,36,0.16)" },
+      "secondaryButton": { "bg": "transparent", "text": "#FFFFFF", "border": "#F59E0B", "hover": "rgba(251,191,36,0.16)" },
+      "icon": "#F59E0B",
+      "iconBg": "rgba(245,158,11,0.1)",
+      "subheading": "#C9D3E6",
+      "secondaryHeading": "#F59E0B",
       "accent": "#10B981", "gradient": { "from": "#0A1224", "to": "#0C1A33" },
       "ring": "#FBBF24", "shadow": "rgba(0,0,0,0.43)",
       "badge": { "text": "#FFFFFF", "background": "rgba(245,158,11,0.15)" },
       "trust": { "text": "#C9D3E6", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#10B981" },
       "accordion": { "questionColor": "#FFFFFF", "answerColor": "#C9D3E6" },
       "light": {
-        "surface": "#FFFBEB", "heading": "#78350F", "description": "#92400E",
+        "surface": "#FFFFFF", "heading": "#0A1224", "description": "#475569", "accent": "#F59E0B",
+        "borderColor": "rgba(0,0,0,0.1)",
+        "subheading": "#6B7280",
+        "iconBg": "rgba(245,158,11,0.08)",
+        "secondaryHeading": "#F59E0B",
         "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
-        "accordion": { "questionColor": "#78350F", "answerColor": "#92400E" }
+        "accordion": { "questionColor": "#0A1224", "answerColor": "#475569" }
+      }
+    }
+  },
+  {
+    "name": "Midnight Amber",
+    "elements": {
+      "heading": "#F8FAFC", "description": "#C7CDD6", "surface": "#000000",
+      "borderColor": "rgba(255,255,255,0.1)",
+      "overlay": { "color": "#1A0F00", "opacity": 0.75, "blend": "normal" },
+      "primaryButton": { "bg": "#F97316", "text": "#FFFFFF", "hover": "#EA580C" },
+      "secondaryButton": { "bg": "transparent", "text": "#F8FAFC", "border": "#F97316", "hover": "rgba(251,146,60,0.10)" },
+      "icon": "#F97316",
+      "iconBg": "rgba(249,115,22,0.1)",
+      "subheading": "#C7CDD6",
+      "secondaryHeading": "#F97316",
+      "accent": "#FDBA74", "gradient": { "from": "#000000", "to": "#171717" },
+      "ring": "#FB923C", "shadow": "rgba(0,0,0,0.50)",
+      "badge": { "text": "#F8FAFC", "background": "rgba(249,115,22,0.15)" },
+      "trust": { "text": "#C7CDD6", "dot1": "#22C55E", "dot2": "#3B82F6", "dot3": "#F97316" },
+      "accordion": { "questionColor": "#F8FAFC", "answerColor": "#C7CDD6" },
+      "light": {
+        "surface": "#FFFFFF", "heading": "#000000", "description": "#333333", "accent": "#F97316",
+        "borderColor": "rgba(0,0,0,0.1)",
+        "subheading": "#4B5563",
+        "iconBg": "rgba(249,115,22,0.08)",
+        "secondaryHeading": "#F97316",
+        "overlay": { "color": "#FFFFFF", "opacity": 0.90, "blend": "normal" },
+        "accordion": { "questionColor": "#000000", "answerColor": "#333333" }
       }
     }
   }
@@ -379,7 +506,11 @@ export const INITIAL_TEMPLATE: WebsiteData = {
         buttonBackgroundColor: '#E11D48',
         buttonTextColor: '#FFFFFF',
         linkColor: '#F43F5E',
-        borderColor: '#F43F5E'
+        borderColor: '#F43F5E',
+        subheadingColor: '#D1D5DB',
+        iconColor: '#E11D48',
+        iconBgColor: 'rgba(225,29,72,0.1)',
+        secondaryHeadingColor: '#E11D48'
     },
     typography: DEFAULT_TYPOGRAPHY
   },
@@ -389,26 +520,90 @@ export const INITIAL_TEMPLATE: WebsiteData = {
         id: 'hero-1',
         type: 'hero',
         content: {
-            title: 'Build the Future.',
-            subtitle: 'Experience the next generation of web design with our AI-powered builder.',
-            ctaText: 'Get Started',
-            imageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2000'
+            title: 'Expert Plumbing Solutions for Your Home & Business',
+            subtitle: 'Reliable, professional, and affordable plumbing services available 24/7. We handle everything from minor leaks to major installations.',
+            ctaText: 'Get a Free Quote',
+            secondaryCtaText: 'Our Services',
+            imageUrl: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&q=80&w=2000'
         },
         styles: {
             backgroundColor: '#0E1214',
-            backgroundImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2000',
+            backgroundImage: '',
             overlayColor: '#000000',
             overlayOpacityValue: '0.6',
-            textColor: '#FFFFFF',
-            accentColor: '#F59E0B',
+            textColor: '#C7CDD6',
+            titleColor: '#F8FAFC',
+            accentColor: '#F43F5E',
             buttonBackgroundColor: '#E11D48',
             buttonTextColor: '#FFFFFF',
             paddingTop: 'pt-32',
             paddingBottom: 'pb-32',
             paddingX: 'px-6',
-            textAlign: 'center',
+            textAlign: 'left',
             titleSize: 'text-6xl',
-            variant: 'HeroCenter'
+            variant: 'HeroPlumbing1',
+            backgroundPattern: 'none',
+            maxWidth: 'max-w-full'
+        }
+    },
+    // 0.5 ABOUT
+    {
+        id: 'about-1',
+        type: 'about',
+        content: {
+            title: 'About Our Mission',
+            subtitle: 'Our Story',
+            description: 'We are committed to delivering excellence through innovation and dedication. Our team works tirelessly to ensure that every project we undertake meets the highest standards of quality.',
+            imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800',
+            ctaText: 'Learn More'
+        },
+        styles: {
+            backgroundColor: '#FFFFFF',
+            themeMode: 'light',
+            textColor: '#4B5563',
+            titleColor: '#111827',
+            accentColor: '#F59E0B',
+            subheadingColor: '#6B7280',
+            secondaryHeadingColor: '#E11D48',
+            paddingTop: 'pt-32',
+            paddingBottom: 'pb-32',
+            paddingX: 'px-6',
+            textAlign: 'left',
+            variant: 'About1',
+            maxWidth: 'max-w-full'
+        }
+    },
+    // 0.7 SERVICES
+    {
+        id: 'services-1',
+        type: 'services',
+        content: {
+            title: 'Our Premium <span style="color: #E11D48">Services</span>',
+            subtitle: 'What We Offer',
+            description: 'We provide a wide range of professional services tailored to meet your specific needs and exceed your expectations.',
+            items: [
+                { id: 's1', title: 'Web Development', description: 'Custom websites built with the latest technologies for maximum performance.', icon: 'Globe' },
+                { id: 's2', title: 'Mobile Apps', description: 'Native and cross-platform mobile applications for iOS and Android.', icon: 'Smartphone' },
+                { id: 's3', title: 'UI/UX Design', description: 'User-centric design that focuses on creating intuitive and engaging experiences.', icon: 'Palette' },
+                { id: 's4', title: 'Cloud Solutions', description: 'Scalable and secure cloud infrastructure to power your business growth.', icon: 'Cloud' },
+                { id: 's5', title: 'Digital Marketing', description: 'Strategic marketing campaigns to increase your online presence and reach.', icon: 'BarChart' },
+                { id: 's6', title: 'Consultancy', description: 'Expert advice and guidance to help you navigate the digital landscape.', icon: 'MessageSquare' }
+            ]
+        },
+        styles: {
+            backgroundColor: '#FFFFFF',
+            themeMode: 'light',
+            textColor: '#4B5563',
+            titleColor: '#111827',
+            accentColor: '#E11D48',
+            subheadingColor: '#E11D48',
+            secondaryHeadingColor: '#E11D48',
+            paddingTop: 'pt-32',
+            paddingBottom: 'pb-32',
+            paddingX: 'px-6',
+            textAlign: 'center',
+            variant: 'ServicesGrid',
+            maxWidth: 'max-w-full'
         }
     },
     // 1. CTA
@@ -432,7 +627,91 @@ export const INITIAL_TEMPLATE: WebsiteData = {
             paddingX: 'px-6',
             textAlign: 'center',
             titleSize: 'text-4xl md:text-6xl',
-            variant: 'center'
+            variant: 'center',
+            maxWidth: 'max-w-full'
+        }
+    },
+    // 1.5 PROCESS
+    {
+        id: 'process-1',
+        type: 'process',
+        content: {
+            badge: 'Workflow',
+            title: 'Our Working Process',
+            subtitle: 'A simple, transparent process designed to deliver exceptional results.',
+            items: [
+                { id: 'p1', title: 'Strategy', description: 'We start by defining the project goals and target audience.', icon: 'Target' },
+                { id: 'p2', title: 'Design', description: 'Our designers create a visual representation of the project.', icon: 'Palette' },
+                { id: 'p3', title: 'Development', description: 'We build the project using the latest technologies.', icon: 'Code' },
+                { id: 'p4', title: 'Launch', description: 'The project is launched and monitored for performance.', icon: 'Rocket' }
+            ]
+        },
+        styles: {
+            backgroundColor: '#FFFFFF',
+            themeMode: 'light',
+            textColor: '#333333',
+            titleColor: '#000000',
+            accentColor: '#E11D48',
+            paddingTop: 'pt-20',
+            paddingBottom: 'pb-20',
+            paddingX: 'px-6',
+            textAlign: 'center',
+            variant: 'ProcessSteps',
+            maxWidth: 'max-w-full'
+        }
+    },
+    // 1.7 WHY CHOOSE US
+    {
+        id: 'why-choose-us-1',
+        type: 'why-choose-us',
+        content: {
+            title: 'Why Choose Us',
+            subtitle: 'Our Advantages',
+            description: 'We offer unmatched quality and dedication to our clients.',
+            items: [
+                { id: 'w1', title: 'Expert Team', description: 'Our professionals are highly skilled and experienced.', icon: 'Users' },
+                { id: 'w2', title: '24/7 Support', description: 'We are always here to help you with any issues.', icon: 'Headphones' },
+                { id: 'w3', title: 'Quality Guaranteed', description: 'We stand behind the quality of our work.', icon: 'Award' }
+            ]
+        },
+        styles: {
+            backgroundColor: '#FFFFFF',
+            themeMode: 'light',
+            textColor: '#4B5563',
+            titleColor: '#111827',
+            accentColor: '#E11D48',
+            paddingTop: 'pt-32',
+            paddingBottom: 'pb-32',
+            paddingX: 'px-6',
+            textAlign: 'center',
+            titleSize: 'text-4xl md:text-6xl',
+            variant: 'WhyChooseUsGrid',
+            maxWidth: 'max-w-full'
+        }
+    },
+    // 1.8 GUARANTEE
+    {
+        id: 'guarantee-1',
+        type: 'guarantee',
+        content: {
+            title: 'Our Quality <span style="color: #E11D48">Guarantee</span>',
+            badgeText: '100% SATISFACTION GUARANTEE',
+            description: 'We stand behind our work. If you are not completely satisfied with our service, we will make it right at no extra cost to you.',
+            icon: 'ShieldCheck',
+            ctaText: 'Learn More About Our Guarantee'
+        },
+        styles: {
+            backgroundColor: '#FFFFFF',
+            themeMode: 'light',
+            textColor: '#4B5563',
+            titleColor: '#111827',
+            accentColor: '#E11D48',
+            paddingTop: 'pt-24',
+            paddingBottom: 'pb-24',
+            paddingX: 'px-6',
+            textAlign: 'center',
+            variant: 'GuaranteeSimple',
+            maxWidth: 'max-w-full'
         }
     },
     // 2. FAQ
@@ -459,7 +738,8 @@ export const INITIAL_TEMPLATE: WebsiteData = {
             paddingBottom: 'pb-24',
             paddingX: 'px-6',
             textAlign: 'center',
-            variant: 'FAQCentered'
+            variant: 'FAQCentered',
+            maxWidth: 'max-w-full'
         },
         elements: []
     },
@@ -487,7 +767,8 @@ export const INITIAL_TEMPLATE: WebsiteData = {
             paddingBottom: 'pb-20',
             paddingX: 'px-6',
             textAlign: 'center',
-            variant: 'TestimonialsGrid'
+            variant: 'TestimonialsGrid',
+            maxWidth: 'max-w-full'
         },
         elements: []
     },
@@ -508,7 +789,8 @@ export const INITIAL_TEMPLATE: WebsiteData = {
           paddingX: 'px-6', 
           textAlign: 'left', 
           titleSize: 'text-4xl', 
-          variant: 'default' 
+          variant: 'default',
+          maxWidth: 'max-w-full'
       }
     },
     // 5. ADVANCED ELEMENTS SECTION
@@ -528,7 +810,8 @@ export const INITIAL_TEMPLATE: WebsiteData = {
           paddingX: 'px-6', 
           textAlign: 'left', 
           titleSize: 'text-4xl', 
-          variant: 'default' 
+          variant: 'default',
+          maxWidth: 'max-w-full'
       }
     }
   ]
@@ -629,6 +912,20 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
                   repeat: 'no-repeat',
                   overlay: { enabled: true }
               }
+          }
+      },
+      'HeroPlumbing1': { 
+          textAlign: 'left', 
+          backgroundPattern: 'dots-grid',
+          titleColor: '#F8FAFC',
+          textColor: '#C7CDD6',
+          subtitleColor: '#C7CDD6',
+          buttonBackgroundColor: '#E11D48',
+          buttonTextColor: '#FFFFFF',
+          background: { 
+              type: 'color', 
+              color: '#0E1214',
+              overlay: { enabled: false }
           }
       },
       'HeroExplore': {
@@ -828,6 +1125,106 @@ export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
             themeMode: 'light',
             background: { type: 'color', overlay: { enabled: false } }
         }
+      }
+  },
+  services: {
+      type: 'services',
+      content: {
+          title: 'Our Services',
+          subtitle: 'What We Do',
+          description: 'Comprehensive solutions for your business needs.',
+          items: [
+              { id: 's1', title: 'Service One', description: 'Description for service one.', icon: 'Settings' },
+              { id: 's2', title: 'Service Two', description: 'Description for service two.', icon: 'Zap' },
+              { id: 's3', title: 'Service Three', description: 'Description for service three.', icon: 'Shield' }
+          ]
+      },
+      styles: {
+          backgroundColor: '#FFFFFF',
+          themeMode: 'light',
+          textColor: '#4B5563',
+          titleColor: '#111827',
+          accentColor: '#F59E0B',
+          paddingTop: 'pt-32',
+          paddingBottom: 'pb-32',
+          paddingX: 'px-6',
+          textAlign: 'center',
+          titleSize: 'text-4xl md:text-6xl',
+          variant: 'ServicesGrid'
+      }
+  },
+  'why-choose-us': {
+      type: 'why-choose-us',
+      content: {
+          title: 'Why Choose Us',
+          subtitle: 'Our Advantages',
+          description: 'We offer unmatched quality and dedication to our clients.',
+          items: [
+              { id: 'w1', title: 'Expert Team', description: 'Our professionals are highly skilled and experienced.', icon: 'Users' },
+              { id: 'w2', title: '24/7 Support', description: 'We are always here to help you with any issues.', icon: 'Headphones' },
+              { id: 'w3', title: 'Quality Guaranteed', description: 'We stand behind the quality of our work.', icon: 'Award' }
+          ]
+      },
+      styles: {
+          backgroundColor: '#FFFFFF',
+          themeMode: 'light',
+          textColor: '#4B5563',
+          titleColor: '#111827',
+          accentColor: '#E11D48',
+          paddingTop: 'pt-32',
+          paddingBottom: 'pb-32',
+          paddingX: 'px-6',
+          textAlign: 'center',
+          titleSize: 'text-4xl md:text-6xl',
+          variant: 'WhyChooseUsGrid'
+      }
+  },
+  guarantee: {
+      type: 'guarantee',
+      content: {
+          title: 'Our Quality <span style="color: #E11D48">Guarantee</span>',
+          badgeText: '100% SATISFACTION GUARANTEE',
+          description: 'We stand behind our work. If you are not completely satisfied with our service, we will make it right at no extra cost to you.',
+          icon: 'ShieldCheck',
+          ctaText: 'Learn More About Our Guarantee'
+      },
+      styles: {
+          backgroundColor: '#FFFFFF',
+          themeMode: 'light',
+          textColor: '#4B5563',
+          titleColor: '#111827',
+          accentColor: '#E11D48',
+          paddingTop: 'pt-24',
+          paddingBottom: 'pb-24',
+          paddingX: 'px-6',
+          textAlign: 'center',
+          variant: 'GuaranteeSimple'
+      }
+  },
+  process: {
+      type: 'process',
+      content: {
+          title: 'Our Working Process',
+          subtitle: 'How It Works',
+          items: [
+              { id: 'p1', title: 'Strategy', description: 'We start by defining the project goals and target audience.' },
+              { id: 'p2', title: 'Design', description: 'Our designers create a visual representation of the project.' },
+              { id: 'p3', title: 'Development', description: 'We build the project using the latest technologies.' },
+              { id: 'p4', title: 'Launch', description: 'The project is launched and monitored for performance.' }
+          ]
+      },
+      styles: {
+          backgroundColor: '#FFFFFF',
+          themeMode: 'light',
+          textColor: '#4B5563',
+          titleColor: '#111827',
+          accentColor: '#3b82f6',
+          paddingTop: 'pt-20',
+          paddingBottom: 'pb-20',
+          paddingX: 'px-6',
+          textAlign: 'center',
+          variant: 'ProcessSteps',
+          maxWidth: 'max-w-full'
       }
   },
   navbar: {

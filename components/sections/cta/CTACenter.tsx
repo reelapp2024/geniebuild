@@ -11,6 +11,12 @@ interface CTAProps {
   onElementUpdate?: (elementId: string, updates: any) => void;
   selectedElementId?: string | null;
   readOnly?: boolean;
+  fontThemeColors?: {
+    titleColor?: string;
+    textColor?: string;
+    subtitleColor?: string;
+    accentColor?: string;
+  };
 }
 
 export const CTACenter: React.FC<CTAProps> = ({ 
@@ -20,7 +26,8 @@ export const CTACenter: React.FC<CTAProps> = ({
   onElementSelect,
   onElementUpdate,
   selectedElementId,
-  readOnly = false 
+  readOnly = false,
+  fontThemeColors
 }) => {
   const { content, styles } = section;
   
@@ -39,6 +46,10 @@ export const CTACenter: React.FC<CTAProps> = ({
   const styleAny = styles as any;
   const themeColors = {
     ...styles, // Include all section.styles properties
+    titleColor: styles.titleColor || fontThemeColors?.titleColor,
+    textColor: styles.textColor || fontThemeColors?.textColor,
+    subtitleColor: styles.subtitleColor || fontThemeColors?.subtitleColor || fontThemeColors?.accentColor,
+    accentColor: styles.accentColor || fontThemeColors?.accentColor,
     // Explicitly map button style properties for clarity
     buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
     buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
@@ -112,7 +123,7 @@ export const CTACenter: React.FC<CTAProps> = ({
   };
 
   return (
-    <div className="mx-auto px-6 relative z-10 max-w-4xl text-center">
+    <div className="mx-auto px-6 py-16 md:py-24 relative z-10 max-w-4xl text-center">
       {/* Render Title using ElementsSection - unwrapped for custom layout */}
       <div className="mb-6">
         <ElementsSection

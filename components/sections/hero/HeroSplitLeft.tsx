@@ -40,6 +40,9 @@ export const HeroSplitLeft: React.FC<HeroProps> = ({ section, onTextEdit, onImag
     titleColor: styles.titleColor || themeData?.heading,
     textColor: styles.textColor || themeData?.description,
     subtitleColor: styles.subtitleColor || styles.textColor || themeData?.description,
+    subheadingColor: styles.subheadingColor || themeData?.subheading || themeData?.description,
+    iconBgColor: styles.iconBgColor || themeData?.iconBg,
+    secondaryHeadingColor: styles.secondaryHeadingColor || themeData?.secondaryHeading || themeData?.heading,
     // Explicitly map button style properties for clarity
     buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
     buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,

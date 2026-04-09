@@ -77,9 +77,9 @@ export const HeroMulticolorV1: React.FC<HeroProps> = ({
     surface: themeData?.surface || styles.backgroundColor || '#0E1214',
     primaryButton: themeData?.primaryButton?.bg || styles.buttonBackgroundColor || '#E11D48',
     primaryButtonText: themeData?.primaryButton?.text || styles.buttonTextColor || '#FFFFFF',
-    secondaryButton: themeData?.elements?.secondaryButton?.bg || styles.secondaryButtonBackgroundColor || 'transparent',
-    secondaryButtonText: themeData?.elements?.secondaryButton?.text || styles.secondaryButtonTextColor || '#F8FAFC',
-    secondaryButtonBorder: themeData?.elements?.secondaryButton?.border || styles.accentColor || '#F43F5E',
+    secondaryButton: (themeData?.elements || themeData)?.secondaryButton?.bg || styles.secondaryButtonBackgroundColor || 'transparent',
+    secondaryButtonText: (themeData?.elements || themeData)?.secondaryButton?.text || styles.secondaryButtonTextColor || (styles.themeMode === 'light' ? (styles.buttonBackgroundColor || (themeData?.elements || themeData)?.primaryButton?.bg || '#E11D48') : '#F8FAFC'),
+    secondaryButtonBorder: (themeData?.elements || themeData)?.secondaryButton?.border || styles.secondaryButtonBorderColor || styles.buttonBackgroundColor || (themeData?.elements || themeData)?.primaryButton?.bg || '#F43F5E',
     accent: themeData?.accent || styles.accentColor || '#F59E0B',
     gradient: {
       from: themeData?.gradient?.from || '#0E1214',
@@ -298,7 +298,7 @@ export const HeroMulticolorV1: React.FC<HeroProps> = ({
                   onTextEdit={onTextEdit}
                   buttonClass={buttonClass}
                   readOnly={readOnly}
-                  themeColors={themeColors}
+                  themeColors={{ ...themeColors, buttonBackgroundColor: colors.secondaryButton, buttonTextColor: colors.secondaryButtonText, buttonBorderColor: colors.secondaryButtonBorder }}
                 />
               )}
             </div>

@@ -121,7 +121,7 @@ export const TestimonialsGrid: React.FC<TestimonialsGridProps> = ({
       ];
 
   return (
-    <div className="max-w-7xl mx-auto px-6">
+    <div className="max-w-7xl mx-auto px-6 py-16 md:py-24">
       {/* Render Title */}
       <div className="mb-4 text-center">
         <ElementsSection

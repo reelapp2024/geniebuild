@@ -36,10 +36,10 @@ export const HeroCrimsonJet: React.FC<HeroProps> = ({
   
   // Combine themeData and activeTheme to ensure we get the full secondaryButton object
   const secondaryButton = {
-    bg: themeData?.elements?.secondaryButton?.bg || activeTheme?.elements?.secondaryButton?.bg || 'transparent',
-    text: themeData?.elements?.secondaryButton?.text || activeTheme?.elements?.secondaryButton?.text || '#F8FAFC',
-    border: themeData?.elements?.secondaryButton?.border || activeTheme?.elements?.secondaryButton?.border || '#F43F5E',
-    hover: themeData?.elements?.secondaryButton?.hover || activeTheme?.elements?.secondaryButton?.hover || '#F43F5E'
+    bg: (themeData?.elements || themeData)?.secondaryButton?.bg || activeTheme?.elements?.secondaryButton?.bg || 'transparent',
+    text: (themeData?.elements || themeData)?.secondaryButton?.text || activeTheme?.elements?.secondaryButton?.text || (styles.themeMode === 'light' ? (styles.buttonBackgroundColor || (themeData?.elements || themeData)?.primaryButton?.bg || '#E11D48') : '#F8FAFC'),
+    border: (themeData?.elements || themeData)?.secondaryButton?.border || styles.secondaryButtonBorderColor || styles.buttonBackgroundColor || activeTheme?.elements?.secondaryButton?.border || '#F43F5E',
+    hover: (themeData?.elements || themeData)?.secondaryButton?.hover || activeTheme?.elements?.secondaryButton?.hover || '#F43F5E'
   };
 
   React.useEffect(() => {
@@ -64,9 +64,10 @@ export const HeroCrimsonJet: React.FC<HeroProps> = ({
   const styleAny = styles as any;
   const themeColors = {
     ...styles,
-    titleColor: theme.heading,
-    textColor: theme.description,
-    subtitleColor: styles.subtitleColor || theme.description,
+    titleColor: styles.titleColor || (fontThemeColors as any)?.titleColor || theme.heading,
+    textColor: styles.textColor || (fontThemeColors as any)?.textColor || theme.description,
+    subtitleColor: styles.subtitleColor || (fontThemeColors as any)?.subtitleColor || (fontThemeColors as any)?.textColor || theme.description,
+    accentColor: styles.accentColor || (fontThemeColors as any)?.accentColor || themeData?.accent,
     buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
     buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
     buttonAlign: styleAny.buttonAlign || styles.textAlign,
@@ -166,7 +167,7 @@ export const HeroCrimsonJet: React.FC<HeroProps> = ({
               readOnly={readOnly}
               isWrapped={false}
               buttonClass={buttonClass}
-              themeColors={{ ...themeColors, buttonBackgroundColor: theme.secondaryButton, buttonTextColor: theme.secondaryButtonText }}
+              themeColors={{ ...themeColors, buttonBackgroundColor: theme.secondaryButton, buttonTextColor: theme.secondaryButtonText, buttonBorderColor: theme.secondaryButtonBorder }}
             />
           </div>
         </div>

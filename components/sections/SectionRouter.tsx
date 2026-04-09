@@ -21,7 +21,7 @@ import { getHeadingSizeClass } from '../../utils/headingSizeUtils';
 import { HeroCenter } from './hero/HeroCenter';
 import { HeroLight } from './hero/HeroLight';
 import { HeroCrimsonJet } from './hero/HeroCrimsonJet';
-import { HeroModern } from './hero/HeroModern';
+import { HeroPlumbing1 } from './hero/HeroPlumbing1';
 import { HeroExplore } from './hero/HeroExplore';
 import { HeroOverlay } from './hero/HeroOverlay';
 import { HeroMarquee } from './hero/HeroMarquee';
@@ -35,6 +35,18 @@ import { NavbarApi } from './navbar/NavbarApi';
 import { FeaturesGrid } from './features/FeaturesGrid';
 import { FeaturesList } from './features/FeaturesList';
 import { FeaturesCards } from './features/FeaturesCards';
+
+// Services variants
+import { ServicesGrid } from './services/ServicesGrid';
+
+// Why Choose Us variants
+import { WhyChooseUsGrid } from './why-choose-us/WhyChooseUsGrid';
+
+// Guarantee variants
+import { GuaranteeSimple } from './guarantee/GuaranteeSimple';
+
+// Process variants
+import { ProcessSteps } from './process/ProcessSteps';
 
 // CTA variants
 import { CTACenter } from './cta/CTACenter';
@@ -69,6 +81,10 @@ import { FAQSplit } from './faq/FAQSplit';
 import { FAQLight } from './faq/FAQLight';
 import { FAQModern } from './faq/FAQModern';
 
+// About variants
+import { About1 } from './about/About1';
+import { AboutPlumbing } from './about/AboutPlumbing';
+
 import { ElementsSection } from './ElementsSection';
 import { AllElementsTest } from './allelementsTest/AllElementsTest';
 interface SectionRouterProps {
@@ -88,13 +104,11 @@ interface SectionRouterProps {
   isSelected?: boolean;
   titleClass?: string;
   titleStyle?: React.CSSProperties;
+  subtitleStyle?: React.CSSProperties;
+  descriptionStyle?: React.CSSProperties;
+  buttonStyle?: React.CSSProperties;
   readOnly?: boolean;
-  themeColors?: {
-    titleFontFamily?: string;
-    subtitleFontFamily?: string;
-    descriptionFontFamily?: string;
-    buttonFontFamily?: string;
-  };
+  themeColors?: any;
 }
 
 /**
@@ -115,8 +129,12 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
     isSelected: props.isSelected,
     titleClass: props.titleClass,
     titleStyle: props.titleStyle,
+    subtitleStyle: props.subtitleStyle,
+    descriptionStyle: props.descriptionStyle,
+    buttonStyle: props.buttonStyle,
     onElementSelect: props.onElementSelect,
     selectedElementId: props.selectedElementId,
+    onElementUpdate: props.onElementUpdate,
   };
 
   // Route based on section type and variant
@@ -127,8 +145,8 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return <HeroCrimsonJet {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroLight':
           return <HeroLight {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} selectedElementId={props.selectedElementId} />;
-        case 'HeroModern':
-          return <HeroModern {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+        case 'HeroPlumbing1':
+          return <HeroPlumbing1 {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroExplore':
           return <HeroExplore {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
         case 'HeroOverlay':
@@ -151,7 +169,7 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return <NavbarMinimal {...baseProps} onLinkEdit={props.onLinkEdit} onLogoClick={props.onLogoClick} />;
         case 'NavbarSimple':
         default:
-          return <NavbarSimple {...baseProps} onLinkEdit={props.onLinkEdit} onLogoClick={props.onLogoClick} />;
+          return <NavbarSimple {...baseProps} themeColors={props.themeColors} onLinkEdit={props.onLinkEdit} onLogoClick={props.onLogoClick} />;
       }
 
     case 'features':
@@ -160,6 +178,7 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return (
             <FeaturesList
               {...baseProps}
+              themeColors={props.themeColors}
               onItemEdit={props.onItemEdit}
               onAddItem={props.onAddItem}
               onRemoveItem={props.onRemoveItem}
@@ -169,6 +188,7 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return (
             <FeaturesCards
               {...baseProps}
+              themeColors={props.themeColors}
               onItemEdit={props.onItemEdit}
               onAddItem={props.onAddItem}
               onRemoveItem={props.onRemoveItem}
@@ -179,6 +199,67 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return (
             <FeaturesGrid
               {...baseProps}
+              themeColors={props.themeColors}
+              onItemEdit={props.onItemEdit}
+              onAddItem={props.onAddItem}
+              onRemoveItem={props.onRemoveItem}
+            />
+          );
+      }
+
+    case 'services':
+      switch (variant) {
+        case 'ServicesGrid':
+        default:
+          return (
+            <ServicesGrid
+              {...baseProps}
+              themeColors={props.themeColors}
+              onItemEdit={props.onItemEdit}
+              onAddItem={props.onAddItem}
+              onRemoveItem={props.onRemoveItem}
+            />
+          );
+      }
+
+    case 'why-choose-us':
+      switch (variant) {
+        case 'WhyChooseUsGrid':
+        default:
+          return (
+            <WhyChooseUsGrid
+              {...baseProps}
+              themeColors={props.themeColors}
+              onItemEdit={props.onItemEdit}
+              onAddItem={props.onAddItem}
+              onRemoveItem={props.onRemoveItem}
+            />
+          );
+      }
+
+    case 'guarantee':
+      switch (variant) {
+        case 'GuaranteeSimple':
+        default:
+          return (
+            <GuaranteeSimple
+              {...baseProps}
+              themeColors={props.themeColors}
+              onItemEdit={props.onItemEdit}
+              onAddItem={props.onAddItem}
+              onRemoveItem={props.onRemoveItem}
+            />
+          );
+      }
+
+    case 'process':
+      switch (variant) {
+        case 'ProcessSteps':
+        default:
+          return (
+            <ProcessSteps
+              {...baseProps}
+              themeColors={props.themeColors}
               onItemEdit={props.onItemEdit}
               onAddItem={props.onAddItem}
               onRemoveItem={props.onRemoveItem}
@@ -189,14 +270,14 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
     case 'cta':
       switch (variant) {
         case 'CTASplit':
-          return <CTASplit {...baseProps} onElementUpdate={props.onElementUpdate} />;
+          return <CTASplit {...baseProps} fontThemeColors={props.themeColors} onElementUpdate={props.onElementUpdate} />;
         case 'CTALight':
-          return <CTALight {...baseProps} onElementUpdate={props.onElementUpdate} />;
+          return <CTALight {...baseProps} fontThemeColors={props.themeColors} onElementUpdate={props.onElementUpdate} />;
         case 'CTAModern':
-          return <CTAModern {...baseProps} onElementUpdate={props.onElementUpdate} />;
+          return <CTAModern {...baseProps} fontThemeColors={props.themeColors} onElementUpdate={props.onElementUpdate} />;
         case 'CTACenter':
         default:
-          return <CTACenter {...baseProps} onElementUpdate={props.onElementUpdate} />;
+          return <CTACenter {...baseProps} fontThemeColors={props.themeColors} onElementUpdate={props.onElementUpdate} />;
       }
 
     case 'footer':
@@ -209,7 +290,7 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return <FooterMinimal {...baseProps} onLinkEdit={props.onLinkEdit} onLogoClick={props.onLogoClick} />;
         case 'FooterColumns':
         default:
-          return <FooterColumns {...baseProps} onLinkEdit={props.onLinkEdit} onLogoClick={props.onLogoClick} />;
+          return <FooterColumns {...baseProps} themeColors={props.themeColors} titleStyle={props.titleStyle} descriptionStyle={props.descriptionStyle} onLinkEdit={props.onLinkEdit} onLogoClick={props.onLogoClick} />;
       }
 
     case 'pricing':
@@ -218,6 +299,7 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return (
             <PricingMinimal
               {...baseProps}
+              themeColors={props.themeColors}
               onItemEdit={props.onItemEdit}
               onRemoveItem={props.onRemoveItem}
               onAddItem={props.onAddItem}
@@ -228,6 +310,7 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           return (
             <PricingCards
               {...baseProps}
+              themeColors={props.themeColors}
               onItemEdit={props.onItemEdit}
               onRemoveItem={props.onRemoveItem}
               onAddItem={props.onAddItem}
@@ -327,6 +410,14 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
             />
           );
       }
+    case 'about':
+      switch (variant) {
+        case 'AboutPlumbing':
+          return <AboutPlumbing {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+        case 'About1':
+        default:
+          return <About1 {...baseProps} themeColors={props.themeColors} onImageClick={props.onImageClick} onElementSelect={props.onElementSelect} onElementUpdate={props.onElementUpdate} selectedElementId={props.selectedElementId} />;
+      }
 
     case 'elements':
       return (
@@ -336,14 +427,7 @@ export const SectionRouter: React.FC<SectionRouterProps> = (props) => {
           onElementUpdate={props.onElementUpdate}
           onElementSelect={props.onElementSelect}
           selectedElementId={props.selectedElementId}
-          themeColors={{
-            titleColor: props.section.styles?.titleColor,
-            textColor: props.section.styles?.textColor,
-            accentColor: props.section.styles?.accentColor,
-            buttonBackgroundColor: props.section.styles?.buttonBackgroundColor,
-            buttonTextColor: props.section.styles?.buttonTextColor,
-            backgroundColor: props.section.styles?.backgroundColor,
-          }}
+          themeColors={props.themeColors}
         />
       );
 

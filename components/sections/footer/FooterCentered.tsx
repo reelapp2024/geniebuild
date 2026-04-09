@@ -27,19 +27,17 @@ export const FooterCentered: React.FC<FooterProps> = ({ section, onTextEdit, onL
                 className="text-3xl font-bold outline-none focus:ring-2 ring-white rounded px-1" 
                 contentEditable={!readOnly}
                 suppressContentEditableWarning 
-                onBlur={(e) => onTextEdit('title', e.currentTarget.textContent || '')}
-            >
-                {content.title}
-            </h3>
+                onBlur={(e) => onTextEdit('title', e.currentTarget.innerHTML || '')}
+                dangerouslySetInnerHTML={{ __html: content.title || '' }}
+            />
         )}
         <p 
             className="opacity-60 max-w-lg outline-none focus:ring-2 ring-white rounded px-1 leading-relaxed" 
             contentEditable={!readOnly}
             suppressContentEditableWarning 
-            onBlur={(e) => onTextEdit('description', e.currentTarget.textContent || '')}
-        >
-            {content.description}
-        </p>
+            onBlur={(e) => onTextEdit('description', e.currentTarget.innerHTML || '')}
+            dangerouslySetInnerHTML={{ __html: content.description || '' }}
+        />
         <div className="flex flex-wrap justify-center gap-8">
             {content.links?.map((link, idx) => (
                 <a 

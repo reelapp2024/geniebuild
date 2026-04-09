@@ -52,9 +52,10 @@ export const HeroLight: React.FC<HeroProps> = ({
   const themeColors = {
     ...styles, // Include all section.styles properties
     // Merge theme data for fallbacks
-    titleColor: styles.titleColor || themeData?.heading,
-    textColor: styles.textColor || themeData?.description,
-    subtitleColor: styles.subtitleColor || styles.textColor || themeData?.description,
+    titleColor: styles.titleColor || (fontThemeColors as any)?.titleColor || themeData?.heading,
+    textColor: styles.textColor || (fontThemeColors as any)?.textColor || themeData?.description,
+    subtitleColor: styles.subtitleColor || (fontThemeColors as any)?.subtitleColor || (fontThemeColors as any)?.textColor || themeData?.description,
+    accentColor: styles.accentColor || (fontThemeColors as any)?.accentColor || themeData?.accent,
     // Explicitly map button style properties for clarity
     buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
     buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,

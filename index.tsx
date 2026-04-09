@@ -5,14 +5,19 @@ import App from './App';
 
 // Suppress "ResizeObserver loop completed with undelivered notifications" error
 // This is a known non-critical issue in some browsers during layout reflows
-window.addEventListener('error', (e) => {
+const suppressResizeObserverErrors = (e: ErrorEvent | PromiseRejectionEvent) => {
   const messages = [
     'ResizeObserver loop completed with undelivered notifications.',
-    'ResizeObserver loop limit exceeded'
+    'ResizeObserver loop limit exceeded',
+    'ResizeObserver'
   ];
-  if (messages.some(msg => e.message?.includes(msg))) {
+  
+  const message = (e instanceof ErrorEvent) ? e.message : (e.reason?.message || '');
+  
+  if (messages.some(msg => message?.includes(msg))) {
     // Suppress the error in the console
     e.stopImmediatePropagation();
+    e.preventDefault();
     
     // Also try to hide the development overlay if it exists
     const overlays = [
@@ -25,7 +30,10 @@ window.addEventListener('error', (e) => {
       if (el) el.style.display = 'none';
     });
   }
-});
+};
+
+window.addEventListener('error', suppressResizeObserverErrors);
+window.addEventListener('unhandledrejection', suppressResizeObserverErrors);
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

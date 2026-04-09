@@ -8,14 +8,24 @@ interface NavbarProps {
   onLinkEdit: (index: number, value: string) => void;
   onLogoClick: () => void;
   buttonClass: string;
+  buttonStyle?: React.CSSProperties;
   readOnly?: boolean;
+  themeColors?: {
+    titleFontFamily?: string;
+    subtitleFontFamily?: string;
+    descriptionFontFamily?: string;
+    buttonFontFamily?: string;
+  };
 }
 
-export const NavbarSimple: React.FC<NavbarProps> = ({ section, onTextEdit, onLinkEdit, onLogoClick, buttonClass, readOnly }) => {
+export const NavbarSimple: React.FC<NavbarProps> = ({ section, onTextEdit, onLinkEdit, onLogoClick, buttonClass, buttonStyle, readOnly, themeColors }) => {
   const { content, styles } = section;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isCustomColor = (value?: string) => value && (value.startsWith('#') || value.startsWith('rgb'));
-  const logoStyle = { color: isCustomColor(styles.titleColor) ? styles.titleColor : undefined };
+  const logoStyle = { 
+    color: isCustomColor(styles.titleColor) ? styles.titleColor : undefined, 
+    fontFamily: themeColors?.titleFontFamily || buttonStyle?.fontFamily 
+  };
 
   const handleLinkClick = (e: React.MouseEvent, href: string) => {
     if (!readOnly) {
@@ -41,10 +51,9 @@ export const NavbarSimple: React.FC<NavbarProps> = ({ section, onTextEdit, onLin
                     style={logoStyle} 
                     contentEditable={!readOnly}
                     suppressContentEditableWarning 
-                    onBlur={(e) => onTextEdit('logo', e.currentTarget.textContent || '')}
-                >
-                    {content.logo}
-                </div>
+                    onBlur={(e) => onTextEdit('logo', e.currentTarget.innerHTML || '')}
+                    dangerouslySetInnerHTML={{ __html: content.logo || '' }}
+                />
             )}
           </div>
 
@@ -55,6 +64,7 @@ export const NavbarSimple: React.FC<NavbarProps> = ({ section, onTextEdit, onLin
                 key={idx} 
                 href={link.href} 
                 className="hover:opacity-75 font-medium transition-opacity text-sm lg:text-base outline-none focus:ring-2 ring-white rounded px-1"
+                style={{ fontFamily: themeColors?.descriptionFontFamily || buttonStyle?.fontFamily }}
                 onClick={(e) => handleLinkClick(e, link.href)}
                 contentEditable={!readOnly}
                 suppressContentEditableWarning
@@ -69,12 +79,12 @@ export const NavbarSimple: React.FC<NavbarProps> = ({ section, onTextEdit, onLin
           <div className="hidden md:block">
             <button 
                 className={buttonClass} 
+                style={buttonStyle}
                 contentEditable={!readOnly}
                 suppressContentEditableWarning 
-                onBlur={(e) => onTextEdit('ctaText', e.currentTarget.textContent || '')}
-            >
-                {content.ctaText}
-            </button>
+                onBlur={(e) => onTextEdit('ctaText', e.currentTarget.innerHTML || '')}
+                dangerouslySetInnerHTML={{ __html: content.ctaText || '' }}
+            />
           </div>
 
           {/* Mobile Menu Button */}
@@ -97,6 +107,7 @@ export const NavbarSimple: React.FC<NavbarProps> = ({ section, onTextEdit, onLin
                   key={idx} 
                   href={link.href} 
                   className="text-2xl font-medium hover:text-blue-400 transition-colors outline-none focus:ring-2 ring-white rounded px-1" 
+                  style={{ fontFamily: buttonStyle?.fontFamily }}
                   onClick={(e) => { if(!readOnly) e.preventDefault(); else setIsMobileMenuOpen(false); }}
                   contentEditable={!readOnly}
                   suppressContentEditableWarning
@@ -107,12 +118,12 @@ export const NavbarSimple: React.FC<NavbarProps> = ({ section, onTextEdit, onLin
             ))}
             <button 
                 className={`${buttonClass} w-full max-w-xs mt-4 py-4 text-lg`}
+                style={buttonStyle}
                 contentEditable={!readOnly}
                 suppressContentEditableWarning
-                onBlur={(e) => onTextEdit('ctaText', e.currentTarget.textContent || '')}
-            >
-                {content.ctaText}
-            </button>
+                onBlur={(e) => onTextEdit('ctaText', e.currentTarget.innerHTML || '')}
+                dangerouslySetInnerHTML={{ __html: content.ctaText || '' }}
+            />
           </div>
       </div>
     </nav>

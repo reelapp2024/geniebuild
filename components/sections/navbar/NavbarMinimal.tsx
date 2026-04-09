@@ -33,10 +33,9 @@ export const NavbarMinimal: React.FC<NavbarProps> = ({ section, onTextEdit, onLi
                     style={logoStyle} 
                     contentEditable={!readOnly}
                     suppressContentEditableWarning 
-                    onBlur={(e) => onTextEdit('logo', e.currentTarget.textContent || '')}
-                >
-                    {content.logo}
-                </div>
+                    onBlur={(e) => onTextEdit('logo', e.currentTarget.innerHTML || '')}
+                    dangerouslySetInnerHTML={{ __html: content.logo || '' }}
+                />
             )}
            </div>
         

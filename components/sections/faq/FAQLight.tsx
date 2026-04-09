@@ -2,6 +2,7 @@
 import React from 'react';
 import { Section, WebsiteElement } from '../../../types';
 import { ElementsSection } from '../ElementsSection';
+import { useTheme } from '@ui/blocks';
 
 interface FAQLightProps {
   section: Section;
@@ -22,11 +23,15 @@ export const FAQLight: React.FC<FAQLightProps> = ({
   readOnly = false,
 }) => {
   const { content, styles } = section;
+  const { themeData } = useTheme();
   const styleAny = styles as any;
   
   // Theme colors for global fallback inheritance
   const themeColors = {
     ...styles,
+    titleColor: styles.titleColor || themeData?.heading,
+    textColor: styles.textColor || themeData?.description,
+    accentColor: styles.accentColor || themeData?.accent,
     fontWeight: styleAny.fontWeight,
     fontSize: styleAny.fontSize,
     textAlign: styles.textAlign || 'center',
@@ -96,17 +101,17 @@ export const FAQLight: React.FC<FAQLightProps> = ({
                 ...item,
                 style: {
                   ...item.style,
-                  borderBottom: `1px solid ${(styles.borderColor || styleAny.cardBorderColor || '#E5E7EB')}20`,
+                  borderBottom: `1px solid ${(styles.borderColor || styleAny.cardBorderColor || themeData?.border || '#E5E7EB')}20`,
                   paddingTop: '1.5rem',
                   paddingBottom: '1.5rem',
                 }
               }))
             }, { 
-              accentColor: styles.accentColor || '#3b82f6',
-              backgroundColor: styleAny.accordionBackgroundColor || styleAny.cardBackgroundColor || styles.overlayColor || '#FFFFFF',
-              borderColor: styleAny.accordionBorderColor || styleAny.cardBorderColor || styles.borderColor || '#E5E7EB',
-              titleColor: styleAny.accordionQuestionColor || styles.titleColor || '#111827',
-              color: styleAny.accordionAnswerColor || styles.textColor || '#4B5563',
+              accentColor: styles.accentColor || themeData?.accent || '#3b82f6',
+              backgroundColor: styleAny.accordionBackgroundColor || styleAny.cardBackgroundColor || styles.overlayColor || themeData?.surface || '#FFFFFF',
+              borderColor: styleAny.accordionBorderColor || styleAny.cardBorderColor || styles.borderColor || themeData?.border || '#E5E7EB',
+              titleColor: styleAny.accordionQuestionColor || styles.titleColor || themeData?.heading || '#111827',
+              color: styleAny.accordionAnswerColor || styles.textColor || themeData?.description || '#4B5563',
               borderRadius: '12px',
               padding: '20px',
             })] 

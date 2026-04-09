@@ -131,7 +131,10 @@ export const CTAModern: React.FC<CTAProps> = ({
         color: 'rgba(255, 255, 255, 0.6)',
         fontWeight: '700',
         fontSize: '14px',
-        textAlign: 'center'
+        textAlign: 'center',
+        borderStyle: 'solid',
+        borderWidth: '1px',
+        borderColor: styles.secondaryButtonBorderColor || styles.buttonBackgroundColor || themeData?.primaryButton?.bg || 'rgba(255, 255, 255, 0.2)'
       }
     };
   };

@@ -26,7 +26,7 @@ export interface SectionConfig {
 export const SECTIONS_REGISTRY: SectionConfig[] = [
   {
     sectionType: 'hero',
-    variants: ['HeroCenter', 'HeroLight', 'HeroCrimsonJet', 'HeroModern', 'HeroExplore', 'HeroOverlay', 'HeroMarquee'],
+    variants: ['HeroCenter', 'HeroLight', 'HeroCrimsonJet', 'HeroExplore', 'HeroOverlay', 'HeroMarquee', 'HeroPlumbing1'],
     defaultVariant: 'HeroCenter'
   },
   {
@@ -43,6 +43,11 @@ export const SECTIONS_REGISTRY: SectionConfig[] = [
     sectionType: 'cta',
     variants: ['CTACenter', 'CTASplit', 'CTALight', 'CTAModern'],
     defaultVariant: 'CTACenter'
+  },
+  {
+    sectionType: 'process',
+    variants: ['ProcessSteps'],
+    defaultVariant: 'ProcessSteps'
   },
   {
     sectionType: 'footer',
@@ -65,6 +70,26 @@ export const SECTIONS_REGISTRY: SectionConfig[] = [
     defaultVariant: 'FAQCentered'
   },
  
+  {
+    sectionType: 'about',
+    variants: ['About1', 'AboutPlumbing'],
+    defaultVariant: 'About1'
+  },
+  {
+    sectionType: 'services',
+    variants: ['ServicesGrid'],
+    defaultVariant: 'ServicesGrid'
+  },
+  {
+    sectionType: 'why-choose-us',
+    variants: ['WhyChooseUsGrid'],
+    defaultVariant: 'WhyChooseUsGrid'
+  },
+  {
+    sectionType: 'guarantee',
+    variants: ['GuaranteeSimple'],
+    defaultVariant: 'GuaranteeSimple'
+  },
   {
     sectionType: 'elements',
     variants: ['ElementsSection'],

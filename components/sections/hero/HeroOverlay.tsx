@@ -148,7 +148,7 @@ export const HeroOverlay: React.FC<HeroProps> = ({
   return (
     <div className="relative w-full min-h-[80vh] flex items-center justify-center overflow-hidden">
       {/* Content Container */}
-      <div className={`relative z-10 ${styles.maxWidth || 'max-w-4xl'} mx-auto px-6 text-center flex flex-col items-center`}>
+      <div className={`relative z-10 ${styles.maxWidth || 'max-w-4xl'} mx-auto px-8 md:px-12 text-center flex flex-col items-center`}>
         
         {/* Badge / Top Text */}
         <div className="mb-6">

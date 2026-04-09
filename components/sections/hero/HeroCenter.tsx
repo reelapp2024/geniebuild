@@ -52,9 +52,13 @@ export const HeroCenter: React.FC<HeroProps> = ({
   const themeColors = {
     ...styles, // Include all section.styles properties
     // Merge theme data for fallbacks
-    titleColor: styles.titleColor || themeData?.heading,
-    textColor: styles.textColor || themeData?.description,
-    subtitleColor: styles.subtitleColor || styles.textColor || themeData?.description,
+    titleColor: styles.titleColor || (fontThemeColors as any)?.titleColor || themeData?.heading,
+    textColor: styles.textColor || (fontThemeColors as any)?.textColor || themeData?.description,
+    subtitleColor: styles.subtitleColor || (fontThemeColors as any)?.subtitleColor || (fontThemeColors as any)?.textColor || themeData?.description,
+    subheadingColor: styles.subheadingColor || (fontThemeColors as any)?.subheadingColor || themeData?.subheading || themeData?.description,
+    iconBgColor: styles.iconBgColor || (fontThemeColors as any)?.iconBgColor || themeData?.iconBg,
+    secondaryHeadingColor: styles.secondaryHeadingColor || (fontThemeColors as any)?.secondaryHeadingColor || themeData?.secondaryHeading || themeData?.heading,
+    accentColor: styles.accentColor || (fontThemeColors as any)?.accentColor || themeData?.accent,
     // Explicitly map button style properties for clarity
     buttonFontWeight: styleAny.buttonFontWeight || styleAny.fontWeight,
     buttonFontSize: styleAny.buttonSize || styleAny.buttonFontSize || styleAny.fontSize,
@@ -147,7 +151,7 @@ export const HeroCenter: React.FC<HeroProps> = ({
   };
   
   return (
-    <div className={`${styles.maxWidth || 'max-w-5xl'} mx-auto px-6 text-center`}>
+    <div className={`${styles.maxWidth || 'max-w-5xl'} mx-auto px-6 py-16 md:py-24 text-center`}>
       {/* Render Title using ElementsSection - unwrapped for custom layout */}
       <div className="mb-6">
         <ElementsSection

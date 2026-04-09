@@ -53,10 +53,9 @@ export const NavbarCentered: React.FC<NavbarProps> = ({ section, onTextEdit, onL
                     style={logoStyle} 
                     contentEditable={!readOnly}
                     suppressContentEditableWarning 
-                    onBlur={(e) => onTextEdit('logo', e.currentTarget.textContent || '')}
-                >
-                    {content.logo}
-                </div>
+                    onBlur={(e) => onTextEdit('logo', e.currentTarget.innerHTML || '')}
+                    dangerouslySetInnerHTML={{ __html: content.logo || '' }}
+                />
             )}
         </div>
 
@@ -76,10 +75,9 @@ export const NavbarCentered: React.FC<NavbarProps> = ({ section, onTextEdit, onL
             className={buttonClass} 
             contentEditable={!readOnly}
             suppressContentEditableWarning 
-            onBlur={(e) => onTextEdit('ctaText', e.currentTarget.textContent || '')}
-          >
-            {content.ctaText}
-          </button>
+            onBlur={(e) => onTextEdit('ctaText', e.currentTarget.innerHTML || '')}
+            dangerouslySetInnerHTML={{ __html: content.ctaText || '' }}
+          />
         </div>
       </div>
 
@@ -106,10 +104,9 @@ export const NavbarCentered: React.FC<NavbarProps> = ({ section, onTextEdit, onL
                 className={`${buttonClass} w-full max-w-xs mt-4 py-4 text-lg`}
                 contentEditable={!readOnly}
                 suppressContentEditableWarning
-                onBlur={(e) => onTextEdit('ctaText', e.currentTarget.textContent || '')}
-              >
-                {content.ctaText}
-              </button>
+                onBlur={(e) => onTextEdit('ctaText', e.currentTarget.innerHTML || '')}
+                dangerouslySetInnerHTML={{ __html: content.ctaText || '' }}
+              />
           </div>
       </div>
     </nav>

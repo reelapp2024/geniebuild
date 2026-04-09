@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Section, WebsiteElement } from '../../types';
 import { useTheme } from '@ui/blocks';
 import { ELEMENT_DEFAULTS, PRESET_THEMES } from '../../constants';
+import * as LucideIcons from 'lucide-react';
 
 interface ElementsSectionProps {
   section: Section;
@@ -26,7 +27,11 @@ interface ElementsSectionProps {
     accentColor?: string;
     buttonBackgroundColor?: string;
     buttonTextColor?: string;
+    buttonBorderColor?: string;
     backgroundColor?: string;
+    subheadingColor?: string;
+    iconBgColor?: string;
+    secondaryHeadingColor?: string;
     // Global style properties for unified styling
     buttonFontWeight?: string;
     buttonFontSize?: string;
@@ -47,6 +52,41 @@ interface ElementsSectionProps {
     fontFamily?: string;
   };
 }
+
+// Helper for Icons (Supports FontAwesome and Lucide)
+const IconRenderer = ({ icon, className, style, size }: { icon: string, className?: string, style?: React.CSSProperties, size?: string | number }) => {
+    if (!icon || icon === 'none') return null;
+
+    // Handle potential 'default' property in LucideIcons import
+    const icons = (LucideIcons as any).default || LucideIcons;
+
+    // Normalize icon name for Lucide (PascalCase)
+    // Lucide icons are exported as PascalCase (e.g., "Globe", "Settings")
+    const normalizedLucideName = icon.charAt(0).toUpperCase() + icon.slice(1);
+    
+    // Try to find the icon in LucideIcons
+    let LucideIcon = icons[normalizedLucideName] || icons[icon];
+    
+    // If not found, try to find it by checking all keys (case-insensitive)
+    if (!LucideIcon) {
+        const iconLower = icon.toLowerCase();
+        const foundKey = Object.keys(icons).find(k => k.toLowerCase() === iconLower);
+        if (foundKey) {
+            LucideIcon = icons[foundKey];
+        }
+    }
+
+    if (LucideIcon) {
+        // Lucide icons use 'size' prop or 'width'/'height' in style
+        const iconSize = size || style?.fontSize || '1em';
+        return <LucideIcon className={className} style={{ ...style, width: iconSize, height: iconSize }} />;
+    }
+
+    // Fallback to Font Awesome (lowercase)
+    const faIconName = icon.toLowerCase().replace('fa-', '');
+    const faClass = `fa-solid fa-${faIconName}`;
+    return <i className={`${faClass} ${className || ''}`} style={{ ...style, fontSize: size || style?.fontSize }}></i>;
+};
 
 // Helper for Countdown
 const CountdownTimer = ({ targetDate, style }: { targetDate: string, style: any }) => {
@@ -250,19 +290,16 @@ const MarqueeTextElement: React.FC<{
           style={editableTextStyle}
           contentEditable={!readOnly}
           suppressContentEditableWarning={!readOnly}
-          onBlur={!readOnly ? (e: any) => onBlurText(e.currentTarget.textContent || '') : undefined}
-        >
-          {text}
-        </span>
-        <span style={editableTextStyle}>
-          {text}
-        </span>
+          onBlur={!readOnly ? (e: any) => onBlurText(e.currentTarget.innerHTML || '') : undefined}
+          dangerouslySetInnerHTML={{ __html: text }}
+        />
+        <span style={editableTextStyle} dangerouslySetInnerHTML={{ __html: text }} />
       </div>
     </div>
   );
 };
 
-export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onElementUpdate, onElementSelect, selectedElementId, buttonClass, readOnly = false, isWrapped = true, themeColors }) => {
+export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onTextEdit, onElementUpdate, onElementSelect, selectedElementId, buttonClass, readOnly = false, isWrapped = true, themeColors }) => {
   const elements = section.elements || [];
   const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
   const { themeData } = useTheme();
@@ -270,9 +307,10 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
   // Get theme colors from section styles or passed prop
   // Simplified: Only core colors, let ELEMENT_DEFAULTS handle the rest
   const sectionStyles = (section.styles || {}) as Record<string, unknown>;
+  const isLightMode = section.styles?.themeMode === 'light';
   const baseTheme = {
-    titleColor: section.styles?.titleColor || themeData?.heading || '#F8FAFC',
-    textColor: section.styles?.textColor || themeData?.description || '#D1D5DB',
+    titleColor: section.styles?.titleColor || themeData?.heading || (isLightMode ? '#111827' : '#F8FAFC'),
+    textColor: section.styles?.textColor || themeData?.description || (isLightMode ? '#4B5563' : '#D1D5DB'),
     backgroundColor: (sectionStyles?.backgroundColor as string) || (themeData as any)?.surface || '',
     accordionQuestionColor:
       (sectionStyles?.accordionQuestionColor as string) ||
@@ -297,14 +335,24 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
       (themeData as any)?.light?.overlay?.color ||
       '#E5E7EB',
     accentColor: section.styles?.accentColor || themeData?.accent || '#3b82f6',
+    iconColor: section.styles?.iconColor || themeData?.icon || themeData?.accent || '#3b82f6',
     buttonBackgroundColor: section.styles?.buttonBackgroundColor || themeData?.primaryButton?.bg || '#E11D48',
     buttonTextColor: section.styles?.buttonTextColor || themeData?.primaryButton?.text || '#FFFFFF',
+    buttonBorderColor: (section.styles as any)?.borderColor || (section.styles as any)?.secondaryButtonBorderColor || 'transparent',
+    subheadingColor: section.styles?.subheadingColor || themeData?.subheading || themeData?.description || '#D1D5DB',
+    iconBgColor: section.styles?.iconBgColor || themeData?.iconBg || 'rgba(0,0,0,0.1)',
+    secondaryHeadingColor: (sectionStyles?.secondaryHeadingColor as string) || (sectionStyles?.buttonBackgroundColor as string) || (themeData as any)?.secondaryHeading || (themeData as any)?.primaryButton?.bg || themeData?.accent || '#3b82f6',
 
     // Font fallbacks from global theme typography
     titleFontFamily: (themeData as any)?.typography?.h1?.fontFamily,
     subtitleFontFamily: (themeData as any)?.typography?.h2?.fontFamily,
     descriptionFontFamily: (themeData as any)?.typography?.p?.fontFamily,
     buttonFontFamily: (themeData as any)?.typography?.button?.fontFamily,
+    
+    // Text Transform fallbacks from section styles
+    titleTextTransform: section.styles?.titleTextTransform,
+    subtitleTextTransform: section.styles?.subtitleTextTransform,
+    descriptionTextTransform: section.styles?.descriptionTextTransform,
   };
 
   const theme = { ...baseTheme, ...(themeColors || {}) };
@@ -323,9 +371,36 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
   };
 
   const handleContentUpdate = (id: string, key: string, value: any) => {
+    if (readOnly) return;
+    
+    // Special handling for virtual hero elements
+    if (id.includes('-hero-title') && key === 'text' && onTextEdit) {
+      onTextEdit('title', value);
+    } else if (id.includes('-hero-subtitle') && key === 'text' && onTextEdit) {
+      onTextEdit('subtitle', value);
+    } else if (id.includes('-hero-button') && key === 'text' && onTextEdit) {
+      onTextEdit('ctaText', value);
+    } else if (id.includes('-hero-button') && key === 'link' && onTextEdit) {
+      onTextEdit('ctaHref', value);
+    } else if (id.includes('-hero-image') && key === 'imageUrl' && onTextEdit) {
+      onTextEdit('imageUrl', value);
+    } else if (id.includes('-hero-badge') && key === 'text' && onTextEdit) {
+      onTextEdit('badgeText', value);
+    }
+
     const el = elements.find(e => e.id === id);
     if(el) {
-        onElementUpdate(id, { content: { ...el.content, [key]: value } });
+        onElementUpdate(id, { ...el, content: { ...el.content, [key]: value } });
+    }
+  };
+
+  const handleArrayContentUpdate = (id: string, arrayKey: string, index: number, itemKey: string, value: any) => {
+    if (readOnly) return;
+    const el = elements.find(e => e.id === id);
+    if(el && el.content[arrayKey]) {
+        const newArray = [...el.content[arrayKey]];
+        newArray[index] = { ...newArray[index], [itemKey]: value };
+        onElementUpdate(id, { ...el, content: { ...el.content, [arrayKey]: newArray } });
     }
   };
 
@@ -371,16 +446,31 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 : theme?.titleFontFamily;
             const headingStyle: React.CSSProperties = {
                 ...safeStyle,
-                color: safeStyle.color || theme?.titleColor || '#F8FAFC',
+                color: safeStyle.color || renderStyle.secondaryHeadingColor || theme?.secondaryHeadingColor || theme?.titleColor || '#F8FAFC',
                 // Fallback to renderStyle (which already contains ELEMENT_DEFAULTS)
                 fontWeight: renderStyle.fontWeight || 'bold',
                 fontSize: renderStyle.fontSize || undefined,
                 textAlign: (renderStyle.textAlign as any) || 'left',
+                textTransform: safeStyle.textTransform || theme?.titleTextTransform || undefined,
                 fontFamily: resolvedHeadingFontFamily && resolvedHeadingFontFamily.trim() !== '' ? resolvedHeadingFontFamily : undefined,
             };
             // Remove undefined properties
             if (!headingStyle.fontFamily) delete headingStyle.fontFamily;
             if (!headingStyle.fontSize) delete headingStyle.fontSize;
+
+            let headingText = content.text || '';
+            const textBefore = content.textBefore || '';
+            const highlightedText = content.highlightedText || content.secondaryText || '';
+            const textAfter = content.textAfter || '';
+
+            if (highlightedText || textBefore || textAfter) {
+                // If multi-part heading is provided, combine them
+                headingText = `${textBefore} <span style="color: ${theme?.secondaryHeadingColor || '#E11D48'}">${highlightedText}</span> ${textAfter}`;
+            } else if (headingText.includes('<span')) {
+                // Manual Span Override: If the user manually adds a <span> tag, override its color
+                headingText = headingText.replace(/style\s*=\s*["']color:\s*[^"';]*["']/gi, `style="color: ${theme?.secondaryHeadingColor || '#E11D48'}"`);
+            }
+
             return React.createElement(
                 headingTag,
                 {
@@ -390,9 +480,9 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                     onClick: (e: React.MouseEvent) => handleClick(e, el),
                     contentEditable: !readOnly,
                     suppressContentEditableWarning: !readOnly,
-                    onBlur: !readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined
-                },
-                content.text
+                    onBlur: !readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined,
+                    dangerouslySetInnerHTML: { __html: headingText }
+                }
             );
 
         case 'text':
@@ -400,7 +490,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             const textSizeClass = content.textSize === 'small' ? 'text-sm' : 
                                   content.textSize === 'large' ? 'text-lg' : 
                                   content.textSize === 'xl' ? 'text-xl' : '';
-            const isSubtitleElement = id.includes('-hero-subtitle');
+            const isSubtitleElement = id.includes('-hero-subtitle') || id.includes('subheading') || content.textSize === 'subheading';
             // Style Hierarchy: renderStyle (ELEMENT_DEFAULTS + element.style) > Theme Colors
             const resolvedTextFontFamily =
               safeStyle.fontFamily && safeStyle.fontFamily.trim() !== ''
@@ -410,11 +500,12 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                   : theme?.descriptionFontFamily;
             const textStyle: React.CSSProperties = {
                 ...safeStyle,
-                color: safeStyle.color || theme.textColor || '#D1D5DB',
+                color: safeStyle.color || (isSubtitleElement ? theme.subheadingColor : theme.textColor) || '#D1D5DB',
                 // Fallback to renderStyle (which already contains ELEMENT_DEFAULTS)
                 fontWeight: renderStyle.fontWeight || '400',
                 fontSize: renderStyle.fontSize || undefined,
                 textAlign: (renderStyle.textAlign as any) || 'left',
+                textTransform: safeStyle.textTransform || (isSubtitleElement ? theme?.subtitleTextTransform : theme?.descriptionTextTransform) || undefined,
                 fontFamily: resolvedTextFontFamily && resolvedTextFontFamily.trim() !== '' ? resolvedTextFontFamily : undefined,
             };
             // Remove undefined properties
@@ -423,6 +514,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             if (content.enableMarquee) {
                 return (
                     <MarqueeTextElement
+                      key={id}
                       id={id}
                       text={content.text || ''}
                       speed={content.marqueeSpeed}
@@ -445,10 +537,9 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                     onClick={!readOnly ? (e: React.MouseEvent) => handleClick(e, el) : undefined}
                     contentEditable={!readOnly}
                     suppressContentEditableWarning={!readOnly}
-                    onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}
-                >
-                    {content.text}
-                </p>
+                    onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined}
+                    dangerouslySetInnerHTML={{ __html: content.text || '' }}
+                />
             );
 
         case 'button':
@@ -462,6 +553,9 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 ...safeStyle, // This includes all properties from getSafeStyle
                 backgroundColor: safeStyle.backgroundColor || theme?.buttonBackgroundColor || '#E11D48',
                 color: safeStyle.color || theme?.buttonTextColor || '#FFFFFF',
+                borderColor: safeStyle.borderColor || theme?.buttonBorderColor || theme?.borderColor || 'transparent',
+                borderWidth: safeStyle.borderWidth || ( (safeStyle.borderColor || (theme?.buttonBorderColor && theme?.buttonBorderColor !== 'transparent')) ? '1px' : undefined ),
+                borderStyle: safeStyle.borderStyle || ( (safeStyle.borderColor || (theme?.buttonBorderColor && theme?.buttonBorderColor !== 'transparent')) ? 'solid' : undefined ),
                 textAlign: 'center' as const, // Button text is always centered internally
                 // Fallback to renderStyle (which already contains ELEMENT_DEFAULTS)
                 fontWeight: renderStyle.fontWeight || 'bold',
@@ -478,10 +572,9 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                     onClick={!readOnly ? (e) => handleClick(e, el) : undefined}
                     contentEditable={!readOnly}
                     suppressContentEditableWarning={!readOnly}
-                    onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}
-                >
-                    {content.text}
-                </button>
+                    onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined}
+                    dangerouslySetInnerHTML={{ __html: content.text || '' }}
+                />
             );
             
             // Use flexbox with justify-content for proper button alignment
@@ -528,7 +621,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                             buttonElement
                         )}
                         {type === 'call-to-action' && content.subText && (
-                            <p className="mt-2 text-sm opacity-70" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'subText', e.currentTarget.textContent) : undefined}>{content.subText}</p>
+                            <p className="mt-2 text-sm opacity-70" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'subText', e.currentTarget.innerHTML) : undefined} dangerouslySetInnerHTML={{ __html: content.subText || '' }} />
                         )}
                     </div>
                 </div>
@@ -742,34 +835,158 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 </div>
             );
 
-        case 'icon':
-            // Ensure icon class is properly formatted (handle both 'fa-star' and 'star' formats)
-            const iconClass = content.icon 
-                ? (content.icon.startsWith('fa-') ? `fa-solid ${content.icon}` : `fa-solid fa-${content.icon}`)
-                : 'fa-solid fa-star';
-            // Use theme accentColor if element color is not explicitly set
-            const iconColor = safeStyle.color || renderStyle?.accentColor || theme?.accentColor || '#F59E0B';
-            return (
-                <div key={id} className={`inline-block ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={safeStyle}>
-                    <i className={iconClass} style={{ fontSize: content.iconSize || safeStyle.fontSize || '2rem', color: iconColor }}></i>
-                </div>
-            );
+         case 'icon':
+             // Use theme iconColor or accentColor if element color is not explicitly set
+             const iconColor = safeStyle.iconColor || safeStyle.color || renderStyle?.iconColor || theme?.iconColor || theme?.icon || renderStyle?.accentColor || theme?.accentColor || '#F59E0B';
+             const iconBg = renderStyle.iconBackgroundColor || renderStyle.iconBgColor || 'transparent';
+             const hasContainer = iconBg !== 'transparent' || (renderStyle.iconBorderStyle && renderStyle.iconBorderStyle !== 'none') || renderStyle.iconBorder || renderStyle.iconShadow;
+
+             return (
+                 <div key={id} className={`inline-block ${selectedClass}`} onClick={(e) => handleClick(e, el)} 
+                     style={{
+                         ...safeStyle,
+                         display: 'inline-flex',
+                         alignItems: 'center',
+                         justifyContent: 'center',
+                         width: hasContainer ? (renderStyle.iconContainerSize || '3rem') : 'auto',
+                         height: hasContainer ? (renderStyle.iconContainerSize || '3rem') : 'auto',
+                         backgroundColor: iconBg,
+                         border: renderStyle.iconBorderStyle && renderStyle.iconBorderStyle !== 'none' 
+                             ? `${renderStyle.iconBorderWidth || '1px'} ${renderStyle.iconBorderStyle} ${renderStyle.iconBorderColor || iconColor}`
+                             : (renderStyle.iconBorder || 'none'),
+                         borderRadius: renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '0px',
+                         borderTopLeftRadius: renderStyle.iconBorderTopLeftRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '0px'),
+                         borderTopRightRadius: renderStyle.iconBorderTopRightRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '0px'),
+                         borderBottomRightRadius: renderStyle.iconBorderBottomRightRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '0px'),
+                         borderBottomLeftRadius: renderStyle.iconBorderBottomLeftRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '0px'),
+                         boxShadow: renderStyle.iconShadow || 'none'
+                     }}>
+                     <IconRenderer icon={content.icon} size={content.iconSize || safeStyle.fontSize || '2rem'} style={{ color: iconColor }} />
+                 </div>
+             );
             
         case 'icon-box':
-            // Ensure icon class is properly formatted
-            const iconBoxClass = content.icon 
-                ? (content.icon.startsWith('fa-') ? `fa-solid ${content.icon}` : `fa-solid fa-${content.icon}`)
-                : 'fa-solid fa-layer-group';
-            // Use theme accentColor if element color is not explicitly set
-            const iconBoxColor = renderStyle?.accentColor || theme?.accentColor || '#F59E0B';
+            // Use theme iconColor if element color is not explicitly set
+            const iconBoxColor = renderStyle.iconColor || theme?.iconColor || renderStyle?.accentColor || theme?.accentColor || '#F59E0B';
+            const iconBoxBg = renderStyle.iconBackgroundColor || renderStyle.iconBgColor || theme?.iconBgColor || 'rgba(241, 245, 249, 0.05)';
+            
             return (
-                <div key={id} className={`flex gap-4 p-4 rounded-lg bg-white/5 border border-white/5 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={safeStyle}>
-                    <div className="shrink-0">
-                         <i className={iconBoxClass} style={{ fontSize: '2rem', color: iconBoxColor }}></i>
+                <div key={id} className={`flex gap-4 p-4 rounded-lg border border-white/5 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={{ ...safeStyle, backgroundColor: safeStyle.backgroundColor || 'rgba(255, 255, 255, 0.05)' }}>
+                    <div className="shrink-0 flex items-center justify-center rounded-lg" 
+                        style={{ 
+                            width: renderStyle.iconContainerSize || '3rem',
+                            height: renderStyle.iconContainerSize || '3rem',
+                            backgroundColor: iconBoxBg,
+                            color: iconBoxColor,
+                            border: renderStyle.iconBorderStyle && renderStyle.iconBorderStyle !== 'none' 
+                                ? `${renderStyle.iconBorderWidth || '1px'} ${renderStyle.iconBorderStyle} ${renderStyle.iconBorderColor || iconBoxColor}`
+                                : (renderStyle.iconBorder || 'none'),
+                            borderRadius: renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '8px',
+                            borderTopLeftRadius: renderStyle.iconBorderTopLeftRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '8px'),
+                            borderTopRightRadius: renderStyle.iconBorderTopRightRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '8px'),
+                            borderBottomRightRadius: renderStyle.iconBorderBottomRightRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '8px'),
+                            borderBottomLeftRadius: renderStyle.iconBorderBottomLeftRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '8px'),
+                            boxShadow: renderStyle.iconShadow || 'none'
+                        }}>
+                         <IconRenderer icon={content.icon || 'fa-layer-group'} size={renderStyle.iconSize || '1.5rem'} style={{ color: iconBoxColor }} />
                     </div>
                     <div>
-                        <h3 className="font-bold text-lg mb-1" style={{ color: theme?.titleColor || safeStyle.color }} contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}>{content.text || 'Icon Box Title'}</h3>
-                        <p className="opacity-70 text-sm" style={{ color: theme?.textColor || safeStyle.color }} contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'subText', e.currentTarget.textContent) : undefined}>{content.subText || 'Description for this icon box goes here.'}</p>
+                        <h3 className="font-bold mb-1 outline-none" 
+                            style={{ 
+                                color: renderStyle.titleColor || theme?.titleColor || '#0F172A',
+                                fontSize: renderStyle.titleFontSize || '1.125rem',
+                                fontWeight: renderStyle.titleFontWeight || '700',
+                                textTransform: (renderStyle.titleTextTransform || renderStyle.textTransform) as any || 'none',
+                                fontStyle: renderStyle.titleFontStyle || 'normal',
+                                letterSpacing: renderStyle.titleLetterSpacing || 'normal',
+                                fontFamily: renderStyle.titleFontFamily || renderStyle.fontFamily || theme?.titleFontFamily
+                            }} 
+                            contentEditable={!readOnly} 
+                            suppressContentEditableWarning={!readOnly} 
+                            onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined} 
+                            dangerouslySetInnerHTML={{ __html: content.text || 'Icon Box Title' }} 
+                        />
+                        <p className="opacity-70 outline-none" 
+                            style={{ 
+                                color: renderStyle.descriptionColor || renderStyle.textColor || theme?.textColor || '#475569',
+                                fontSize: renderStyle.descriptionFontSize || '0.875rem',
+                                fontWeight: renderStyle.descriptionFontWeight || '400',
+                                textTransform: (renderStyle.descriptionTextTransform || renderStyle.textTransform) as any || 'none',
+                                fontStyle: renderStyle.descriptionFontStyle || 'normal',
+                                letterSpacing: renderStyle.descriptionLetterSpacing || 'normal',
+                                fontFamily: renderStyle.descriptionFontFamily || renderStyle.fontFamily || theme?.descriptionFontFamily
+                            }} 
+                            contentEditable={!readOnly} 
+                            suppressContentEditableWarning={!readOnly} 
+                            onBlur={!readOnly ? (e) => handleContentUpdate(id, 'subText', e.currentTarget.innerHTML) : undefined} 
+                            dangerouslySetInnerHTML={{ __html: content.subText || 'Description for this icon box goes here.' }} 
+                        />
+                    </div>
+                </div>
+            );
+
+        case 'feature-box':
+            const isLight = theme?.themeMode === 'light' || section.styles?.themeMode === 'light';
+            const featureIconColor = renderStyle.iconColor || theme?.iconColor || renderStyle?.accentColor || theme?.accentColor || (isLight ? '#E11D48' : '#F43F5E');
+            const featureIconBg = renderStyle.iconBackgroundColor || renderStyle.iconBgColor || theme?.iconBgColor || (isLight ? 'rgba(225, 29, 72, 0.1)' : 'rgba(225, 29, 72, 0.15)'); 
+            const iconPos = content.iconPosition || renderStyle.iconPosition || 'left';
+            
+            return (
+                <div key={id} className={`flex ${iconPos === 'top' ? 'flex-col items-center text-center' : 'flex-row items-start text-left'} gap-4 p-4 rounded-xl transition-all duration-300 group ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={safeStyle}>
+                    {content.icon && content.icon !== 'none' && (
+                        <div 
+                            className="shrink-0 rounded-lg flex items-center justify-center transition-all duration-300"
+                            style={{ 
+                                width: renderStyle.iconContainerSize || '3rem',
+                                height: renderStyle.iconContainerSize || '3rem',
+                                backgroundColor: featureIconBg,
+                                color: featureIconColor,
+                                '--hover-bg': featureIconColor,
+                                border: renderStyle.iconBorderStyle && renderStyle.iconBorderStyle !== 'none' 
+                                    ? `${renderStyle.iconBorderWidth || '1px'} ${renderStyle.iconBorderStyle} ${renderStyle.iconBorderColor || featureIconColor}`
+                                    : (renderStyle.iconBorder || 'none'),
+                                borderRadius: renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '8px',
+                                borderTopLeftRadius: renderStyle.iconBorderTopLeftRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '8px'),
+                                borderTopRightRadius: renderStyle.iconBorderTopRightRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '8px'),
+                                borderBottomRightRadius: renderStyle.iconBorderBottomRightRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '8px'),
+                                borderBottomLeftRadius: renderStyle.iconBorderBottomLeftRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '8px'),
+                                boxShadow: renderStyle.iconShadow || 'none'
+                            } as any}
+                        >
+                             <IconRenderer icon={content.icon || 'star'} size={renderStyle.iconSize || '1.25rem'} style={{ color: featureIconColor }} />
+                        </div>
+                    )}
+                    <div className={iconPos === 'top' ? 'mt-2' : ''}>
+                        <h4 className="font-bold mb-1 outline-none" 
+                            style={{ 
+                                color: renderStyle.titleColor || theme?.titleColor || (isLight ? '#111827' : '#F8FAFC'),
+                                fontSize: renderStyle.titleFontSize || '1rem',
+                                fontWeight: renderStyle.titleFontWeight || '700',
+                                textTransform: (renderStyle.titleTextTransform || renderStyle.textTransform) as any || 'none',
+                                fontStyle: renderStyle.titleFontStyle || 'normal',
+                                letterSpacing: renderStyle.titleLetterSpacing || 'normal',
+                                fontFamily: renderStyle.titleFontFamily || renderStyle.fontFamily || theme?.titleFontFamily
+                            }} 
+                            contentEditable={!readOnly} 
+                            suppressContentEditableWarning={!readOnly} 
+                            onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined} 
+                            dangerouslySetInnerHTML={{ __html: content.text || 'Feature Title' }} 
+                        />
+                        <p className="leading-relaxed outline-none opacity-80" 
+                            style={{ 
+                                color: renderStyle.descriptionColor || renderStyle.textColor || theme?.textColor || (isLight ? '#4B5563' : '#D1D5DB'),
+                                fontSize: renderStyle.descriptionFontSize || '0.875rem',
+                                fontWeight: renderStyle.descriptionFontWeight || '400',
+                                textTransform: (renderStyle.descriptionTextTransform || renderStyle.textTransform) as any || 'none',
+                                fontStyle: renderStyle.descriptionFontStyle || 'normal',
+                                letterSpacing: renderStyle.descriptionLetterSpacing || 'normal',
+                                fontFamily: renderStyle.descriptionFontFamily || renderStyle.fontFamily || theme?.descriptionFontFamily
+                            }} 
+                            contentEditable={!readOnly} 
+                            suppressContentEditableWarning={!readOnly} 
+                            onBlur={!readOnly ? (e) => handleContentUpdate(id, 'subText', e.currentTarget.innerHTML) : undefined} 
+                            dangerouslySetInnerHTML={{ __html: content.subText || 'Feature description goes here.' }} 
+                        />
                     </div>
                 </div>
             );
@@ -792,8 +1009,8 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                         }}
                      />
                      <div className="p-6 pt-2">
-                        <h3 className="font-bold text-xl mb-2" style={{ color: theme?.titleColor || safeStyle.color }} contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}>{content.title || content.text || 'Image Box Title'}</h3>
-                        <p className="opacity-70 text-sm" style={{ color: theme?.textColor || safeStyle.color }} contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'description', e.currentTarget.textContent) : undefined}>{content.description || content.subText || 'Description text for the image box element.'}</p>
+                        <h3 className="font-bold text-xl mb-2" style={{ color: theme?.titleColor || safeStyle.color }} contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined} dangerouslySetInnerHTML={{ __html: content.title || content.text || 'Image Box Title' }} />
+                        <p className="opacity-70 text-sm" style={{ color: theme?.textColor || safeStyle.color }} contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'description', e.currentTarget.innerHTML) : undefined} dangerouslySetInnerHTML={{ __html: content.description || content.subText || 'Description text for the image box element.' }} />
                      </div>
                 </div>
             );
@@ -807,9 +1024,14 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             return (
                 <ul key={id} className={`list-disc list-inside space-y-2 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={listStyle}>
                     {(content.items || [{title: 'List Item 1'}, {title: 'List Item 2'}, {title: 'List Item 3'}]).map((item, i) => (
-                        <li key={i} className="opacity-90">
-                            {item.title}
-                        </li>
+                        <li 
+                            key={i} 
+                            className="opacity-90 outline-none"
+                            contentEditable={!readOnly}
+                            suppressContentEditableWarning={!readOnly}
+                            onBlur={!readOnly ? (e: any) => handleArrayContentUpdate(id, 'items', i, 'title', e.currentTarget.innerHTML) : undefined}
+                            dangerouslySetInnerHTML={{ __html: item.title || '' }}
+                        />
                     ))}
                 </ul>
             );
@@ -905,13 +1127,18 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             
             // 7. Badge size and padding
             const badgeFontSize = renderStyle?.fontSize || '0.75rem';
-            const badgePadding = renderStyle?.padding || '6px';
+            const badgePadding = renderStyle?.padding || '6px 12px';
             const badgeBorderRadius = renderStyle?.borderRadius || '9999px';
             
             // 8. Create safe style object excluding colors
             const badgeSafeStyle = { ...safeStyle };
             delete badgeSafeStyle.backgroundColor;
             delete badgeSafeStyle.color;
+
+            // 9. Icon logic
+            const hasIcon = content.icon && content.icon !== 'none';
+            const iconPosition = content.iconPosition || 'left';
+            const iconSize = content.iconSize || '0.75rem';
             
             return (
                 <span 
@@ -926,11 +1153,19 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                         ...badgeSafeStyle 
                     }}
                     onClick={!readOnly ? (e) => handleClick(e, el) : undefined}
-                    contentEditable={!readOnly}
-                    suppressContentEditableWarning={!readOnly}
-                    onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}
                 >
-                    {content.text || 'Badge'}
+                    {hasIcon && iconPosition === 'left' && (
+                        <IconRenderer icon={content.icon} size={iconSize} className="mr-2" />
+                    )}
+                    <span
+                        contentEditable={!readOnly}
+                        suppressContentEditableWarning={!readOnly}
+                        onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined}
+                        dangerouslySetInnerHTML={{ __html: content.text || 'Badge' }}
+                    />
+                    {hasIcon && iconPosition === 'right' && (
+                        <IconRenderer icon={content.icon} size={iconSize} className="ml-2" />
+                    )}
                 </span>
             );
 
@@ -957,7 +1192,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             };
             return (
                 <blockquote key={id} className={`border-l-4 pl-4 py-2 italic opacity-80 ${selectedClass}`} style={blockquoteStyle} onClick={!readOnly ? (e) => handleClick(e, el) : undefined}>
-                    <p className="mb-2" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}>"{content.text || 'This is a quote.'}"</p>
+                    <p className="mb-2" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined} dangerouslySetInnerHTML={{ __html: `"${content.text || 'This is a quote.'}"` }} />
                     <cite className="text-sm font-bold not-italic opacity-70">- {content.author || 'Author Name'}</cite>
                 </blockquote>
             );
@@ -985,23 +1220,30 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                                 className="flex items-center justify-between cursor-pointer list-none select-none"
                                 style={{ padding: safeStyle.padding || '1.25rem' }}
                             >
-                                <span className="font-bold text-lg" style={{ color: (safeStyle as Record<string, string>).titleColor || theme?.accordionQuestionColor || theme?.titleColor || safeStyle.color || '#F8FAFC' }}>
-                                    {item.title || item.question}
-                                </span>
+                                <span 
+                                    className="font-bold text-lg outline-none" 
+                                    style={{ color: (safeStyle as Record<string, string>).titleColor || theme?.accordionQuestionColor || theme?.titleColor || safeStyle.color || '#F8FAFC' }}
+                                    contentEditable={!readOnly}
+                                    suppressContentEditableWarning={!readOnly}
+                                    onBlur={!readOnly ? (e: any) => handleArrayContentUpdate(id, 'items', idx, item.title !== undefined ? 'title' : 'question', e.currentTarget.innerHTML) : undefined}
+                                    dangerouslySetInnerHTML={{ __html: item.title || item.question || '' }}
+                                />
                                 <div className="shrink-0 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-open:rotate-180 transition-transform">
                                     <i className="fa-solid fa-chevron-down text-sm" style={{ color: theme?.accentColor || '#3b82f6' }}></i>
                                 </div>
                             </summary>
                             <div
-                                className="text-base opacity-80 leading-relaxed border-t mt-2"
+                                className="text-base opacity-80 leading-relaxed border-t mt-2 outline-none"
                                 style={{
                                     padding: safeStyle.padding || '1.25rem',
                                     borderColor: theme?.accordionBorderColor || theme?.cardBorderColor || '#E5E7EB',
                                     color: safeStyle.color ?? theme?.accordionAnswerColor ?? theme?.textColor ?? '#D1D5DB'
                                 }}
-                            >
-                                {item.content || item.answer}
-                            </div>
+                                contentEditable={!readOnly}
+                                suppressContentEditableWarning={!readOnly}
+                                onBlur={!readOnly ? (e: any) => handleArrayContentUpdate(id, 'items', idx, item.content !== undefined ? 'content' : 'answer', e.currentTarget.innerHTML) : undefined}
+                                dangerouslySetInnerHTML={{ __html: item.content || item.answer || '' }}
+                            />
                         </details>
                     ))}
                 </div>
@@ -1020,11 +1262,21 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                              <div className="w-10 h-6 bg-white/10 rounded-full relative group-open:bg-green-500 transition-colors">
                                  <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all group-open:left-5"></div>
                              </div>
-                             <span>{content.text || 'Toggle Title'}</span>
+                             <span 
+                                className="outline-none"
+                                contentEditable={!readOnly}
+                                suppressContentEditableWarning={!readOnly}
+                                onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined}
+                                dangerouslySetInnerHTML={{ __html: content.text || 'Toggle Title' }}
+                             />
                         </summary>
-                        <div className="p-4 pt-0 text-sm opacity-80">
-                            {content.subText || 'Toggle Content goes here...'}
-                        </div>
+                        <div 
+                            className="p-4 pt-0 text-sm opacity-80 outline-none"
+                            contentEditable={!readOnly}
+                            suppressContentEditableWarning={!readOnly}
+                            onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'subText', e.currentTarget.innerHTML) : undefined}
+                            dangerouslySetInnerHTML={{ __html: content.subText || 'Toggle Content goes here...' }}
+                        />
                      </details>
                 </div>
             );
@@ -1040,20 +1292,30 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             return (
                 <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, el)} style={tabsStyle}>
                     <div className="flex border-b border-white/10 mb-4 overflow-x-auto">
-                        {content.items?.map((item, idx) => (
+                        {content.items?.map((item: any, idx: number) => (
                             <button 
                                 key={idx}
                                 onClick={(e) => { e.stopPropagation(); setActiveTabs({...activeTabs, [id]: idx}); }}
                                 className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${currentTab === idx ? 'border-blue-500 text-white' : 'border-transparent text-white/50 hover:text-white'}`}
                                 style={{ borderColor: currentTab === idx ? tabsAccentColor : 'transparent' }}
                             >
-                                {item.title}
+                                <span 
+                                    className="outline-none"
+                                    contentEditable={!readOnly}
+                                    suppressContentEditableWarning={!readOnly}
+                                    onBlur={!readOnly ? (e: any) => handleArrayContentUpdate(id, 'items', idx, 'title', e.currentTarget.innerHTML) : undefined}
+                                    dangerouslySetInnerHTML={{ __html: item.title || '' }}
+                                />
                             </button>
                         ))}
                     </div>
-                    <div className="p-4 bg-white/5 rounded-lg border border-white/10 min-h-[100px]">
-                        {content.items?.[currentTab]?.content}
-                    </div>
+                    <div 
+                        className="p-4 bg-white/5 rounded-lg border border-white/10 min-h-[100px] outline-none"
+                        contentEditable={!readOnly}
+                        suppressContentEditableWarning={!readOnly}
+                        onBlur={!readOnly ? (e: any) => handleArrayContentUpdate(id, 'items', currentTab, 'content', e.currentTarget.innerHTML) : undefined}
+                        dangerouslySetInnerHTML={{ __html: content.items?.[currentTab]?.content || '' }}
+                    />
                 </div>
             );
 
@@ -1067,13 +1329,25 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             return (
                 <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, el)} style={progressBarStyle}>
                     <div className="flex justify-between mb-1 text-xs font-bold uppercase tracking-wider">
-                        <span>{content.text}</span>
-                        <span>{content.percentage}%</span>
+                        <span 
+                            className="outline-none"
+                            contentEditable={!readOnly}
+                            suppressContentEditableWarning={!readOnly}
+                            onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined}
+                            dangerouslySetInnerHTML={{ __html: content.text || '' }}
+                        />
+                        <span 
+                            className="outline-none"
+                            contentEditable={!readOnly}
+                            suppressContentEditableWarning={!readOnly}
+                            onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'percentage', e.currentTarget.innerHTML.replace('%', '')) : undefined}
+                            dangerouslySetInnerHTML={{ __html: `${content.percentage || 0}%` }}
+                        />
                     </div>
                     <div className="w-full bg-white/10 rounded-full h-2.5">
                         <div 
                             className="bg-blue-600 h-2.5 rounded-full transition-all duration-1000" 
-                            style={{ width: `${content.percentage}%`, backgroundColor: progressBarColor }}
+                            style={{ width: `${content.percentage || 0}%`, backgroundColor: progressBarColor }}
                         ></div>
                     </div>
                 </div>
@@ -1091,7 +1365,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                     <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: counterAccentColor }}>
                         {content.prefix}{content.targetNumber}{content.suffix}
                     </div>
-                    <div className="text-sm font-bold uppercase tracking-widest opacity-60">
+                    <div className="text-sm font-bold uppercase tracking-widest outline-none" style={{ color: renderStyle.subheadingColor || theme?.subheadingColor || theme?.textColor || '#C7CDD6', opacity: theme?.subheadingColor ? 1 : 0.6 }}>
                         {content.text}
                     </div>
                 </div>
@@ -1120,10 +1394,12 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                         ...safeStyle
                     }}
                 >
-                     <div style={{ color: alertBorder[alertBoxType] }}><i className={`fa-solid ${content.icon || 'fa-circle-info'}`}></i></div>
+                     <div style={{ color: alertBorder[alertBoxType] }}>
+                        <IconRenderer icon={content.icon || 'circle-info'} />
+                     </div>
                      <div>
-                         <strong className="block font-bold mb-1" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.textContent) : undefined}>{content.text || 'Alert Title'}</strong>
-                         <p className="text-sm opacity-80" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'subText', e.currentTarget.textContent) : undefined}>{content.subText || 'Alert description.'}</p>
+                         <strong className="block font-bold mb-1" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined} dangerouslySetInnerHTML={{ __html: content.text || 'Alert Title' }} />
+                         <p className="text-sm opacity-80" contentEditable={!readOnly} suppressContentEditableWarning={!readOnly} onBlur={!readOnly ? (e) => handleContentUpdate(id, 'subText', e.currentTarget.innerHTML) : undefined} dangerouslySetInnerHTML={{ __html: content.subText || 'Alert description.' }} />
                      </div>
                 </div>
             );
@@ -1142,14 +1418,35 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                             <div className="flex items-center gap-4 mb-4">
                                 <img src={item.avatar || 'https://via.placeholder.com/50'} className="w-12 h-12 rounded-full object-cover" alt="Avatar" referrerPolicy="no-referrer" />
                                 <div>
-                                    <div className="font-bold" style={{ color: theme?.titleColor }}>{item.author || 'John Doe'}</div>
-                                    <div className="text-xs opacity-50" style={{ color: theme?.textColor }}>{item.role || 'Customer'}</div>
+                                    <div 
+                                        className="font-bold outline-none" 
+                                        style={{ color: theme?.titleColor }}
+                                        contentEditable={!readOnly}
+                                        suppressContentEditableWarning={!readOnly}
+                                        onBlur={!readOnly ? (e: any) => handleArrayContentUpdate(id, 'items', idx, 'author', e.currentTarget.innerHTML) : undefined}
+                                        dangerouslySetInnerHTML={{ __html: item.author || 'John Doe' }}
+                                    />
+                                    <div 
+                                        className="text-xs outline-none" 
+                                        style={{ color: renderStyle.subheadingColor || theme?.subheadingColor || theme?.textColor || '#C7CDD6', opacity: theme?.subheadingColor ? 1 : 0.5 }}
+                                        contentEditable={!readOnly}
+                                        suppressContentEditableWarning={!readOnly}
+                                        onBlur={!readOnly ? (e: any) => handleArrayContentUpdate(id, 'items', idx, 'role', e.currentTarget.innerHTML) : undefined}
+                                        dangerouslySetInnerHTML={{ __html: item.role || 'Customer' }}
+                                    />
                                 </div>
                                 <div className="ml-auto text-yellow-500 text-sm">
                                     <i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i>
                                 </div>
                             </div>
-                            <p className="italic opacity-80 flex-grow" style={{ color: theme?.textColor }}>"{item.content || 'Great service!'}"</p>
+                            <p 
+                                className="italic opacity-80 flex-grow outline-none" 
+                                style={{ color: theme?.textColor }}
+                                contentEditable={!readOnly}
+                                suppressContentEditableWarning={!readOnly}
+                                onBlur={!readOnly ? (e: any) => handleArrayContentUpdate(id, 'items', idx, 'content', e.currentTarget.innerHTML) : undefined}
+                                dangerouslySetInnerHTML={{ __html: `"${item.content || 'Great service!'}"` }}
+                            />
                         </div>
                     ))}
                 </div>
@@ -1172,6 +1469,9 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             );
 
         case 'stat-card':
+            const statIconColor = renderStyle.iconColor || theme?.iconColor || theme?.accentColor || '#3b82f6';
+            const statIconBg = renderStyle.iconBackgroundColor || renderStyle.iconBgColor || theme?.iconBgColor || (statIconColor + '1A');
+            
             return (
                 <div
                     key={id}
@@ -1181,14 +1481,51 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                 >
                     <div className="flex items-center gap-4 mb-3">
                         {content.icon && (
-                            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
-                                <i className={`fa-solid fa-${content.icon} text-lg`}></i>
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform"
+                                style={{ 
+                                    backgroundColor: statIconBg, 
+                                    color: statIconColor,
+                                    border: renderStyle.iconBorderStyle && renderStyle.iconBorderStyle !== 'none' 
+                                        ? `${renderStyle.iconBorderWidth || '1px'} ${renderStyle.iconBorderStyle} ${renderStyle.iconBorderColor || statIconColor}`
+                                        : (renderStyle.iconBorder || 'none'),
+                                    borderRadius: renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '0.5rem',
+                                    borderTopLeftRadius: renderStyle.iconBorderTopLeftRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '0.5rem'),
+                                    borderTopRightRadius: renderStyle.iconBorderTopRightRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '0.5rem'),
+                                    borderBottomRightRadius: renderStyle.iconBorderBottomRightRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '0.5rem'),
+                                    borderBottomLeftRadius: renderStyle.iconBorderBottomLeftRadius || renderStyle.iconBorderRadius || (renderStyle.iconBorderRadius !== undefined ? renderStyle.iconBorderRadius : '0.5rem'),
+                                    boxShadow: renderStyle.iconShadow || 'none'
+                                }}
+                            >
+                                <IconRenderer icon={content.icon} size="1.125rem" style={{ color: statIconColor }} />
                             </div>
                         )}
-                        <div className="text-3xl font-bold tracking-tight" style={{ color: theme?.titleColor }}>{content.value || content.targetNumber || '0'}</div>
+                        <div 
+                            className="text-3xl font-bold tracking-tight outline-none" 
+                            style={{ color: renderStyle.titleColor || theme?.titleColor || '#F8FAFC' }}
+                            contentEditable={!readOnly}
+                            suppressContentEditableWarning={!readOnly}
+                            onBlur={!readOnly ? (e: any) => handleContentUpdate(id, content.value !== undefined ? 'value' : 'targetNumber', e.currentTarget.innerHTML) : undefined}
+                            dangerouslySetInnerHTML={{ __html: content.value || content.targetNumber || '0' }}
+                        />
                     </div>
-                    <div className="text-sm font-semibold uppercase tracking-wider opacity-60 mb-1" style={{ color: theme?.textColor }}>{content.text || 'Label'}</div>
-                    {content.subText && <div className="text-xs opacity-40 leading-relaxed" style={{ color: theme?.textColor }}>{content.subText}</div>}
+                    <div 
+                        className="text-sm font-semibold uppercase tracking-wider mb-1 outline-none" 
+                        style={{ color: renderStyle.subheadingColor || theme?.subheadingColor || theme?.textColor || '#C7CDD6', opacity: theme?.subheadingColor ? 1 : 0.6 }}
+                        contentEditable={!readOnly}
+                        suppressContentEditableWarning={!readOnly}
+                        onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined}
+                        dangerouslySetInnerHTML={{ __html: content.text || 'Label' }}
+                    />
+                    {content.subText && (
+                        <div 
+                            className="text-xs opacity-40 leading-relaxed outline-none" 
+                            style={{ color: renderStyle.textColor || theme?.textColor || '#C7CDD6' }}
+                            contentEditable={!readOnly}
+                            suppressContentEditableWarning={!readOnly}
+                            onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'subText', e.currentTarget.innerHTML) : undefined}
+                            dangerouslySetInnerHTML={{ __html: content.subText }}
+                        />
+                    )}
                 </div>
             );
 
@@ -1209,7 +1546,13 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                     </div>
                     {content.targetNumber && (
                         <div className="text-sm font-medium" style={{ color: theme?.textColor }}>
-                            Join <span className="text-blue-400 font-bold">{content.targetNumber}</span> others
+                            Join <span 
+                                className="text-blue-400 font-bold outline-none"
+                                contentEditable={!readOnly}
+                                suppressContentEditableWarning={!readOnly}
+                                onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'targetNumber', e.currentTarget.innerHTML) : undefined}
+                                dangerouslySetInnerHTML={{ __html: content.targetNumber }}
+                            /> others
                         </div>
                     )}
                 </div>
@@ -1225,13 +1568,41 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             };
              return (
                  <div key={id} className={`p-8 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center text-center ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={pricingStyle}>
-                     <h3 className="text-xl font-bold mb-2" style={{ color: theme?.titleColor }}>{content.text || 'Plan Name'}</h3>
-                     <div className="text-4xl font-bold mb-1" style={{ color: theme?.accentColor }}>{content.price || '$99'}</div>
-                     <div className="text-sm opacity-50 mb-6">{content.period || 'per month'}</div>
+                     <h3 
+                        className="text-xl font-bold mb-2 outline-none" 
+                        style={{ color: theme?.titleColor }}
+                        contentEditable={!readOnly}
+                        suppressContentEditableWarning={!readOnly}
+                        onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined}
+                        dangerouslySetInnerHTML={{ __html: content.text || 'Plan Name' }}
+                     />
+                     <div 
+                        className="text-4xl font-bold mb-1 outline-none" 
+                        style={{ color: theme?.accentColor }}
+                        contentEditable={!readOnly}
+                        suppressContentEditableWarning={!readOnly}
+                        onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'price', e.currentTarget.innerHTML) : undefined}
+                        dangerouslySetInnerHTML={{ __html: content.price || '$99' }}
+                     />
+                     <div 
+                        className="text-sm mb-6 outline-none"
+                        style={{ color: renderStyle.subheadingColor || theme?.subheadingColor || theme?.textColor || '#C7CDD6', opacity: theme?.subheadingColor ? 1 : 0.5 }}
+                        contentEditable={!readOnly}
+                        suppressContentEditableWarning={!readOnly}
+                        onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'period', e.currentTarget.innerHTML) : undefined}
+                        dangerouslySetInnerHTML={{ __html: content.period || 'per month' }}
+                     />
                      <ul className="space-y-3 mb-8 w-full text-left">
-                         {content.items?.map((feature, i) => (
+                         {content.items?.map((feature: any, i: number) => (
                              <li key={i} className="flex gap-2 text-sm opacity-80">
-                                 <i className="fa-solid fa-check text-green-500 mt-1"></i> {feature.title}
+                                 <i className="fa-solid fa-check text-green-500 mt-1"></i> 
+                                 <span 
+                                    className="outline-none flex-1"
+                                    contentEditable={!readOnly}
+                                    suppressContentEditableWarning={!readOnly}
+                                    onBlur={!readOnly ? (e: any) => handleArrayContentUpdate(id, 'items', i, 'title', e.currentTarget.innerHTML) : undefined}
+                                    dangerouslySetInnerHTML={{ __html: feature.title || '' }}
+                                 />
                              </li>
                          ))}
                      </ul>
@@ -1240,7 +1611,7 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
              );
 
         case 'flip-box':
-            const directionClass = {
+            const directionClass: Record<string, string> = {
                 left: 'group-hover:rotate-y-180',
                 right: 'group-hover:-rotate-y-180',
                 top: 'group-hover:rotate-x-180',
@@ -1262,13 +1633,38 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
                  <div key={id} className={`group h-64 perspective-1000 ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={flipBoxStyle}>
                      <div className={`relative w-full h-full transition-transform duration-700 transform-style-3d ${rotateClass}`}>
                          <div className="absolute inset-0 backface-hidden bg-white/10 border border-white/10 rounded-xl flex flex-col items-center justify-center p-6 text-center">
-                              <i className={`fa-solid ${content.icon || 'fa-star'} text-4xl mb-4`} style={{color: flipBoxAccentColor}}></i>
-                              <h3 className="font-bold text-xl" style={{ color: theme?.titleColor }}>{content.frontTitle || 'Front Title'}</h3>
-                              <p className="text-sm opacity-70 mt-2">{content.frontDesc || 'Hover to flip'}</p>
+                              <IconRenderer icon={content.icon || 'star'} size="2.25rem" style={{ color: flipBoxAccentColor, marginBottom: '1rem' }} />
+                              <h3 
+                                className="font-bold text-xl outline-none" 
+                                style={{ color: theme?.titleColor }}
+                                contentEditable={!readOnly}
+                                suppressContentEditableWarning={!readOnly}
+                                onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'frontTitle', e.currentTarget.innerHTML) : undefined}
+                                dangerouslySetInnerHTML={{ __html: content.frontTitle || 'Front Title' }}
+                              />
+                              <p 
+                                className="text-sm opacity-70 mt-2 outline-none"
+                                contentEditable={!readOnly}
+                                suppressContentEditableWarning={!readOnly}
+                                onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'frontDesc', e.currentTarget.innerHTML) : undefined}
+                                dangerouslySetInnerHTML={{ __html: content.frontDesc || 'Hover to flip' }}
+                              />
                          </div>
                          <div className={`absolute inset-0 backface-hidden ${backRotate} bg-blue-600 rounded-xl flex flex-col items-center justify-center p-6 text-center`} style={{ backgroundColor: flipBoxAccentColor }}>
-                              <h3 className="font-bold text-xl">{content.backTitle || 'Back Title'}</h3>
-                              <p className="text-sm opacity-90 mt-2 mb-4">{content.backDesc || 'Hidden details revealed.'}</p>
+                              <h3 
+                                className="font-bold text-xl outline-none"
+                                contentEditable={!readOnly}
+                                suppressContentEditableWarning={!readOnly}
+                                onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'backTitle', e.currentTarget.innerHTML) : undefined}
+                                dangerouslySetInnerHTML={{ __html: content.backTitle || 'Back Title' }}
+                              />
+                              <p 
+                                className="text-sm opacity-90 mt-2 mb-4 outline-none"
+                                contentEditable={!readOnly}
+                                suppressContentEditableWarning={!readOnly}
+                                onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'backDesc', e.currentTarget.innerHTML) : undefined}
+                                dangerouslySetInnerHTML={{ __html: content.backDesc || 'Hidden details revealed.' }}
+                              />
                               <button className="px-4 py-2 bg-white text-black text-xs font-bold rounded-full">Action</button>
                          </div>
                      </div>
@@ -1284,7 +1680,14 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             };
              return (
                  <div key={id} className={`${selectedClass}`} onClick={(e) => handleClick(e, el)} style={countdownStyle}>
-                     <h4 className="font-bold mb-4 uppercase tracking-widest text-xs opacity-50" style={{textAlign: safeStyle.textAlign}}>{content.text || 'Offer Ends In'}</h4>
+                     <h4 
+                        className="font-bold mb-4 uppercase tracking-widest text-xs outline-none" 
+                        style={{textAlign: safeStyle.textAlign, color: renderStyle.subheadingColor || theme?.subheadingColor || theme?.textColor || '#C7CDD6', opacity: theme?.subheadingColor ? 1 : 0.5}}
+                        contentEditable={!readOnly}
+                        suppressContentEditableWarning={!readOnly}
+                        onBlur={!readOnly ? (e: any) => handleContentUpdate(id, 'text', e.currentTarget.innerHTML) : undefined}
+                        dangerouslySetInnerHTML={{ __html: content.text || 'Offer Ends In' }}
+                     />
                      <CountdownTimer targetDate={content.targetDate || new Date(Date.now() + 86400000).toISOString()} style={{ ...style, accentColor: countdownAccentColor }} />
                  </div>
              );
@@ -1302,11 +1705,25 @@ export const ElementsSection: React.FC<ElementsSectionProps> = ({ section, onEle
             return (
                  <div key={id} className={`p-6 bg-white/5 border border-white/10 rounded-xl ${selectedClass}`} onClick={(e) => handleClick(e, el)} style={reviewCarouselStyle}>
                      <div className="flex gap-4 overflow-hidden mask-linear-gradient">
-                         {(content.items || [{title: 'Review 1'}, {title: 'Review 2'}]).map((item, i) => (
+                         {(content.items || [{title: 'Review 1'}, {title: 'Review 2'}]).map((item: any, i: number) => (
                              <div key={i} className="min-w-[250px] p-4 bg-black/20 rounded border border-white/5">
                                  <div className="text-yellow-500 text-xs mb-2"><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i></div>
-                                 <p className="text-sm italic opacity-80 mb-2" style={{ color: reviewTextColor }}>"{item.content || 'Excellent product.'}"</p>
-                                 <div className="font-bold text-xs" style={{ color: authorColor }}>{item.author || 'User'}</div>
+                                 <p 
+                                    className="text-sm italic opacity-80 mb-2 outline-none" 
+                                    style={{ color: reviewTextColor }}
+                                    contentEditable={!readOnly}
+                                    suppressContentEditableWarning={!readOnly}
+                                    onBlur={!readOnly ? (e: any) => handleArrayContentUpdate(id, 'items', i, 'content', e.currentTarget.innerHTML) : undefined}
+                                    dangerouslySetInnerHTML={{ __html: `"${item.content || 'Excellent product.'}"` }}
+                                 />
+                                 <div 
+                                    className="font-bold text-xs outline-none" 
+                                    style={{ color: authorColor }}
+                                    contentEditable={!readOnly}
+                                    suppressContentEditableWarning={!readOnly}
+                                    onBlur={!readOnly ? (e: any) => handleArrayContentUpdate(id, 'items', i, 'author', e.currentTarget.innerHTML) : undefined}
+                                    dangerouslySetInnerHTML={{ __html: item.author || 'User' }}
+                                 />
                              </div>
                          ))}
                      </div>

@@ -27,10 +27,9 @@ export const FooterMinimal: React.FC<FooterProps> = ({ section, onTextEdit, onLi
                     className="font-bold text-base outline-none focus:ring-2 ring-white rounded px-1" 
                     contentEditable={!readOnly}
                     suppressContentEditableWarning 
-                    onBlur={(e) => onTextEdit('title', e.currentTarget.textContent || '')}
-                >
-                    {content.title}
-                </div>
+                    onBlur={(e) => onTextEdit('title', e.currentTarget.innerHTML || '')}
+                    dangerouslySetInnerHTML={{ __html: content.title || '' }}
+                />
             )}
             <div 
                 className="hidden md:block w-px h-4 bg-current opacity-30"
@@ -39,10 +38,9 @@ export const FooterMinimal: React.FC<FooterProps> = ({ section, onTextEdit, onLi
                 className="outline-none focus:ring-2 ring-white rounded px-1" 
                 contentEditable={!readOnly}
                 suppressContentEditableWarning 
-                onBlur={(e) => onTextEdit('description', e.currentTarget.textContent || '')}
-            >
-                {content.description}
-            </div>
+                onBlur={(e) => onTextEdit('description', e.currentTarget.innerHTML || '')}
+                dangerouslySetInnerHTML={{ __html: content.description || '' }}
+            />
         </div>
         
         <div className="flex flex-wrap justify-center gap-6">

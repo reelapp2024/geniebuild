@@ -18,6 +18,53 @@ interface SectionRendererProps {
   selectedElementId?: string | null;
 }
 
+interface SectionErrorBoundaryProps {
+  sectionType: string;
+  children: React.ReactNode;
+}
+
+interface SectionErrorBoundaryState {
+  hasError: boolean;
+}
+
+class SectionErrorBoundary extends React.Component<SectionErrorBoundaryProps, SectionErrorBoundaryState> {
+  constructor(props: SectionErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error(`[SectionRenderer] Section render failed for "${this.props.sectionType}"`, error);
+  }
+
+  componentDidUpdate(prevProps: SectionErrorBoundaryProps) {
+    if (prevProps.sectionType !== this.props.sectionType && this.state.hasError) {
+      this.setState({ hasError: false });
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="mx-auto my-8 max-w-4xl rounded-xl border border-amber-500/40 bg-amber-500/10 p-6 text-center">
+          <div className="text-sm font-semibold text-amber-300">
+            Section "{this.props.sectionType}" is not available
+          </div>
+          <div className="mt-2 text-xs text-amber-200/80">
+            This section variant is missing or incompatible with GenieBuild.
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 const BackgroundCarousel: React.FC<{
   images: Array<{ url: string; id: string }>;
   settings: any;
@@ -168,10 +215,106 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
 
   const handleElementUpdate = (elementId: string, updates: Partial<WebsiteElement>) => {
     if (readOnly) return;
-    const newElements = section.elements?.map(el => 
-        el.id === elementId ? { ...el, ...updates } : el
+    const elements = section.elements || [];
+    const existingIndex = elements.findIndex(el => el.id === elementId);
+    
+    let newElements;
+    if (existingIndex >= 0) {
+      newElements = [...elements];
+      newElements[existingIndex] = { ...newElements[existingIndex], ...updates };
+    } else {
+      newElements = [...elements, { id: elementId, ...updates } as WebsiteElement];
+    }
+
+    // Sync with section content/styles if this elementId refers to virtual title/subtitle/description
+    const isTitle = elementId === `${section.id}-title` || elementId === `${section.id}-hero-title`;
+    const isSubtitle = elementId === `${section.id}-subtitle` || elementId === `${section.id}-hero-subtitle`;
+    const isDescription = elementId === `${section.id}-description` || elementId === `${section.id}-hero-description`;
+    const isButton = elementId === `${section.id}-hero-button`;
+    const isImage = elementId === `${section.id}-hero-image`;
+
+    if (isTitle || isSubtitle || isDescription || isButton || isImage) {
+      const prefix = isTitle ? 'title' : (isSubtitle ? 'subtitle' : (isDescription ? 'description' : (isButton ? 'cta' : 'image')));
+      const sectionUpdates: any = { content: { ...content }, styles: { ...styles } };
+      
+      if (isButton) {
+        if (updates.content?.text !== undefined) sectionUpdates.content.ctaText = updates.content.text;
+        if (updates.content?.link !== undefined) sectionUpdates.content.ctaHref = updates.content.link;
+      } else if (isImage) {
+        if (updates.content?.imageUrl !== undefined) sectionUpdates.content.imageUrl = updates.content.imageUrl;
+      } else if (updates.content?.text !== undefined) {
+          sectionUpdates.content[prefix] = updates.content.text;
+      }
+      
+      if (updates.style) {
+        if (isButton) {
+          if (updates.style.backgroundColor) sectionUpdates.styles.buttonBackgroundColor = updates.style.backgroundColor;
+          if (updates.style.color) sectionUpdates.styles.buttonTextColor = updates.style.color;
+        } else {
+          if (updates.style.color) sectionUpdates.styles[`${prefix}Color`] = updates.style.color;
+          if (updates.style.fontSize) sectionUpdates.styles[`${prefix}FontSize`] = updates.style.fontSize;
+          if (updates.style.fontWeight) sectionUpdates.styles[`${prefix}FontWeight`] = updates.style.fontWeight;
+          if (updates.style.fontFamily) sectionUpdates.styles[`${prefix}FontFamily`] = updates.style.fontFamily;
+          if (updates.style.textTransform) sectionUpdates.styles[`${prefix}TextTransform`] = updates.style.textTransform;
+          if (updates.style.letterSpacing) sectionUpdates.styles[`${prefix}LetterSpacing`] = updates.style.letterSpacing;
+          if (updates.style.fontStyle) sectionUpdates.styles[`${prefix}FontStyle`] = updates.style.fontStyle;
+        }
+      }
+      
+      onUpdate(section.id, { elements: newElements, ...sectionUpdates });
+      return;
+    }
+
+    // Sync with content.items if this elementId refers to an item or its sub-parts
+    const itemToUpdate = content.items?.find(i => 
+      i.id === elementId || 
+      elementId === `${i.id}-title` || 
+      elementId === `${i.id}-description` || 
+      elementId === `${i.id}-icon` ||
+      elementId === `${i.id}-price`
     );
-    onUpdate(section.id, { elements: newElements });
+
+    if (itemToUpdate) {
+      const newItems = content.items?.map(item => {
+        const isExactMatch = item.id === elementId;
+        const isTitleMatch = elementId === `${item.id}-title`;
+        const isDescMatch = elementId === `${item.id}-description`;
+        const isIconMatch = elementId === `${item.id}-icon`;
+        const isPriceMatch = elementId === `${item.id}-price`;
+
+        if (!isExactMatch && !isTitleMatch && !isDescMatch && !isIconMatch && !isPriceMatch) return item;
+
+        const itemUpdates: any = {};
+        if (updates.content) {
+          if (isExactMatch) {
+            if (updates.content.text !== undefined) itemUpdates.title = updates.content.text;
+            if (updates.content.subText !== undefined) itemUpdates.description = updates.content.subText;
+            if (updates.content.icon !== undefined) itemUpdates.icon = updates.content.icon;
+            if (updates.content.price !== undefined) itemUpdates.price = updates.content.price;
+          } else if (isTitleMatch) {
+            if (updates.content.text !== undefined) itemUpdates.title = updates.content.text;
+          } else if (isDescMatch) {
+            if (updates.content.text !== undefined) itemUpdates.description = updates.content.text;
+          } else if (isIconMatch) {
+            if (updates.content.icon !== undefined) itemUpdates.icon = updates.content.icon;
+          } else if (isPriceMatch) {
+            if (updates.content.text !== undefined) itemUpdates.price = updates.content.text;
+          }
+        }
+
+        if (updates.style) {
+          itemUpdates.style = {
+            ...(item.style || {}),
+            ...updates.style
+          };
+        }
+
+        return { ...item, ...itemUpdates };
+      });
+      onUpdate(section.id, { elements: newElements, content: { ...content, items: newItems } });
+    } else {
+      onUpdate(section.id, { elements: newElements });
+    }
   };
 
   const handleLinkEdit = (index: number, newLabel: string) => {
@@ -266,19 +409,23 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     styles.fontFamily ||
     activeTypography?.button?.fontFamily;
   
-  const defaultBg = isLight && activeGlobalTheme.light ? activeGlobalTheme.light.surface : (themeData?.surface || '#0E1214');
-  const defaultTitle = isLight && activeGlobalTheme.light ? activeGlobalTheme.light.heading : (themeData?.heading || '#F8FAFC');
-  const defaultText = isLight && activeGlobalTheme.light ? activeGlobalTheme.light.description : (themeData?.description || '#C7CDD6');
+  const defaultBg = isLight ? '#FFFFFF' : (themeData?.surface || '#0E1214');
+  const defaultTitle = isLight ? '#000000' : (themeData?.heading || '#F8FAFC');
+  const defaultText = isLight ? '#333333' : (themeData?.description || '#C7CDD6');
 
   const themeColors = {
       backgroundColor: styles.backgroundColor || defaultBg,
       textColor: styles.textColor || defaultText,
       titleColor: styles.titleColor || defaultTitle,
-      subtitleColor: styles.subtitleColor || defaultText,
-      accentColor: styles.accentColor || themeData?.accent || '#F59E0B',
+      subtitleColor: styles.subtitleColor || (isLight ? (themeData?.light?.accent || themeData?.accent || '#F59E0B') : defaultText),
+      accentColor: styles.accentColor || (isLight ? (themeData?.light?.accent || themeData?.accent) : themeData?.accent) || '#F59E0B',
       buttonBackgroundColor: styles.buttonBackgroundColor || themeData?.primaryButton?.bg || '#E11D48',
       buttonTextColor: styles.buttonTextColor || themeData?.primaryButton?.text || '#FFFFFF',
-      borderColor: styles.borderColor || themeData?.ring || '#F43F5E',
+      borderColor: styles.borderColor || (isLight ? themeData?.light?.borderColor : themeData?.borderColor) || themeData?.ring || '#F43F5E',
+      cardBorderColor: styles.borderColor || (isLight ? themeData?.light?.borderColor : themeData?.borderColor) || themeData?.ring || '#F43F5E',
+      accordionBorderColor: styles.borderColor || (isLight ? themeData?.light?.borderColor : themeData?.borderColor) || themeData?.ring || '#F43F5E',
+      iconColor: styles.iconColor || (isLight ? (themeData?.light?.icon || themeData?.icon) : themeData?.icon) || styles.accentColor || (isLight ? (themeData?.light?.accent || themeData?.accent) : themeData?.accent) || '#E11D48',
+      iconBgColor: styles.iconBgColor || (isLight ? (themeData?.light?.iconBg || themeData?.iconBg) : themeData?.iconBg) || 'rgba(225, 29, 72, 0.1)',
       // Typography font families (used by hero components + ElementsSection)
       titleFontFamily: resolvedTitleFontFamily,
       subtitleFontFamily: resolvedSubtitleFontFamily,
@@ -336,8 +483,8 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       } else {
         // Fall back to theme surface color if no background is set (including empty string, null, undefined)
         const hasBackground = styles.backgroundColor && styles.backgroundColor.trim() !== '';
-        if (!hasBackground && themeData?.surface) {
-          bgStyles.backgroundColor = themeData.surface;
+        if (!hasBackground && defaultBg) {
+          bgStyles.backgroundColor = defaultBg;
         } else if (hasBackground && !isCustomColor(styles.backgroundColor)) {
           // Keep Tailwind class-based backgrounds
           bgStyles.backgroundColor = undefined;
@@ -346,20 +493,24 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     }
     
     // ALWAYS set surface color as fallback (like website multicolor theme does)
-    if (!bgStyles.backgroundColor && themeData?.surface) {
-      bgStyles.backgroundColor = themeData.surface;
+    if (!bgStyles.backgroundColor && defaultBg) {
+      bgStyles.backgroundColor = defaultBg;
     }
     
     return bgStyles;
   };
 
-  const isFullBleed = styles.variant?.includes('Modern') || 
+  const isFullBleed = styles.maxWidth === 'max-w-full' || 
+                     styles.variant?.includes('Modern') || 
                      styles.variant?.includes('Geometric') || 
                      styles.variant?.includes('CrimsonJet') || 
+                     styles.variant?.includes('HeroPlumbing1') || 
                      styles.variant?.includes('Multicolor') || 
                      styles.variant?.includes('Gradient') ||
                      styles.variant?.includes('Explore') ||
-                     styles.variant?.includes('Marquee');
+                     styles.variant?.includes('Marquee') ||
+                     styles.variant?.includes('About1') ||
+                     styles.variant?.includes('ServicesGrid');
 
   const inlineStyles: React.CSSProperties = {
     ...getBackgroundStyles(),
@@ -372,6 +523,10 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     ...(!isFullBleed && !isTailwindClass(styles.paddingBottom) ? { paddingBottom: styles.paddingBottom } : {}),
     ...(!isFullBleed && !isTailwindClass(styles.paddingLeft) ? { paddingLeft: styles.paddingLeft } : {}),
     ...(!isFullBleed && !isTailwindClass(styles.paddingRight) ? { paddingRight: styles.paddingRight } : {}),
+    ...(styles.borderColor ? { borderColor: styles.borderColor } : {}),
+    ...(styles.borderWidth ? { borderWidth: styles.borderWidth } : {}),
+    ...(styles.borderStyle ? { borderStyle: styles.borderStyle } : {}),
+    ...(styles.borderRadius ? { borderRadius: styles.borderRadius } : {}),
   };
 
   const bgClass = !styles.background && !isCustomColor(styles.backgroundColor) ? styles.backgroundColor : '';
@@ -388,7 +543,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       isTailwindClass(styles.marginRight) ? styles.marginRight : ''
   ].filter(Boolean).join(' ');
   
-  const containerClass = `relative group transition-all duration-300 ${bgClass} ${textClass} ${spacingClasses} ${!readOnly && isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-black z-10 shadow-[0_0_30px_rgba(255,255,255,0.1)]' : (!readOnly ? 'hover:ring-1 hover:ring-white/20 cursor-pointer' : '')}`;
+  const containerClass = `relative group transition-all duration-300 ${bgClass} ${textClass} ${spacingClasses} ${!readOnly && isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-black z-10 shadow-[0_0_30px_rgba(255,255,255,0.1)]' : (!readOnly ? '' : '')}`;
 
   const formatColorClass = (prefix: string, val?: string) => {
     if (!val) return '';
@@ -414,9 +569,31 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
   
   const hasCustomSize = styles.titleSize && (styles.titleSize.includes('px') || styles.titleSize.includes('rem') || styles.titleSize.includes('em'));
   const titleClass = `font-bold mb-6 ${!isCustomColor(styles.titleColor) ? styles.titleColor || '' : ''}`;
-  const titleStyle = {
+  const titleStyle: React.CSSProperties = {
     ...(isCustomColor(styles.titleColor) ? { color: styles.titleColor } : {}),
-    ...(hasCustomSize ? { fontSize: styles.titleSize } : {})
+    ...(hasCustomSize ? { fontSize: styles.titleSize } : {}),
+    ...(styles.titleTextTransform ? { textTransform: styles.titleTextTransform } : {}),
+    fontFamily: resolvedTitleFontFamily,
+  };
+
+  const hasSubtitleCustomSize = styles.subtitleSize && (styles.subtitleSize.includes('px') || styles.subtitleSize.includes('rem') || styles.subtitleSize.includes('em'));
+  const subtitleStyle: React.CSSProperties = {
+    ...(isCustomColor(styles.subtitleColor) ? { color: styles.subtitleColor } : {}),
+    ...(hasSubtitleCustomSize ? { fontSize: styles.subtitleSize } : {}),
+    ...(styles.subtitleTextTransform ? { textTransform: styles.subtitleTextTransform } : {}),
+    fontFamily: resolvedSubtitleFontFamily,
+  };
+
+  const hasDescriptionCustomSize = styles.descriptionSize && (styles.descriptionSize.includes('px') || styles.descriptionSize.includes('rem') || styles.descriptionSize.includes('em'));
+  const descriptionStyle: React.CSSProperties = {
+    ...(isCustomColor(styles.descriptionColor) ? { color: styles.descriptionColor } : {}),
+    ...(hasDescriptionCustomSize ? { fontSize: styles.descriptionSize } : {}),
+    ...(styles.descriptionTextTransform ? { textTransform: styles.descriptionTextTransform } : {}),
+    fontFamily: resolvedDescriptionFontFamily,
+  };
+
+  const buttonStyle: React.CSSProperties = {
+    fontFamily: resolvedButtonFontFamily,
   };
 
   const isFixedSection = type === 'navbar' || type === 'footer';
@@ -446,15 +623,44 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
     
     // If the saved DB color exactly matches the theme, it's a legacy theme save. We treat it like a ghost color to ensure it stays fully synced and visually enabled.
     const isThemeMatch = originalColor && originalColor.toLowerCase() === activeThemeColor.toLowerCase();
-    const requiresResurrection = isGhostColor || isThemeMatch;
 
-    // 4. Exit early if explicitly disabled, BUT ONLY if it is a truly custom user override (Resurrect broken saves)
-    if (bgOverlay && bgOverlay.enabled === false && !requiresResurrection) {
+    // 4. Determine if we should skip the overlay for color backgrounds
+    // We are more strict now: if type is 'color', it IS a color background regardless of leftover backgroundImage
+    const isColorBg = styles.background 
+      ? (styles.background.type === 'color') 
+      : (!styles.backgroundImage || styles.backgroundImage === '' || !!styles.backgroundColor);
+      
+    const hasImage = styles.background 
+      ? (styles.background.type === 'image' && !!styles.background.image?.url) 
+      : (!!styles.backgroundImage && styles.backgroundImage !== '');
+    
+    const isExplicitlyEnabled = bgOverlay?.enabled === true;
+    const isExplicitlyDisabled = bgOverlay?.enabled === false;
+    
+    // Overlays are primarily for images/gradients. 
+    // For solid colors, we default to NONE unless explicitly enabled.
+    // We also skip if there's no image and it's not explicitly enabled.
+    if ((isColorBg || !hasImage) && !isExplicitlyEnabled) {
       return { gradientOverlay: null, colorOverlay: null };
     }
-    
-    // Auto-fix broken transparent colors OR legacy pure black (#000000) from old database saves
-    if (isGhostColor) {
+
+    // 5. Exit early if explicitly disabled. 
+    // We HONOUR explicit disablement above all else.
+    if (isExplicitlyDisabled) {
+      return { gradientOverlay: null, colorOverlay: null };
+    }
+
+    // 6. Resurrection Logic: Only resurrect if we have an image AND the color is "ghostly" (broken/default)
+    // We don't resurrect for color backgrounds (handled above)
+    const requiresResurrection = hasImage && isGhostColor;
+
+    if (isGhostColor && !requiresResurrection) {
+       // If it's a ghost color but doesn't require resurrection (e.g. no image), we just hide it
+       return { gradientOverlay: null, colorOverlay: null };
+    }
+
+    // 7. Auto-fix broken transparent colors OR legacy pure black (#000000) from old database saves
+    if (requiresResurrection) {
         // Attempt to use Active Theme first, then strictly fallback to Crimson Jet
         const activeThemeColor = (themeData as any)?.elements?.overlay?.color || (themeData as any)?.overlay?.color;
         overlayColor = activeThemeColor || PRESET_THEMES[0].elements.overlay.color;
@@ -524,6 +730,9 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
         isSelected={isSelected}
         titleClass={titleClass}
         titleStyle={titleStyle}
+        subtitleStyle={subtitleStyle}
+        descriptionStyle={descriptionStyle}
+        buttonStyle={buttonStyle}
         themeColors={themeColors}
         readOnly={readOnly}
       />
@@ -539,7 +748,17 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
                      styles.background.image.images.length > 0;
 
   return (
-    <div className={containerClass} style={inlineStyles} onClick={(e) => { if(!readOnly) { e.stopPropagation(); onClick(); }}}>
+    <div className={containerClass} style={inlineStyles}>
+      {/* Select Section Button - Appears on hover when not selected */}
+      {!readOnly && !isSelected && (
+        <button 
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+          className="absolute top-4 left-4 z-50 opacity-0 group-hover:opacity-100 transition-all bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg shadow-xl flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider border border-blue-400/30"
+        >
+          <i className="fa-solid fa-layer-group"></i>
+          Select Section
+        </button>
+      )}
       {/* Background Carousel */}
       {isCarousel && (
         <BackgroundCarousel 
@@ -602,7 +821,12 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       
       {/* Ensure content sits above the background and overlays */}
       <div className="relative z-10 w-full h-full">
-        {renderContent()}
+        <SectionErrorBoundary
+          key={`${section.type}-${section.styles?.variant || 'default'}`}
+          sectionType={section.type}
+        >
+          {renderContent()}
+        </SectionErrorBoundary>
       </div>
     </div>
   );

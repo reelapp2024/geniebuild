@@ -62,19 +62,23 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({ children, className,
         // Suppress ResizeObserver errors in the iframe window too
         const win = doc.defaultView;
         if (win) {
-            win.addEventListener('error', (e) => {
-                if (e.message?.includes('ResizeObserver')) {
+            const suppressIframeResizeObserverErrors = (e: ErrorEvent | PromiseRejectionEvent) => {
+                const message = (e instanceof ErrorEvent) ? e.message : (e.reason?.message || '');
+                if (message?.includes('ResizeObserver')) {
                     e.stopImmediatePropagation();
+                    e.preventDefault();
                 }
-            });
+            };
+            win.addEventListener('error', suppressIframeResizeObserverErrors);
+            win.addEventListener('unhandledrejection', suppressIframeResizeObserverErrors);
         }
         
-        // Inject Tailwind
+        // Inject Tailwind runtime (required for current GenieBuild class rendering)
         const script = doc.createElement('script');
         script.src = "https://cdn.tailwindcss.com";
         doc.head.appendChild(script);
 
-        // Inject Fonts & Icons from main document
+        // Inject Fonts, Icons, and built CSS from main document
         const links = document.querySelectorAll('link[rel="stylesheet"], link[rel="preconnect"], style');
         links.forEach(link => {
             // Clone and append
@@ -140,9 +144,13 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({ children, className,
     const frame = frameRef.current;
     
     // Auto-resize iframe height based on content
+    let isUpdating = false;
     const updateHeight = () => {
+        if (isUpdating) return;
+        
         // Use requestAnimationFrame to ensure we update in sync with the browser's paint cycle
         // and avoid "ResizeObserver loop completed with undelivered notifications"
+        isUpdating = true;
         window.requestAnimationFrame(() => {
             const doc = frame.contentDocument;
             if (doc && doc.body) {
@@ -153,12 +161,13 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({ children, className,
                 const currentHeightStr = frame.style.height;
                 const currentHeight = currentHeightStr ? parseInt(currentHeightStr, 10) : 0;
 
-                // Only update if the height has actually changed significantly (> 1px)
+                // Only update if the height has actually changed significantly (> 2px)
                 // to avoid redundant layout cycles and potential infinite loops
-                if (height > 0 && Math.abs(currentHeight - height) > 1) {
+                if (height > 0 && Math.abs(currentHeight - height) > 2) {
                     frame.style.height = `${height}px`;
                 }
             }
+            isUpdating = false;
         });
     };
 

@@ -1,5 +1,5 @@
 
-export type SectionType = 'navbar' | 'hero' | 'features' | 'cta' | 'footer' | 'testimonials' | 'pricing' | 'image-banner' | 'elements' | 'allelementsTest' | 'faq';
+export type SectionType = 'navbar' | 'hero' | 'about' | 'features' | 'services' | 'cta' | 'process' | 'footer' | 'testimonials' | 'pricing' | 'image-banner' | 'elements' | 'allelementsTest' | 'faq' | 'why-choose-us' | 'guarantee';
 
 export type ElementType = 
   // Basic
@@ -32,7 +32,9 @@ export type ElementType =
   | 'countdown-timer'
   | 'logo-cloud'
   | 'stat-card'
-  | 'user-avatars';
+  | 'user-avatars'
+  | 'feature-box'
+  | 'pricing-item';
 
 // Comprehensive Style Interface based on "Common Properties" request
 export interface ElementStyle {
@@ -165,6 +167,12 @@ export interface ElementStyle {
     
     // Accent Color support for form elements/custom elements
     accentColor?: string;
+    secondaryButtonBorderColor?: string;
+    iconColor?: string;
+    iconBackgroundColor?: string;
+    subheadingColor?: string;
+    iconBgColor?: string;
+    secondaryHeadingColor?: string;
 
     // Allow generic string keys for extensibility
     [key: string]: any; 
@@ -186,7 +194,7 @@ export interface WebsiteElement {
     marqueeSpeed?: '1x' | '2x' | '3x' | '4x' | '5x' | '6x' | '7x' | '8x' | '9x' | '10x';
     marqueeDirection?: 'left' | 'right';
     htmlTag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'div' | 'span';
-    textSize?: 'base' | 'small' | 'large' | 'xl'; // Text size variant for p tags
+    textSize?: 'base' | 'small' | 'large' | 'xl' | 'subheading'; // Text size variant for p tags
     link?: string;
     src?: string; 
     alt?: string;
@@ -285,7 +293,7 @@ export interface Section {
   content: {
     title?: string;
     subtitle?: string;
-    subtitleTextSize?: 'base' | 'small' | 'large' | 'xl'; // Store textSize directly for Hero subtitle
+    subtitleTextSize?: 'base' | 'small' | 'large' | 'xl' | 'subheading'; // Store textSize directly for Hero subtitle
     description?: string;
     ctaText?: string;
     ctaHref?: string;
@@ -315,6 +323,7 @@ export interface Section {
     listItems?: string[]; 
     projectId?: string; // For API-based navbar/footer
     brand?: string; // For footer brand name
+    badge?: string; // For process/features sections
   };
   // The new flexible structure for custom/elements sections
   elements?: WebsiteElement[]; 
@@ -344,13 +353,16 @@ export interface Section {
     titleSize?: string;
     titleAlign?: 'left' | 'center' | 'right' | 'justify';
     titleFontWeight?: string;
+    titleTextTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
     titleHeadingTag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
     subtitleColor?: string;
     subtitleSize?: string;
     subtitleAlign?: 'left' | 'center' | 'right' | 'justify';
     subtitleFontWeight?: string;
+    subtitleTextTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
     descriptionColor?: string;
     descriptionSize?: string;
+    descriptionTextTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
     fontSize?: string;
     fontWeight?: string;
     accentColor: string;
@@ -436,6 +448,7 @@ export interface Section {
     enableGeometry?: boolean;
     
     variant?: string;
+    backgroundPattern?: 'none' | 'dots-grid' | 'diagonal-lines' | 'plus-signs' | 'circuit' | 'topography';
     themeMode?: 'light' | 'dark';
 
     // Typography & Colors
@@ -445,15 +458,18 @@ export interface Section {
     titleSize?: string;
     titleAlign?: 'left' | 'center' | 'right' | 'justify';
     titleFontWeight?: string;
+    titleTextTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
     titleHeadingTag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'; // Heading level for section titles
     
     subtitleColor?: string;
     subtitleSize?: string;
     subtitleAlign?: 'left' | 'center' | 'right' | 'justify';
     subtitleFontWeight?: string;
+    subtitleTextTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
     
     descriptionColor?: string;
     descriptionSize?: string;
+    descriptionTextTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
     
     fontSize?: string;
     fontWeight?: string;
@@ -469,6 +485,12 @@ export interface Section {
 
     secondaryButtonBackgroundColor?: string;
     secondaryButtonTextColor?: string;
+    secondaryButtonBorderColor?: string;
+    iconColor?: string;
+    iconBackgroundColor?: string;
+    subheadingColor?: string;
+    iconBgColor?: string;
+    secondaryHeadingColor?: string;
 
     linkColor?: string; 
 
@@ -499,6 +521,10 @@ export interface WebsiteData {
         linkColor: string;
         borderColor: string;
         overlayColor?: string; 
+        subheadingColor?: string;
+        iconColor?: string;
+        iconBgColor?: string;
+        secondaryHeadingColor?: string;
     };
     typography: {
         h1: TypographyStyle;

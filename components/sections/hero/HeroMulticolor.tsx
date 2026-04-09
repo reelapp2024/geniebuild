@@ -143,7 +143,8 @@ export const HeroMulticolor: React.FC<HeroProps> = ({
       },
       style: {
         backgroundColor: styles.secondaryButtonBackgroundColor || 'transparent',
-        color: styles.secondaryButtonTextColor || ''
+        color: styles.secondaryButtonTextColor || '',
+        borderColor: styles.secondaryButtonBorderColor || styles.buttonBackgroundColor || themeData?.primaryButton?.bg || ''
       }
     };
   };
@@ -242,7 +243,7 @@ export const HeroMulticolor: React.FC<HeroProps> = ({
                   onTextEdit={onTextEdit}
                   buttonClass={buttonClass}
                   readOnly={readOnly}
-                  themeColors={themeColors}
+                  themeColors={{ ...themeColors, buttonBackgroundColor: styles.secondaryButtonBackgroundColor, buttonTextColor: styles.secondaryButtonTextColor, buttonBorderColor: styles.secondaryButtonBorderColor || styles.buttonBackgroundColor }}
                 />
               </div>
             )}

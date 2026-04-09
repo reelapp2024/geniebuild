@@ -183,23 +183,33 @@ export const HeroGeometric: React.FC<HeroProps> = ({
               padding: (typeof badgeElement?.style?.padding === 'string' ? badgeElement.style.padding : '6px') || '6px',
               borderRadius: (typeof badgeElement?.style?.borderRadius === 'string' ? badgeElement.style.borderRadius : '9999px') || '9999px'
             } as React.CSSProperties}
-            contentEditable={!readOnly}
-            suppressContentEditableWarning={!readOnly}
             onClick={(e) => handleElementClick(e, badgeId)}
-            onBlur={(e) => {
-              const newText = e.currentTarget.textContent || '';
-              // Update element if it exists, otherwise update section content
-              if (badgeElement && onElementUpdate) {
-                // Element exists, update it directly
-                onElementUpdate(badgeId, { content: { text: newText } });
-              } else {
-                // Fallback to section content
-                onTextEdit('badgeText', newText);
-              }
-            }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-            {badgeText}
+            {badgeElement?.content.icon && badgeElement.content.icon !== 'none' && (badgeElement.content.iconPosition || 'left') === 'left' && (
+              <i className={`fa-solid ${badgeElement.content.icon}`} style={{ fontSize: badgeElement.content.iconSize || '10px' }} />
+            )}
+            {(!badgeElement?.content.icon || badgeElement.content.icon === '') && (
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+            )}
+            <span
+              contentEditable={!readOnly}
+              suppressContentEditableWarning={!readOnly}
+              onBlur={(e) => {
+                const newText = e.currentTarget.innerHTML || '';
+                // Update element if it exists, otherwise update section content
+                if (badgeElement && onElementUpdate) {
+                  // Element exists, update it directly
+                  onElementUpdate(badgeId, { content: { ...badgeElement.content, text: newText } });
+                } else {
+                  // Fallback to section content
+                  onTextEdit('badgeText', newText);
+                }
+              }}
+              dangerouslySetInnerHTML={{ __html: badgeText }}
+            />
+            {badgeElement?.content.icon && badgeElement.content.icon !== 'none' && badgeElement.content.iconPosition === 'right' && (
+              <i className={`fa-solid ${badgeElement.content.icon}`} style={{ fontSize: badgeElement.content.iconSize || '10px' }} />
+            )}
           </div>
 
           {/* Render Title using ElementsSection - unwrapped for custom layout */}

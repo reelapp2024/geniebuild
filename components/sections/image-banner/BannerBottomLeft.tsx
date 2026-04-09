@@ -25,14 +25,14 @@ export const BannerBottomLeft: React.FC<BannerProps> = ({ section, onTextEdit, b
               style: titleStyle,
               contentEditable: true,
               suppressContentEditableWarning: true,
-              onBlur: (e: any) => onTextEdit('title', e.currentTarget.textContent || '')
-            },
-            content.title
+              onBlur: (e: any) => onTextEdit('title', e.currentTarget.innerHTML || ''),
+              dangerouslySetInnerHTML: { __html: content.title || '' }
+            }
           );
         })()}
-        <p className="text-xl mb-10 opacity-90 outline-none focus:ring-2 ring-white rounded px-2 max-w-xl" contentEditable suppressContentEditableWarning onBlur={(e) => onTextEdit('subtitle', e.currentTarget.textContent || '')}>{content.subtitle}</p>
+        <p className="text-xl mb-10 opacity-90 outline-none focus:ring-2 ring-white rounded px-2 max-w-xl" contentEditable suppressContentEditableWarning onBlur={(e) => onTextEdit('subtitle', e.currentTarget.innerHTML || '')} dangerouslySetInnerHTML={{ __html: content.subtitle || '' }} />
         <div>
-            <button className={buttonClass + ' px-12 py-4 text-xl font-bold shadow-2xl'} contentEditable suppressContentEditableWarning onBlur={(e) => onTextEdit('ctaText', e.currentTarget.textContent || '')}>{content.ctaText}</button>
+            <button className={buttonClass + ' px-12 py-4 text-xl font-bold shadow-2xl'} contentEditable suppressContentEditableWarning onBlur={(e) => onTextEdit('ctaText', e.currentTarget.innerHTML || '')} dangerouslySetInnerHTML={{ __html: content.ctaText || '' }} />
         </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Section, WebsiteElement } from '../../../types';
 import { ElementsSection } from '../ElementsSection';
+import { useTheme } from '@ui/blocks';
 
 interface FAQCenteredProps {
   section: Section;
@@ -21,11 +22,15 @@ export const FAQCentered: React.FC<FAQCenteredProps> = ({
   readOnly = false,
 }) => {
   const { content, styles } = section;
+  const { themeData } = useTheme();
   const styleAny = styles as any;
   
   // Theme colors for global fallback inheritance
   const themeColors = {
     ...styles,
+    titleColor: styles.titleColor || themeData?.heading,
+    textColor: styles.textColor || themeData?.description,
+    accentColor: styles.accentColor || themeData?.accent,
     fontWeight: styleAny.fontWeight,
     fontSize: styleAny.fontSize,
     textAlign: styles.textAlign || 'center',
@@ -89,11 +94,11 @@ export const FAQCentered: React.FC<FAQCenteredProps> = ({
         <ElementsSection 
           isWrapped={false} 
           section={{ ...section, elements: [getEl('accordion', 'accordion', { items: activeItems }, {
-            accentColor: styles.accentColor || '#3b82f6',
-            backgroundColor: styleAny.accordionBackgroundColor || styleAny.cardBackgroundColor || styles.overlayColor || '#0E1214',
-            borderColor: styleAny.accordionBorderColor || styleAny.cardBorderColor || styles.borderColor || '#2D2D2D',
-            titleColor: styleAny.accordionQuestionColor || styles.titleColor || '#F8FAFC',
-            color: styleAny.accordionAnswerColor || styles.textColor || '#D1D5DB',
+            accentColor: styles.accentColor || themeData?.accent || '#3b82f6',
+            backgroundColor: styleAny.accordionBackgroundColor || styleAny.cardBackgroundColor || styles.overlayColor || themeData?.surface || '#0E1214',
+            borderColor: styleAny.accordionBorderColor || styleAny.cardBorderColor || styles.borderColor || themeData?.border || '#2D2D2D',
+            titleColor: styleAny.accordionQuestionColor || styles.titleColor || themeData?.heading || '#F8FAFC',
+            color: styleAny.accordionAnswerColor || styles.textColor || themeData?.description || '#D1D5DB',
             borderRadius: '12px',
             padding: '20px',
           })] }} 

@@ -70,10 +70,10 @@ export const CTAMulticolor: React.FC<CTAProps> = ({
     primaryButton: themeData?.primaryButton?.bg || styles.buttonBackgroundColor || '#E11D48',
     primaryButtonText: themeData?.primaryButton?.text || styles.buttonTextColor || '#FFFFFF',
     primaryButtonHover: themeData?.primaryButton?.hover || '#BE123C',
-    secondaryButton: themeData?.elements?.secondaryButton?.bg || 'rgba(255, 255, 255, 0.95)',
-    secondaryButtonText: themeData?.elements?.secondaryButton?.text || themeData?.elements?.primaryButton?.bg || '#E11D48',
-    secondaryButtonBorder: themeData?.elements?.secondaryButton?.border || themeData?.elements?.primaryButton?.bg || '#E11D48',
-    secondaryButtonHover: themeData?.elements?.secondaryButton?.hover || themeData?.elements?.primaryButton?.bg || '#E11D48',
+    secondaryButton: (themeData?.elements || themeData)?.secondaryButton?.bg || styles.secondaryButtonBackgroundColor || 'rgba(255, 255, 255, 0.95)',
+    secondaryButtonText: (themeData?.elements || themeData)?.secondaryButton?.text || styles.secondaryButtonTextColor || (themeData?.elements || themeData)?.primaryButton?.bg || '#E11D48',
+    secondaryButtonBorder: (themeData?.elements || themeData)?.secondaryButton?.border || styles.secondaryButtonBorderColor || styles.buttonBackgroundColor || (themeData?.elements || themeData)?.primaryButton?.bg || '#E11D48',
+    secondaryButtonHover: (themeData?.elements || themeData)?.secondaryButton?.hover || (themeData?.elements || themeData)?.primaryButton?.bg || '#E11D48',
     accent: themeData?.accent || styles.accentColor || '#F59E0B',
     gradient: {
       from: themeData?.gradient?.from || '#0E1214',
@@ -220,7 +220,7 @@ export const CTAMulticolor: React.FC<CTAProps> = ({
               onTextEdit={onTextEdit}
               buttonClass={buttonClass}
               readOnly={readOnly}
-              themeColors={themeColors}
+              themeColors={{ ...themeColors, buttonBackgroundColor: styles.secondaryButtonBackgroundColor, buttonTextColor: styles.secondaryButtonTextColor, buttonBorderColor: styles.secondaryButtonBorderColor || styles.buttonBackgroundColor }}
             />
           )}
         </div>
