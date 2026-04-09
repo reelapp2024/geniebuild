@@ -1,7 +1,6 @@
 import React from 'react';
 import { Section, WebsiteElement } from '../../../types';
 import { ElementsSection } from '../ElementsSection';
-import { useTheme } from '@ui/blocks';
 
 interface AboutProps {
   section: Section;
@@ -27,7 +26,42 @@ export const About1: React.FC<AboutProps> = ({
 }) => {
   const content = section.content || {};
   const styles = section.styles || {};
-  const { themeData } = useTheme();
+  const isDark = styles.themeMode === 'dark';
+  
+  // 1. Strict Native Defaults (Perfect localhost:3000 look)
+  const nativeBg = isDark ? '#0E1214' : '#FFFFFF';
+  const nativeTitle = isDark ? '#F8FAFC' : '#111827';
+  const nativeText = isDark ? '#C7CDD6' : '#4B5563';
+  const nativeCardBg = isDark ? '#151515' : '#F9FAFB';
+  const nativeCardBorder = isDark ? '#333333' : '#E5E7EB';
+
+  // 2. Fetch User Customizations (Strictly isolated from passedThemeColors bleed)
+  let finalBg = styles.backgroundColor || nativeBg;
+  let finalTitle = styles.titleColor || nativeTitle;
+  let finalText = styles.textColor || nativeText;
+  let finalCardBg = styles.cardBackgroundColor || nativeCardBg;
+  let finalCardBorder = styles.cardBorderColor || nativeCardBorder;
+
+  // 3. Contrast Auto-Healer (Fixes corrupted DB bleed)
+  const upperBg = finalBg.toUpperCase();
+  const isBgLight = upperBg === '#FFFFFF' || upperBg === '#FFF' || upperBg.startsWith('RGB(255');
+  if (isBgLight) {
+      if (finalTitle.toUpperCase() === '#FFFFFF' || finalTitle.toUpperCase() === '#F8FAFC') finalTitle = '#111827';
+      if (finalText.toUpperCase() === '#FFFFFF' || finalText.toUpperCase() === '#C7CDD6') finalText = '#4B5563';
+  }
+
+  const themeColors = {
+      ...styles,
+      backgroundColor: finalBg,
+      titleColor: finalTitle,
+      textColor: finalText,
+      subtitleColor: styles.subtitleColor || passedThemeColors?.subtitleColor || '#3b82f6',
+      accentColor: styles.accentColor || passedThemeColors?.accentColor || '#3b82f6',
+      cardBackgroundColor: finalCardBg,
+      cardBorderColor: finalCardBorder,
+      buttonBackgroundColor: styles.buttonBackgroundColor || passedThemeColors?.buttonBackgroundColor,
+      buttonTextColor: styles.buttonTextColor || passedThemeColors?.buttonTextColor
+  };
   
   const titleId = `${section.id}-about-title`;
   const subtitleId = `${section.id}-about-subtitle`;
@@ -49,30 +83,6 @@ export const About1: React.FC<AboutProps> = ({
   const textElement = section.elements?.find(e => e.id === textId);
   const imageElement = section.elements?.find(e => e.id === imageId);
   const buttonElement = getButtonElement();
-  
-  const styleAny = styles as any;
-  const themeColors = {
-    ...styles,
-    titleColor: styles.titleColor || passedThemeColors?.titleColor || themeData?.heading || (styles.themeMode === 'dark' ? '#F8FAFC' : '#111827'),
-    textColor: styles.textColor || passedThemeColors?.textColor || themeData?.description || (styles.themeMode === 'dark' ? '#C7CDD6' : '#4B5563'),
-    subtitleColor: styles.subheadingColor || styles.subtitleColor || passedThemeColors?.subheadingColor || passedThemeColors?.subtitleColor || themeData?.accent,
-    subheadingColor: styles.subheadingColor || passedThemeColors?.subheadingColor || themeData?.accent,
-    accentColor: styles.accentColor || passedThemeColors?.accentColor || themeData?.accent,
-    buttonBackgroundColor: styles.buttonBackgroundColor || passedThemeColors?.buttonBackgroundColor || themeData?.primaryButton?.bg,
-    secondaryHeadingColor: styleAny.secondaryHeadingColor || styleAny.buttonBackgroundColor || passedThemeColors?.buttonBackgroundColor || themeData?.primaryButton?.bg || themeData?.accent,
-    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily || passedThemeColors?.titleFontFamily,
-    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || passedThemeColors?.subtitleFontFamily,
-    descriptionFontFamily: styleAny.descriptionFontFamily || styleAny.fontFamily || passedThemeColors?.descriptionFontFamily,
-    titleFontSize: styleAny.titleFontSize || styleAny.titleSize || styleAny.fontSize,
-    subtitleFontSize: styleAny.subtitleFontSize || styleAny.subtitleSize || styleAny.fontSize,
-    descriptionFontSize: styleAny.descriptionFontSize || styleAny.descriptionSize || styleAny.fontSize,
-    titleFontWeight: styleAny.titleFontWeight || styleAny.fontWeight,
-    subtitleFontWeight: styleAny.subtitleFontWeight || styleAny.fontWeight,
-    descriptionFontWeight: styleAny.descriptionFontWeight || styleAny.fontWeight,
-    titleLetterSpacing: styleAny.titleLetterSpacing,
-    subtitleLetterSpacing: styleAny.subtitleLetterSpacing,
-    descriptionLetterSpacing: styleAny.descriptionLetterSpacing,
-  };
   
   const getTitleElement = (): WebsiteElement => {
     let titleText = titleElement?.content?.text || content.title || 'About Our Mission';
@@ -146,7 +156,7 @@ export const About1: React.FC<AboutProps> = ({
   const paddingX = styles.paddingX || 'px-6';
 
   return (
-    <div className="w-full" style={{ backgroundColor: styles.backgroundColor || (styles.themeMode === 'dark' ? '#0E1214' : '#FFFFFF') }}>
+    <div className="w-full" style={{ backgroundColor: themeColors.backgroundColor }}>
       <div className={`max-w-7xl mx-auto ${paddingX} ${paddingTop} ${paddingBottom}`}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         <div className={styles.textAlign === 'right' ? 'order-2' : ''}>
@@ -201,8 +211,8 @@ export const About1: React.FC<AboutProps> = ({
               isWrapped={false}
               themeColors={{
                 ...themeColors,
-                buttonBackgroundColor: styles.buttonBackgroundColor || themeData?.primaryButton?.bg,
-                buttonTextColor: styles.buttonTextColor || themeData?.primaryButton?.text
+                buttonBackgroundColor: styles.buttonBackgroundColor || passedThemeColors?.buttonBackgroundColor,
+                buttonTextColor: styles.buttonTextColor || passedThemeColors?.buttonTextColor
               }}
             />
           </div>

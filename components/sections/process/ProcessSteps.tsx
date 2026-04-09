@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Section, WebsiteElement } from '../../../types';
-import { useTheme } from '@ui/blocks';
 import { ElementsSection } from '../ElementsSection';
 import { motion } from 'motion/react';
 import { Plus, Trash2, ArrowRight } from 'lucide-react';
@@ -34,26 +33,48 @@ export const ProcessSteps: React.FC<ProcessProps> = ({
   themeColors: passedThemeColors
 }) => {
   const { content, styles } = section;
-  const { themeData } = useTheme();
+  const isDark = styles.themeMode === 'dark';
 
-  const titleColor = styles.titleColor || passedThemeColors?.titleColor || themeData?.heading || '#111827';
-  const textColor = styles.textColor || passedThemeColors?.textColor || themeData?.description || '#4B5563';
-  const accentColor = styles.accentColor || passedThemeColors?.accentColor || themeData?.accent || '#3b82f6';
-  const surfaceColor = styles.backgroundColor || passedThemeColors?.backgroundColor || themeData?.surface || '#FFFFFF';
-  const subheadingColor = styles.subheadingColor || passedThemeColors?.subheadingColor || themeData?.subheading || themeData?.description || '#4B5563';
-  const iconBgColor = styles.iconBgColor || passedThemeColors?.iconBgColor || themeData?.iconBg || accentColor;
-  const secondaryHeadingColor = styles.secondaryHeadingColor || passedThemeColors?.secondaryHeadingColor || themeData?.secondaryHeading || titleColor;
+  // 1. Strict Native Defaults (Perfect localhost:3000 look)
+  const nativeBg = isDark ? '#0E1214' : '#FFFFFF';
+  const nativeTitle = isDark ? '#F8FAFC' : '#111827';
+  const nativeText = isDark ? '#C7CDD6' : '#4B5563';
+  const nativeCardBg = isDark ? '#151515' : '#F9FAFB';
+  const nativeCardBorder = isDark ? '#333333' : '#E5E7EB';
+
+  // 2. Fetch User Customizations (Strictly isolated from passedThemeColors bleed)
+  let finalBg = styles.backgroundColor || nativeBg;
+  let finalTitle = styles.titleColor || nativeTitle;
+  let finalText = styles.textColor || nativeText;
+  let finalCardBg = styles.cardBackgroundColor || nativeCardBg;
+  let finalCardBorder = styles.cardBorderColor || nativeCardBorder;
+
+  // 3. Contrast Auto-Healer (Fixes corrupted DB bleed)
+  const upperBg = finalBg.toUpperCase();
+  const isBgLight = upperBg === '#FFFFFF' || upperBg === '#FFF' || upperBg.startsWith('RGB(255');
+  if (isBgLight) {
+      if (finalTitle.toUpperCase() === '#FFFFFF' || finalTitle.toUpperCase() === '#F8FAFC') finalTitle = '#111827';
+      if (finalText.toUpperCase() === '#FFFFFF' || finalText.toUpperCase() === '#C7CDD6') finalText = '#4B5563';
+  }
 
   const themeColors = {
-    ...styles,
-    titleColor,
-    textColor,
-    accentColor,
-    backgroundColor: surfaceColor,
-    subheadingColor,
-    iconBgColor,
-    secondaryHeadingColor,
+      ...styles,
+      backgroundColor: finalBg,
+      titleColor: finalTitle,
+      textColor: finalText,
+      subtitleColor: styles.subtitleColor || passedThemeColors?.subtitleColor || '#3b82f6',
+      accentColor: styles.accentColor || passedThemeColors?.accentColor || '#3b82f6',
+      cardBackgroundColor: finalCardBg,
+      cardBorderColor: finalCardBorder,
+      buttonBackgroundColor: styles.buttonBackgroundColor || passedThemeColors?.buttonBackgroundColor,
+      buttonTextColor: styles.buttonTextColor || passedThemeColors?.buttonTextColor
   };
+  const titleColor = themeColors.titleColor;
+  const textColor = themeColors.textColor;
+  const accentColor = themeColors.accentColor || '#3b82f6';
+  const subheadingColor = styles.subheadingColor || themeColors.subtitleColor || '#3b82f6';
+  const iconBgColor = styles.iconBgColor || accentColor;
+  const secondaryHeadingColor = styles.secondaryHeadingColor || titleColor;
 
   const titleId = `${section.id}-title`;
   const subtitleId = `${section.id}-subtitle`;
@@ -103,7 +124,7 @@ export const ProcessSteps: React.FC<ProcessProps> = ({
   };
 
   return (
-    <section className="py-24 relative overflow-hidden" style={{ backgroundColor: surfaceColor }}>
+    <section className="py-24 relative overflow-hidden" style={{ backgroundColor: themeColors.backgroundColor }}>
       {/* Background Decorative Elements */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full opacity-[0.03]" style={{ backgroundImage: `radial-gradient(${titleColor} 1px, transparent 1px)`, backgroundSize: '32px 32px' }} />

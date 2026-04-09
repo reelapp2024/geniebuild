@@ -1,7 +1,6 @@
 import React from 'react';
 import { Section, WebsiteElement } from '../../../types';
 import { ElementsSection } from '../ElementsSection';
-import { useTheme } from '@ui/blocks';
 
 interface GuaranteeProps {
   section: Section;
@@ -51,23 +50,41 @@ export const GuaranteeSimple: React.FC<GuaranteeProps> = ({
   themeColors: passedThemeColors
 }) => {
   const { content, styles } = section;
-  const { themeData } = useTheme();
-  
-  const isLight = styles.themeMode === 'light';
-  const styleAny = styles as any;
-  
+  const isDark = styles.themeMode === 'dark';
+
+  // 1. Strict Native Defaults (Perfect localhost:3000 look)
+  const nativeBg = isDark ? '#0E1214' : '#FFFFFF';
+  const nativeTitle = isDark ? '#F8FAFC' : '#111827';
+  const nativeText = isDark ? '#C7CDD6' : '#4B5563';
+  const nativeCardBg = isDark ? '#151515' : '#F9FAFB';
+  const nativeCardBorder = isDark ? '#333333' : '#E5E7EB';
+
+  // 2. Fetch User Customizations (Strictly isolated from passedThemeColors bleed)
+  let finalBg = styles.backgroundColor || nativeBg;
+  let finalTitle = styles.titleColor || nativeTitle;
+  let finalText = styles.textColor || nativeText;
+  let finalCardBg = styles.cardBackgroundColor || nativeCardBg;
+  let finalCardBorder = styles.cardBorderColor || nativeCardBorder;
+
+  // 3. Contrast Auto-Healer (Fixes corrupted DB bleed)
+  const upperBg = finalBg.toUpperCase();
+  const isBgLight = upperBg === '#FFFFFF' || upperBg === '#FFF' || upperBg.startsWith('RGB(255');
+  if (isBgLight) {
+      if (finalTitle.toUpperCase() === '#FFFFFF' || finalTitle.toUpperCase() === '#F8FAFC') finalTitle = '#111827';
+      if (finalText.toUpperCase() === '#FFFFFF' || finalText.toUpperCase() === '#C7CDD6') finalText = '#4B5563';
+  }
+
   const themeColors = {
-    ...styles,
-    titleColor: styles.titleColor || passedThemeColors?.titleColor || themeData?.heading || (isLight ? '#111827' : '#F8FAFC'),
-    textColor: styles.textColor || passedThemeColors?.textColor || themeData?.description || (isLight ? '#4B5563' : '#D1D5DB'),
-    subtitleColor: styles.subheadingColor || passedThemeColors?.subheadingColor || themeData?.subheading || themeData?.accent || (isLight ? '#E11D48' : '#F43F5E'),
-    accentColor: styles.accentColor || passedThemeColors?.accentColor || themeData?.accent || '#E11D48',
-    iconColor: styles.iconColor || passedThemeColors?.iconColor || themeData?.icon || themeData?.accent || '#E11D48',
-    iconBgColor: styles.iconBgColor || passedThemeColors?.iconBgColor || themeData?.iconBg || (isLight ? 'rgba(225,29,72,0.1)' : 'rgba(225,29,72,0.15)'),
-    secondaryHeadingColor: styles.secondaryHeadingColor || passedThemeColors?.secondaryHeadingColor || themeData?.secondaryHeading || themeData?.accent || '#E11D48',
-    titleFontFamily: styleAny.titleFontFamily || styleAny.fontFamily || passedThemeColors?.titleFontFamily,
-    subtitleFontFamily: styleAny.subtitleFontFamily || styleAny.fontFamily || passedThemeColors?.subtitleFontFamily,
-    descriptionFontFamily: styleAny.descriptionFontFamily || styleAny.fontFamily || passedThemeColors?.descriptionFontFamily,
+      ...styles,
+      backgroundColor: finalBg,
+      titleColor: finalTitle,
+      textColor: finalText,
+      subtitleColor: styles.subtitleColor || passedThemeColors?.subtitleColor || '#3b82f6',
+      accentColor: styles.accentColor || passedThemeColors?.accentColor || '#3b82f6',
+      cardBackgroundColor: finalCardBg,
+      cardBorderColor: finalCardBorder,
+      buttonBackgroundColor: styles.buttonBackgroundColor || passedThemeColors?.buttonBackgroundColor,
+      buttonTextColor: styles.buttonTextColor || passedThemeColors?.buttonTextColor
   };
 
   const badgeId = `${section.id}-badge`;
@@ -155,7 +172,7 @@ export const GuaranteeSimple: React.FC<GuaranteeProps> = ({
   const paddingX = styles.paddingX || 'px-6';
 
   return (
-    <div className={`relative overflow-hidden ${paddingTop} ${paddingBottom} ${paddingX}`}>
+    <div className={`relative overflow-hidden ${paddingTop} ${paddingBottom} ${paddingX}`} style={{ backgroundColor: themeColors.backgroundColor }}>
       {/* Background decoration */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-[0.03]">
         <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-current blur-[100px]" style={{ color: themeColors.accentColor }}></div>
